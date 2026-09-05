@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FKD方块殿 | 我的世界服务器官网</title>
-    <!-- 网页图标 -->
     <link rel="icon" type="image/jpeg" href="https://s41.ax1x.com/2026/09/05/pnA9bvD.jpg">
-    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -187,6 +185,39 @@
         .footer { padding: 2rem 1.5rem; text-align: center; border-top: 2px solid var(--border-color); background: var(--bg-secondary); margin-top: 40px; }
         .footer .footer-text { font-size: 0.78rem; color: var(--text-muted); }
         .pixel-divider { letter-spacing: 4px; color: var(--border-light); margin: 0.5rem 0; }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: var(--shadow-hover);
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .modal h3 { margin-bottom: 1.5rem; text-align: center; }
+        .modal .form-group { margin-bottom: 1rem; }
+        .modal .submit-btn { width: 100%; }
         @media (max-width: 768px) {
             .hero { padding: 100px 1rem 40px; }
             .hero-title { font-size: 1.8rem; }
@@ -199,9 +230,7 @@
     </style>
 </head>
 <body>
-
     <div class="error-toast" id="errorToast"></div>
-
     <nav class="navbar" id="navbar">
         <div class="navbar-brand">
             <div class="brand-icon">
@@ -217,10 +246,52 @@
             <li><a href="#stories">故事</a></li>
             <li><a href="#hall">名人榜</a></li>
             <li><a href="#submit">投稿</a></li>
+            <li><a href="#" id="oreFinderLink">矿石查找</a></li>
+            <li><a href="#" id="seedMapLink">种子查询</a></li>
         </ul>
         <button class="theme-toggle" id="themeToggle" aria-label="切换明暗模式">🌓</button>
     </nav>
-
+    <!-- 矿石查找参数模态框 -->
+    <div class="modal-overlay" id="oreModal">
+        <div class="modal">
+            <button class="modal-close" id="closeOreModal">&times;</button>
+            <h3>⛏️ 矿石查找器(可能出错)</h3>
+            <div class="form-group">
+                <label>矿石种类</label>
+                <select id="oreType">
+                    <option value="diamond">钻石</option>
+                    <option value="ancient_debris">远古残骸</option>
+                    <option value="gold">金</option>
+                    <option value="iron">铁</option>
+                    <option value="copper">铜</option>
+                    <option value="redstone">红石</option>
+                    <option value="lapis_lazuli">青金石</option>
+                    <option value="coal">煤炭</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>查找大小</label>
+                <select id="oreSize">
+                    <option value="all">最小 (all)</option>
+                    <option value="medium">中等 (medium)</option>
+                    <option value="big">最大 (big)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>坐标 X</label>
+                <input type="number" id="coordX" placeholder="例如 100">
+            </div>
+            <div class="form-group">
+                <label>坐标 Y</label>
+                <input type="number" id="coordY" placeholder="例如 64">
+            </div>
+            <div class="form-group">
+                <label>坐标 Z</label>
+                <input type="number" id="coordZ" placeholder="例如 -200">
+            </div>
+            <button class="submit-btn" id="generateOreLink">生成并跳转</button>
+        </div>
+    </div>
     <section class="hero" id="home">
         <div class="hero-logo">
             <img src="https://s41.ax1x.com/2026/09/05/pnA9bvD.jpg" alt="FKD方块殿Logo">
@@ -231,7 +302,6 @@
         <p class="hero-desc">一个由玩家社区驱动的 Minecraft 服务器，<br>在这里，每一个方块都承载着故事，每一位玩家都值得被铭记。</p>
         <p class="hero-owner">🏆 服主：<strong>FKD乄老果</strong></p>
     </section>
-
     <div class="container">
         <div class="info-grid">
             <div class="info-card"><div class="icon">👑</div><div class="label">服主</div><div class="value">FKD乄老果</div></div>
@@ -240,7 +310,6 @@
             <div class="info-card"><div class="icon">📡</div><div class="label">托管平台</div><div class="value">Supabase</div></div>
         </div>
     </div>
-
     <section class="section" id="stories">
         <div class="container">
             <div class="section-header">
@@ -261,7 +330,6 @@
             <div id="storiesEmpty" style="display:none; text-align:center; padding:2rem; color:var(--text-muted);">暂无故事，快来投稿第一篇吧！</div>
         </div>
     </section>
-
     <section class="section" id="submit" style="padding-top:0;">
         <div class="container">
             <div class="submit-form-card">
@@ -302,7 +370,6 @@
             </div>
         </div>
     </section>
-
     <section class="section" id="hall">
         <div class="container">
             <div class="section-header">
@@ -312,36 +379,28 @@
             <div style="text-align:center; padding:2rem; color:var(--text-muted);">🏅 名人榜暂未更新，欢迎自荐或推荐优秀玩家！</div>
         </div>
     </section>
-
     <footer class="footer">
         <div class="footer-brand">⛏️ FKD方块殿</div>
         <div class="pixel-divider">▪ ▪ ▪ ▪ ▪</div>
         <div class="footer-text" id="footerText"></div>
     </footer>
-
     <script>
-        // ==================== 错误弹窗 ====================
+        console.log('🚀 页面脚本开始执行');
         function showError(message) {
-            console.error('❌ 错误:', message);
+            console.error('❌ 错误弹窗:', message);
             const toast = document.getElementById('errorToast');
             toast.textContent = '❌ ' + message;
             toast.classList.add('show');
             clearTimeout(toast._timeout);
             toast._timeout = setTimeout(() => toast.classList.remove('show'), 8000);
         }
-
-        // ==================== 检查 SDK ====================
         if (typeof window.supabase === 'undefined') {
             document.getElementById('storiesLoading').innerHTML = '❌ Supabase SDK 加载失败，请检查网络后刷新页面';
             document.getElementById('submitBtn').disabled = true;
             showError('Supabase SDK 加载失败');
         }
-
-        // ==================== Supabase 配置 ====================
         const SUPABASE_URL = 'https://yowwyasttkywyqgseuqz.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_j4rpi2ejPTMGxo79uaaX3g_kQYrinS4';
-
-        // ==================== 站点配置 ====================
         const SITE_CONFIG = {
             serverName: 'FKD方块殿',
             season: 'S8.0',
@@ -350,22 +409,16 @@
             contactQQ: '3658683821',
             generatedBy: '由权威deep seek生成'
         };
-
-        // ==================== 更新页脚 ====================
         document.getElementById('footerText').innerHTML = `
             服主：${SITE_CONFIG.owner} | 赛季 ${SITE_CONFIG.season} | ${SITE_CONFIG.githubNote}<br>
             ${SITE_CONFIG.generatedBy} | 投稿QQ：${SITE_CONFIG.contactQQ}<br>
             © 2026 ${SITE_CONFIG.serverName} · 我的世界服务器
         `;
-
-        // ==================== HTML 转义 ====================
         function escapeHTML(str) {
             const div = document.createElement('div');
             div.textContent = str;
             return div.innerHTML;
         }
-
-        // ==================== 图片URL安全校验 ====================
         function isValidImageUrl(url) {
             try {
                 const parsed = new URL(url);
@@ -374,8 +427,6 @@
                 return false;
             }
         }
-
-        // ==================== 渲染故事 ====================
         function renderStories(stories) {
             const container = document.getElementById('storiesContainer');
             const emptyEl = document.getElementById('storiesEmpty');
@@ -412,8 +463,6 @@
                 container.appendChild(card);
             });
         }
-
-        // ==================== 加载故事 ====================
         async function loadStories() {
             const loadingEl = document.getElementById('storiesLoading');
             const container = document.getElementById('storiesContainer');
@@ -421,38 +470,30 @@
             loadingEl.style.display = 'block';
             container.style.display = 'none';
             emptyEl.style.display = 'none';
-
             if (typeof window.supabase === 'undefined') {
                 loadingEl.innerHTML = '❌ Supabase SDK 未加载';
                 showError('Supabase SDK 未加载');
                 return;
             }
-
             try {
                 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                 const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('查询超时(15秒)')), 15000));
                 const queryPromise = supabase.from('stories').select('*').order('created_at', { ascending: false });
                 const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
-
                 if (error) throw new Error(error.message);
-
                 renderStories(data);
                 loadingEl.style.display = 'none';
             } catch (err) {
-                console.error('加载故事失败:', err);
                 loadingEl.innerHTML = '❌ ' + escapeHTML(err.message);
                 showError('加载故事失败: ' + err.message);
             }
         }
-
-        // ==================== 表单提交 ====================
         document.getElementById('storyForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
             const msg = document.getElementById('formMessage');
             msg.className = 'form-message';
             msg.textContent = '';
-
             const title = document.getElementById('storyTitle').value.trim();
             const author = document.getElementById('storyAuthor').value.trim();
             const date = document.getElementById('storyDate').value;
@@ -460,13 +501,11 @@
             const content = document.getElementById('storyContent').value.trim();
             const imagesInput = document.getElementById('storyImages').value.trim();
             const password = document.getElementById('submitPassword').value;
-
             if (!title || !author || !content || !password) {
                 msg.textContent = '请填写所有必填字段';
                 msg.className = 'form-message error';
                 return;
             }
-
             const imageUrls = imagesInput ? imagesInput.split(/[,\n]/).map(s => s.trim()).filter(Boolean) : [];
             const storyData = {
                 password,
@@ -477,10 +516,8 @@
                 content,
                 image_urls: imageUrls
             };
-
             btn.disabled = true;
             btn.textContent = '提交中...';
-
             try {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 20000);
@@ -491,11 +528,9 @@
                     signal: controller.signal
                 });
                 clearTimeout(timeoutId);
-
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}：${response.statusText || '请求失败'}`);
                 }
-
                 const result = await response.json();
                 if (result.success) {
                     msg.textContent = '✅ 故事提交成功！';
@@ -507,7 +542,6 @@
                     throw new Error(result.error || '密码错误或提交失败');
                 }
             } catch (err) {
-                console.error('投稿失败:', err);
                 msg.textContent = '❌ ' + (err.name === 'AbortError' ? '请求超时，请稍后再试' : err.message);
                 msg.className = 'form-message error';
                 showError('投稿失败: ' + (err.name === 'AbortError' ? '请求超时' : err.message));
@@ -516,19 +550,52 @@
                 btn.textContent = '提交故事';
             }
         });
-
+        // ==================== 矿石查找器（当前页面跳转） ====================
+        const oreModal = document.getElementById('oreModal');
+        const oreFinderLink = document.getElementById('oreFinderLink');
+        const closeOreModal = document.getElementById('closeOreModal');
+        const generateOreLink = document.getElementById('generateOreLink');
+        oreFinderLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            oreModal.classList.add('active');
+        });
+        closeOreModal.addEventListener('click', () => {
+            oreModal.classList.remove('active');
+        });
+        oreModal.addEventListener('click', (e) => {
+            if (e.target === oreModal) {
+                oreModal.classList.remove('active');
+            }
+        });
+        generateOreLink.addEventListener('click', () => {
+            const oreType = document.getElementById('oreType').value;
+            const oreSize = document.getElementById('oreSize').value;
+            const coordX = document.getElementById('coordX').value.trim();
+            const coordY = document.getElementById('coordY').value.trim();
+            const coordZ = document.getElementById('coordZ').value.trim();
+            if (!coordX || !coordY || !coordZ) {
+                showError('请完整填写三个坐标');
+                return;
+            }
+            const baseUrl = 'https://www.orefinder.gg/ores';
+            const queryString = `filter=${encodeURIComponent(oreSize)}&ores[]=${encodeURIComponent(oreType)}&platform=bedrock_1_21&position[]=${encodeURIComponent(coordX)}&position[]=${encodeURIComponent(coordY)}&position[]=${encodeURIComponent(coordZ)}&seed=20260810`;
+            const finalUrl = `${baseUrl}?${queryString}`;
+            window.location.href = finalUrl;
+        });
+        // ==================== 种子查询器（直接跳转） ====================
+        document.getElementById('seedMapLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = 'https://www.chunkbase.com/apps/seed-map#seed=20260810&platform=bedrock_1_21_110&dimension=overworld&x=0&z=0&zoom=0.5';
+        });
         // ==================== 明暗切换 ====================
         const toggleBtn = document.getElementById('themeToggle');
         const root = document.documentElement;
-
         function updateThemeIcon() {
             toggleBtn.textContent = root.getAttribute('data-theme') === 'light' ? '☀️' : '🌙';
         }
-
         const savedTheme = localStorage.getItem('fkd-theme');
         if (savedTheme === 'light') root.setAttribute('data-theme', 'light');
         updateThemeIcon();
-
         toggleBtn.addEventListener('click', () => {
             if (root.getAttribute('data-theme') === 'light') {
                 root.removeAttribute('data-theme');
@@ -539,13 +606,9 @@
             }
             updateThemeIcon();
         });
-
-        // ==================== 导航栏滚动 ====================
         window.addEventListener('scroll', () => {
             document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
         }, { passive: true });
-
-        // ==================== 启动 ====================
         loadStories();
     </script>
 </body>
