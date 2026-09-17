@@ -504,10 +504,203 @@
                                 .quick-grid { grid-template-columns: repeat(2, 1fr); }
                                 .visit-counter { font-size: 0.7rem; }
                         }
+
+                        /* 设置侧栏（留言墙自动刷新开关） */
+                        .settings-toggle-btn {
+                                position: fixed; right: 18px; bottom: 80px;
+                                width: 48px; height: 48px; border-radius: 50%;
+                                border: 2px solid var(--border-color); background: var(--bg-card);
+                                color: var(--text-secondary); font-size: 1.35rem; cursor: pointer;
+                                z-index: 1500; display: flex; align-items: center; justify-content: center;
+                                box-shadow: var(--shadow); transition: all 0.3s;
+                        }
+                        .settings-toggle-btn:hover { border-color: var(--accent-green); color: var(--accent-gold); transform: rotate(60deg); }
+                        .settings-sidebar {
+                                position: fixed; top: 0; right: 0;
+                                width: 300px; max-width: 85vw; height: 100%;
+                                background: var(--bg-secondary); border-left: 2px solid var(--border-color);
+                                box-shadow: var(--shadow-hover); z-index: 1600;
+                                transform: translateX(100%); transition: transform 0.35s ease;
+                                padding: 1.5rem 1.2rem; overflow-y: auto;
+                        }
+                        .settings-sidebar.open { transform: translateX(0); }
+                        .settings-sidebar h3 { margin-bottom: 1.2rem; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; }
+                        .settings-close {
+                                position: absolute; top: 10px; right: 14px; background: transparent;
+                                border: none; color: var(--text-secondary); font-size: 1.6rem; cursor: pointer;
+                        }
+                        .settings-close:hover { color: var(--accent-gold); }
+                        .settings-item {
+                                display: flex; align-items: center; justify-content: space-between; gap: 0.8rem;
+                                padding: 0.9rem 0; border-bottom: 1px solid var(--border-light);
+                        }
+                        .settings-item:last-of-type { border-bottom: none; }
+                        .settings-item .label { font-size: 0.88rem; color: var(--text-primary); }
+                        .settings-item .desc { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem; }
+                        .settings-sidebar select {
+                                padding: 0.4rem 0.6rem; border-radius: 6px; border: 1px solid var(--border-color);
+                                background: var(--bg-secondary); color: var(--text-primary); font-size: 0.82rem; outline: none;
+                        }
+                        .settings-refresh-btn {
+                                margin-top: 1rem; width: 100%; background: var(--bg-card); border: 1px solid var(--border-color);
+                                color: var(--text-secondary); padding: 0.6rem; border-radius: 6px; cursor: pointer;
+                                font-size: 0.85rem; transition: all 0.25s;
+                        }
+                        .settings-refresh-btn:hover { border-color: var(--accent-green); color: var(--accent-gold); }
+                        .settings-refresh-info { font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem; line-height: 1.6; min-height: 1rem; }
+                        .switch { position: relative; width: 46px; height: 26px; flex-shrink: 0; }
+                        .switch input { opacity: 0; width: 0; height: 0; }
+                        .switch .slider {
+                                position: absolute; cursor: pointer; inset: 0; background: var(--bg-card);
+                                border: 1px solid var(--border-color); border-radius: 26px; transition: 0.3s;
+                        }
+                        .switch .slider:before {
+                                content: ''; position: absolute; height: 18px; width: 18px; left: 3px; top: 3px;
+                                background: var(--text-muted); border-radius: 50%; transition: 0.3s;
+                        }
+                        .switch input:checked + .slider { background: var(--accent-green); border-color: var(--accent-green); }
+                        .switch input:checked + .slider:before { transform: translateX(20px); background: #fff; }
+                        @media (max-width: 768px) {
+                                .settings-toggle-btn { bottom: 70px; width: 44px; height: 44px; font-size: 1.2rem; }
+                        }
+
+                        /* 用户系统 UI（申请注册 + 后台审核） */
+                        .auth-area { display: flex; align-items: center; gap: 0.5rem; }
+                        .auth-user { font-size: 0.85rem; color: var(--text-primary); }
+                        .auth-btn {
+                                background: var(--bg-card); border: 2px solid var(--border-color);
+                                color: var(--text-secondary); padding: 0.3rem 0.7rem; cursor: pointer;
+                                font-size: 0.8rem; transition: all 0.2s; font-family: var(--mc-pixel-font);
+                        }
+                        .auth-btn:hover { border-color: var(--accent-green); color: var(--accent-gold); }
+                        .auth-btn.primary { border-color: var(--accent-gold); color: var(--accent-gold); }
+                        .auth-btn.admin { border-color: var(--accent-green); color: var(--accent-green-light); }
+                        .auth-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; }
+                        .auth-tab {
+                                flex: 1; background: var(--bg-secondary); border: 2px solid var(--border-color);
+                                color: var(--text-secondary); padding: 0.5rem; cursor: pointer; font-size: 0.85rem;
+                                font-family: var(--mc-pixel-font);
+                        }
+                        .auth-tab.active { border-color: var(--accent-gold); color: var(--accent-gold); }
+                        .admin-list { display: flex; flex-direction: column; gap: 0.8rem; max-height: 60vh; overflow-y: auto; }
+                        .admin-item {
+                                background: var(--bg-card); border: 2px solid var(--mc-edge); padding: 0.8rem 1rem;
+                                display: flex; justify-content: space-between; align-items: center; gap: 0.8rem;
+                        }
+                        .admin-item-name { font-weight: 700; color: var(--accent-gold); }
+                        .admin-item-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem; }
+                        .admin-item-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+                        .admin-approve, .admin-reject {
+                                border: 2px solid var(--border-color); padding: 0.35rem 0.7rem; cursor: pointer;
+                                font-size: 0.8rem; background: var(--bg-secondary); color: var(--text-primary);
+                        }
+                        .admin-approve { border-color: var(--accent-green); color: var(--accent-green-light); }
+                        .admin-reject { border-color: #ff6b6b; color: #ff6b6b; }
                 </style>
         </head>
         <body>
                 <div class="error-toast" id="errorToast"></div>
+
+                <!-- 设置侧栏：留言墙自动刷新开关 -->
+                <button
+                        class="settings-toggle-btn"
+                        id="settingsToggleBtn"
+                        aria-label="打开设置"
+                        title="设置"
+                >
+                        ⚙️
+                </button>
+                <aside class="settings-sidebar" id="settingsSidebar" aria-hidden="true">
+                        <button
+                                class="settings-close"
+                                id="settingsCloseBtn"
+                                aria-label="关闭设置"
+                        >
+                                &times;
+                        </button>
+                        <h3>⚙️ 设置</h3>
+                        <div class="settings-item">
+                                <div>
+                                        <div class="label">留言墙自动刷新</div>
+                                        <div class="desc">每隔一段时间自动拉取最新留言</div>
+                                </div>
+                                <label class="switch">
+                                        <input type="checkbox" id="autoRefreshToggle" />
+                                        <span class="slider"></span>
+                                </label>
+                        </div>
+                        <div class="settings-item">
+                                <div>
+                                        <div class="label">刷新间隔</div>
+                                        <div class="desc">自动刷新的频率</div>
+                                </div>
+                                <select id="autoRefreshInterval">
+                                        <option value="10000">10 秒</option>
+                                        <option value="30000">30 秒</option>
+                                        <option value="60000">60 秒</option>
+                                </select>
+                        </div>
+                        <button class="settings-refresh-btn" id="manualRefreshBtn">
+                                🔄 立即刷新留言
+                        </button>
+                        <div class="settings-refresh-info" id="refreshInfo"></div>
+                </aside>
+
+                <!-- 用户系统：登录 / 申请注册 -->
+                <div class="modal-overlay" id="authModal">
+                        <div class="modal">
+                                <button class="modal-close" id="closeAuthModal">&times;</button>
+                                <h3>🔑 账号</h3>
+                                <div class="auth-tabs">
+                                        <button class="auth-tab active" data-tab="login">登录</button>
+                                        <button class="auth-tab" data-tab="apply">申请注册</button>
+                                </div>
+                                <div id="loginPanel">
+                                        <form id="loginForm">
+                                                <div class="form-group">
+                                                        <label>用户名</label>
+                                                        <input id="loginUsername" type="text" autocomplete="username" required />
+                                                </div>
+                                                <div class="form-group">
+                                                        <label>密码</label>
+                                                        <input id="loginPassword" type="password" autocomplete="current-password" required />
+                                                </div>
+                                                <button class="submit-btn" type="submit">登录</button>
+                                        </form>
+                                </div>
+                                <div id="applyPanel" style="display:none">
+                                        <form id="applyForm">
+                                                <div class="form-group">
+                                                        <label>用户名（3-20 位，中英文/数字/下划线）</label>
+                                                        <input id="applyUsername" type="text" required />
+                                                </div>
+                                                <div class="form-group">
+                                                        <label>密码（至少 6 位）</label>
+                                                        <input id="applyPassword" type="password" required />
+                                                </div>
+                                                <div class="form-group">
+                                                        <label>联系方式（QQ / 邮箱，可选）</label>
+                                                        <input id="applyContact" type="text" />
+                                                </div>
+                                                <div class="form-group">
+                                                        <label>申请理由（可选）</label>
+                                                        <input id="applyReason" type="text" />
+                                                </div>
+                                                <button class="submit-btn" type="submit">提交申请</button>
+                                        </form>
+                                </div>
+                                <div class="form-message" id="authMessage"></div>
+                        </div>
+                </div>
+
+                <!-- 管理员审核面板 -->
+                <div class="modal-overlay" id="adminModal">
+                        <div class="modal">
+                                <button class="modal-close" id="closeAdminModal">&times;</button>
+                                <h3>🛡️ 待审核申请</h3>
+                                <div class="admin-list" id="adminList"></div>
+                        </div>
+                </div>
 
                 <nav class="navbar" id="navbar">
                         <div class="navbar-brand">
@@ -531,6 +724,7 @@
                                 <li class="nav-sep"></li>
                                 <li><a data-view="submit">✍️ 投稿</a></li>
                         </ul>
+                        <div class="auth-area" id="authArea"></div>
                         <button
                                 class="theme-toggle"
                                 id="themeToggle"
@@ -1084,7 +1278,6 @@
                         // ---------- 常量配置 ----------
                         const SUPABASE_URL = 'https://yowwyasttkywyqgseuqz.supabase.co';
                         const SUPABASE_ANON_KEY = 'sb_publishable_j4rpi2ejPTMGxo79uaaX3g_kQYrinS4';
-                        const TRADE_PASSWORD = 'fkd2024';
 
                         const SITE_CONFIG = {
                             serverName: 'FKD方块殿',
@@ -1226,16 +1419,18 @@
                             const tag = document.getElementById('storyTag').value.trim() || '其他';
                             const content = document.getElementById('storyContent').value.trim();
                             const imagesInput = document.getElementById('storyImages').value.trim();
-                            const password = document.getElementById('submitPassword').value;
 
-                            if (!title || !author || !content || !password) {
-                                msg.textContent = '请填写所有必填字段';
+                            if (!title || !author || !content) {
+                                msg.textContent = '请填写标题、作者和内容';
                                 msg.className = 'form-message error';
                                 return;
                             }
 
+                            const claims = parseToken();
+                            if (!claims) { showAuthRequired('formMessage'); return; }
+
                             const imageUrls = imagesInput ? imagesInput.split(/[,\n]/).map(s => s.trim()).filter(Boolean) : [];
-                            const storyData = { password, title, author, date: date || new Date().toISOString().slice(0,10), tag: tag || '', content, image_urls: imageUrls };
+                            const storyData = { title, author, date: date || new Date().toISOString().slice(0,10), tag: tag || '', content, image_urls: imageUrls };
 
                             btn.disabled = true;
                             btn.textContent = '提交中...';
@@ -1245,7 +1440,7 @@
                                 const timeoutId = setTimeout(() => controller.abort(), 20000);
                                 const response = await fetch('https://yowwyasttkywyqgseuqz.supabase.co/functions/v1/submit-story', {
                                     method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
+                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
                                     body: JSON.stringify(storyData),
                                     signal: controller.signal
                                 });
@@ -1328,19 +1523,20 @@
 
                         document.getElementById('messageForm').addEventListener('submit', async (e) => {
                             e.preventDefault();
-                            const nickname = document.getElementById('messageNickname').value.trim();
                             const content = document.getElementById('messageContent').value.trim();
                             const btn = document.getElementById('submitMessageBtn');
                             const msgEl = document.getElementById('messageFormMessage');
                             msgEl.className = 'form-message';
                             msgEl.textContent = '';
                             if (!content) { msgEl.textContent = '留言内容不能为空'; msgEl.className = 'form-message error'; return; }
+                            const claims = parseToken();
+                            if (!claims) { showAuthRequired('messageFormMessage'); return; }
                             btn.disabled = true;
                             btn.textContent = '发布中...';
                             try {
                                 const url = `${SUPABASE_URL}/rest/v1/messages`;
-                                const headers = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
-                                const body = JSON.stringify({ nickname: nickname || '匿名', content, created_at: new Date().toISOString() });
+                                const headers = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
+                                const body = JSON.stringify({ user_id: claims.sub, nickname: claims.username, content, created_at: new Date().toISOString() });
                                 const response = await fetch(url, { method: 'POST', headers, body });
                                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                                 msgEl.textContent = '✅ 留言成功！';
@@ -1424,19 +1620,15 @@
                             const price = document.getElementById('tradePrice').value.trim();
                             const sellerName = document.getElementById('tradeSellerName').value.trim();
                             const contact = document.getElementById('tradeContact').value.trim();
-                            const password = document.getElementById('tradePassword').value;
 
-                            if (!itemName || !description || !price || !sellerName || !contact || !password) {
+                            if (!itemName || !description || !price || !sellerName || !contact) {
                                 msg.textContent = '请填写所有必填字段';
                                 msg.className = 'form-message error';
                                 return;
                             }
 
-                            if (password !== TRADE_PASSWORD) {
-                                msg.textContent = '发布密码错误';
-                                msg.className = 'form-message error';
-                                return;
-                            }
+                            const claims = parseToken();
+                            if (!claims) { showAuthRequired('tradeFormMessage'); return; }
 
                             const manageCode = generateManageCode();
 
@@ -1447,15 +1639,16 @@
                                 const url = `${SUPABASE_URL}/rest/v1/trades`;
                                 const headers = {
                                     'apikey': SUPABASE_ANON_KEY,
-                                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                                    'Authorization': `Bearer ${getToken()}`,
                                     'Content-Type': 'application/json',
                                     'Prefer': 'return=minimal'
                                 };
                                 const body = JSON.stringify({
+                                    user_id: claims.sub,
                                     item_name: itemName,
                                     description,
                                     price,
-                                    seller_name: sellerName,
+                                    seller_name: claims.username,
                                     contact,
                                     status: 'active',
                                     manage_code: manageCode,
@@ -1592,6 +1785,288 @@
                         loadStories();
                         loadMessages();
                         loadTrades();
+
+                        // ---------- 12. 设置侧栏 + 留言墙自动刷新 ----------
+                        // 仅调用已有 loadMessages()，不修改其他任何逻辑
+                        (function settingsAndAutoRefresh() {
+                                const settingsSidebar = document.getElementById('settingsSidebar');
+                                const settingsToggleBtn = document.getElementById('settingsToggleBtn');
+                                const settingsCloseBtn = document.getElementById('settingsCloseBtn');
+                                const autoRefreshToggle = document.getElementById('autoRefreshToggle');
+                                const autoRefreshInterval = document.getElementById('autoRefreshInterval');
+                                const manualRefreshBtn = document.getElementById('manualRefreshBtn');
+                                const refreshInfo = document.getElementById('refreshInfo');
+
+                                const KEY_ON = 'fkd-autorefresh';
+                                const KEY_INTERVAL = 'fkd-autorefresh-interval';
+
+                                let timer = null;
+
+                                function isOn() {
+                                        return localStorage.getItem(KEY_ON) !== 'off';
+                                }
+
+                                function setInfo(text) {
+                                        if (refreshInfo) refreshInfo.textContent = text || '';
+                                }
+
+                                async function doRefresh() {
+                                        try {
+                                                await loadMessages();
+                                                const t = new Date().toLocaleTimeString('zh-CN');
+                                                setInfo('✅ 已刷新 · 上次更新 ' + t);
+                                        } catch (e) {
+                                                setInfo('❌ 刷新失败，将稍后重试');
+                                        }
+                                }
+
+                                function startAutoRefresh() {
+                                        stopAutoRefresh();
+                                        const interval = parseInt(autoRefreshInterval.value, 10) || 10000;
+                                        timer = setInterval(doRefresh, interval);
+                                }
+
+                                function stopAutoRefresh() {
+                                        if (timer) {
+                                                clearInterval(timer);
+                                                timer = null;
+                                        }
+                                }
+
+                                function applyState() {
+                                        const on = isOn();
+                                        autoRefreshToggle.checked = on;
+                                        if (on) {
+                                                startAutoRefresh();
+                                                setInfo('自动刷新已开启');
+                                        } else {
+                                                stopAutoRefresh();
+                                                setInfo('自动刷新已关闭');
+                                        }
+                                }
+
+                                // 初始化 UI 状态
+                                const savedInterval = localStorage.getItem(KEY_INTERVAL);
+                                if (savedInterval) autoRefreshInterval.value = savedInterval;
+
+                                settingsToggleBtn.addEventListener('click', () => {
+                                        const open = settingsSidebar.classList.toggle('open');
+                                        settingsSidebar.setAttribute('aria-hidden', open ? 'false' : 'true');
+                                });
+                                settingsCloseBtn.addEventListener('click', () => {
+                                        settingsSidebar.classList.remove('open');
+                                        settingsSidebar.setAttribute('aria-hidden', 'true');
+                                });
+                                autoRefreshToggle.addEventListener('change', () => {
+                                        localStorage.setItem(KEY_ON, autoRefreshToggle.checked ? 'on' : 'off');
+                                        applyState();
+                                });
+                                autoRefreshInterval.addEventListener('change', () => {
+                                        localStorage.setItem(KEY_INTERVAL, autoRefreshInterval.value);
+                                        if (isOn()) startAutoRefresh();
+                                });
+                                manualRefreshBtn.addEventListener('click', () => doRefresh());
+
+                                applyState();
+                        })();
+
+                        // ---------- 13. 用户系统（方案A：申请注册 + 后台审核） ----------
+                        const FUNCTIONS_BASE = `${SUPABASE_URL}/functions/v1`;
+                        const AUTH_TOKEN_KEY = 'fkd_auth_token';
+                        // 内存兜底：部分环境（file:// 或隐私模式）会禁用 localStorage，
+                        // 此时用变量保存，至少保证当前页面会话内登录态可用
+                        let _memToken = null;
+                        function getToken() {
+                                try { return localStorage.getItem(AUTH_TOKEN_KEY) || _memToken; }
+                                catch { return _memToken; }
+                        }
+                        function setToken(t) {
+                                _memToken = t;
+                                try { localStorage.setItem(AUTH_TOKEN_KEY, t); } catch {}
+                        }
+                        function clearToken() {
+                                _memToken = null;
+                                try { localStorage.removeItem(AUTH_TOKEN_KEY); } catch {}
+                        }
+                        function parseToken() {
+                                const t = getToken();
+                                if (!t) return null;
+                                try {
+                                        // 后端签发的是 base64url（含 -/_），必须还原为标准 base64 再 atob
+                                        const seg = t.split('.')[1];
+                                        const norm = seg.replace(/-/g, '+').replace(/_/g, '/');
+                                        const pad = norm + '='.repeat((4 - (norm.length % 4)) % 4);
+                                        const bin = atob(pad);
+                                        const bytes = new Uint8Array(bin.length);
+                                        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+                                        const p = JSON.parse(new TextDecoder().decode(bytes));
+                                        if (p.exp && p.exp * 1000 < Date.now()) { clearToken(); return null; }
+                                        return p;
+                                } catch { return null; }
+                        }
+                        function isAdmin() { const p = parseToken(); return !!(p && p.app_role === 'admin'); }
+
+                        function authHeaders(extra) {
+                                const h = Object.assign({ 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY }, extra || {});
+                                const t = getToken();
+                                if (t) h['Authorization'] = `Bearer ${t}`;
+                                return h;
+                        }
+                        async function callFunction(path, method, body) {
+                                const ctrl = new AbortController();
+                                const timer = setTimeout(() => ctrl.abort(), 20000);
+                                let res;
+                                try {
+                                        res = await fetch(`${FUNCTIONS_BASE}/${path}`, { method, headers: authHeaders(), body: body ? JSON.stringify(body) : undefined, signal: ctrl.signal });
+                                } catch (e) {
+                                        clearTimeout(timer);
+                                        // fetch 在网络层直接失败（如 Safari/WebView 的 "Load failed"）：
+                                        // 常见原因是用 file:// 直接双击打开本页面，浏览器会拦截跨域请求
+                                        const isFile = (typeof location !== 'undefined') && location.protocol === 'file:';
+                                        const hint = isFile
+                                                ? '网络请求失败：当前是通过 file:// 方式打开页面，浏览器会拦截对服务器的请求。请将本页面部署到网站域名访问，或本地起服务后访问（在文件所在目录运行 python3 -m http.server 8000，然后打开 http://localhost:8000）'
+                                                : '网络请求失败，请检查网络连接后重试（若反复出现，请确认没有用 file:// 直接打开本页面）';
+                                        return { ok: false, status: 0, data: { error: hint, network: true } };
+                                }
+                                clearTimeout(timer);
+                                let data = {};
+                                try { data = await res.json(); } catch {}
+                                return { ok: res.ok, status: res.status, data };
+                        }
+                        function showAuthRequired(msgId) {
+                                const el = document.getElementById(msgId);
+                                if (el) { el.textContent = '⚠️ 请先登录后再操作'; el.className = 'form-message error'; }
+                                openAuthModal('login');
+                        }
+
+                        function updateAuthUI() {
+                                const area = document.getElementById('authArea');
+                                if (!area) return;
+                                const claims = parseToken();
+                                if (claims) {
+                                        const adminBtn = isAdmin() ? `<button class="auth-btn admin" id="openAdminBtn">🛡️ 审核</button>` : '';
+                                        area.innerHTML = `
+                                                <span class="auth-user">👤 ${escapeHTML(claims.username)}</span>
+                                                ${adminBtn}
+                                                <button class="auth-btn" id="logoutBtn">退出</button>`;
+                                        const lb = document.getElementById('logoutBtn');
+                                        if (lb) lb.addEventListener('click', () => { clearToken(); updateAuthUI(); showError('已退出登录'); });
+                                        const ab = document.getElementById('openAdminBtn');
+                                        if (ab) ab.addEventListener('click', openAdminModal);
+                                } else {
+                                        area.innerHTML = `<button class="auth-btn primary" id="openAuthBtn">🔑 登录 / 注册</button>`;
+                                        const ob = document.getElementById('openAuthBtn');
+                                        if (ob) ob.addEventListener('click', () => openAuthModal('login'));
+                                }
+                        }
+
+                        function openAuthModal(tab) {
+                                const modal = document.getElementById('authModal');
+                                if (modal) {
+                                        modal.classList.add('active');
+                                        switchAuthTab(tab || 'login');
+                                        // file:// 打开时提前告知用户请求会被浏览器拦截
+                                        if (location.protocol === 'file:') {
+                                                const msg = document.getElementById('authMessage');
+                                                if (msg) { msg.textContent = '⚠️ 当前是 file:// 打开的本地文件，登录/申请请求会被浏览器拦截。请通过 http(s) 访问本页面（本地可用 python3 -m http.server 8000）'; msg.className = 'form-message error'; }
+                                        }
+                                }
+                        }
+                        function closeAuthModal() {
+                                const modal = document.getElementById('authModal');
+                                if (modal) modal.classList.remove('active');
+                        }
+                        function switchAuthTab(tab) {
+                                document.querySelectorAll('.auth-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+                                const lp = document.getElementById('loginPanel');
+                                const ap = document.getElementById('applyPanel');
+                                if (lp) lp.style.display = tab === 'login' ? 'block' : 'none';
+                                if (ap) ap.style.display = tab === 'apply' ? 'block' : 'none';
+                                const msg = document.getElementById('authMessage');
+                                if (msg) { msg.textContent = ''; msg.className = 'form-message'; }
+                        }
+
+                        function openAdminModal() {
+                                const modal = document.getElementById('adminModal');
+                                if (modal) { modal.classList.add('active'); loadAdminList(); }
+                        }
+                        function closeAdminModal() {
+                                const modal = document.getElementById('adminModal');
+                                if (modal) modal.classList.remove('active');
+                        }
+                        async function loadAdminList() {
+                                const list = document.getElementById('adminList');
+                                if (!list) return;
+                                list.innerHTML = '加载中...';
+                                const { ok, data } = await callFunction('admin-list', 'GET');
+                                if (!ok) { list.innerHTML = '❌ ' + (data.error || '加载失败'); return; }
+                                const users = (data.users || []).filter(u => u.status === 'pending');
+                                if (users.length === 0) { list.innerHTML = '✅ 暂无待审核申请'; return; }
+                                list.innerHTML = '';
+                                users.forEach(u => {
+                                        const div = document.createElement('div');
+                                        div.className = 'admin-item';
+                                        div.innerHTML = `
+                                                <div class="admin-item-main">
+                                                        <div class="admin-item-name">👤 ${escapeHTML(u.username)}</div>
+                                                        <div class="admin-item-meta">联系方式：${escapeHTML(u.contact || '未填')} · 理由：${escapeHTML(u.reason || '无')}</div>
+                                                </div>
+                                                <div class="admin-item-actions">
+                                                        <button class="admin-approve" data-id="${u.id}">通过</button>
+                                                        <button class="admin-reject" data-id="${u.id}">驳回</button>
+                                                </div>`;
+                                        list.appendChild(div);
+                                });
+                                list.querySelectorAll('.admin-approve').forEach(b => b.addEventListener('click', () => reviewUser(b.dataset.id, 'approve')));
+                                list.querySelectorAll('.admin-reject').forEach(b => b.addEventListener('click', () => reviewUser(b.dataset.id, 'reject')));
+                        }
+                        async function reviewUser(id, action) {
+                                const { ok, data } = await callFunction('admin-review', 'POST', { id, action });
+                                if (!ok) { showError(data.error || '操作失败'); return; }
+                                await loadAdminList();
+                        }
+
+                        (function wireUserSystem() {
+                                const loginForm = document.getElementById('loginForm');
+                                if (loginForm) loginForm.addEventListener('submit', async (e) => {
+                                        e.preventDefault();
+                                        const msg = document.getElementById('authMessage');
+                                        const u = document.getElementById('loginUsername').value.trim();
+                                        const p = document.getElementById('loginPassword').value;
+                                        const { ok, data } = await callFunction('login', 'POST', { username: u, password: p });
+                                        if (!ok) { msg.textContent = '❌ ' + (data.error || '登录失败'); msg.className = 'form-message error'; return; }
+                                        setToken(data.token);
+                                        msg.textContent = '✅ 登录成功'; msg.className = 'form-message success';
+                                        updateAuthUI();
+                                        setTimeout(closeAuthModal, 600);
+                                });
+
+                                const applyForm = document.getElementById('applyForm');
+                                if (applyForm) applyForm.addEventListener('submit', async (e) => {
+                                        e.preventDefault();
+                                        const msg = document.getElementById('authMessage');
+                                        const username = document.getElementById('applyUsername').value.trim();
+                                        const password = document.getElementById('applyPassword').value;
+                                        const contact = document.getElementById('applyContact').value.trim();
+                                        const reason = document.getElementById('applyReason').value.trim();
+                                        const { ok, data } = await callFunction('apply', 'POST', { username, password, contact, reason });
+                                        if (!ok) { msg.textContent = '❌ ' + (data.error || '申请失败'); msg.className = 'form-message error'; return; }
+                                        msg.textContent = '✅ ' + (data.message || '申请已提交'); msg.className = 'form-message success';
+                                        applyForm.reset();
+                                });
+
+                                document.querySelectorAll('.auth-tab').forEach(t => t.addEventListener('click', () => switchAuthTab(t.dataset.tab)));
+                                const ca = document.getElementById('closeAuthModal');
+                                if (ca) ca.addEventListener('click', closeAuthModal);
+                                const cm = document.getElementById('authModal');
+                                if (cm) cm.addEventListener('click', (e) => { if (e.target === cm) closeAuthModal(); });
+                                const cam = document.getElementById('closeAdminModal');
+                                if (cam) cam.addEventListener('click', closeAdminModal);
+                                const amm = document.getElementById('adminModal');
+                                if (amm) amm.addEventListener('click', (e) => { if (e.target === amm) closeAdminModal(); });
+
+                                updateAuthUI();
+                        })();
                 </script>
         </body>
 </html>
