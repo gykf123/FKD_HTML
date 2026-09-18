@@ -2164,15 +2164,31 @@
 
                         // 删帖：管理员可删任意；用户可删自己的（RLS 策略内校验权限）
                         async function deletePost(type, id, cardEl) {
+                                // 登录态校验：token 缺失/失效时不发无效请求，避免 401 困扰
+                                const claims = parseToken();
+                                if (!claims || !claims.sub) {
+                                        showError('❌ 请先登录后再删除');
+                                        openAuthModal('login');
+                                        return;
+                                }
                                 if (!confirm('确定删除这条内容吗？不可撤销。')) return;
+                                // 表名映射：按钮 data-type 用单数，实际表名为复数
+                                const TABLE = { story: 'stories', message: 'messages', trade: 'trades' };
+                                const table = TABLE[type] || type;
                                 try {
-                                        const response = await fetch(`${SUPABASE_URL}/rest/v1/${type}?id=eq.${id}`, {
+                                        const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
                                                 method: 'DELETE',
                                                 headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}`, 'Prefer': 'return=minimal' }
                                         });
                                         if (!response.ok) {
-                                                const t = await response.text().catch(() => '');
-                                                throw new Error(`HTTP ${response.status} ${t.slice(0, 120)}`);
+                                                let detail = '';
+                                                try { detail = (await response.text()).catch(() => ''); detail = detail.slice(0, 120); } catch {}
+                                                // 401 通常是登录 token 失效/无法验签：清除并引导重新登录
+                                                if (response.status === 401) {
+                                                        clearToken(); updateAuthUI();
+                                                        throw new Error('登录状态已失效，请点右上角重新登录后再删除');
+                                                }
+                                                throw new Error(`HTTP ${response.status} ${detail}`);
                                         }
                                         if (cardEl && cardEl.parentNode) cardEl.parentNode.removeChild(cardEl);
                                         showError('✅ 已删除');
