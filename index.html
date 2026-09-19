@@ -5,9 +5,9 @@
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
                 <meta
                         name="description"
-                        content="FKD方块殿我的世界网易版服务器官网，始于服务器，不止于服务器 长期不关"
+                        content="FKD方块殿 · FKD服务器社区，我的世界玩家共创家园，始于方块，不止于方块 长期不关"
                 />
-                <title>FKD方块殿 | 我的世界服务器官网</title>
+                <title>FKD方块殿 | FKD服务器社区</title>
                 <link
                         rel="icon"
                         type="image/jpeg"
@@ -864,9 +864,9 @@
                                                 <span class="dot"></span>
                                         </div>
                                         <h1 class="hero-title">FKD 方块殿</h1>
-                                        <p class="hero-subtitle">我的世界服务器</p>
+                                        <p class="hero-subtitle">FKD服务器社区</p>
                                         <p class="hero-desc">
-                                                一个由玩家社区驱动的 Minecraft 服务器，<br />在这里，每一个方块都承载着故事，每一位玩家都值得被铭记。
+                                                一个由玩家社区驱动的 Minecraft 社区，<br />在这里，每一个方块都承载着故事，每一位玩家都值得被铭记。
                                         </p>
                                         <p class="hero-owner">🏆 服主：<strong>FKD乄老果</strong></p>
                                 </div>
@@ -919,7 +919,7 @@
                                                 <div class="quick-card c-submit" data-view="submit">
                                                         <div class="q-icon">✍️</div>
                                                         <div class="q-title">投稿故事</div>
-                                                        <div class="q-desc">分享你的服务器故事</div>
+                                                        <div class="q-desc">分享你的社区故事</div>
                                                 </div>
                                         </div>
                                 </div>
@@ -1310,7 +1310,7 @@
                         document.getElementById('footerText').innerHTML = `
                             服主：${SITE_CONFIG.owner} | 赛季 ${SITE_CONFIG.season} | ${SITE_CONFIG.githubNote}<br>
                             ${SITE_CONFIG.generatedBy} | 投稿QQ：${SITE_CONFIG.contactQQ}<br>
-                            © 2026 ${SITE_CONFIG.serverName} · 我的世界服务器
+                            © 2026 ${SITE_CONFIG.serverName} · FKD服务器社区
                         `;
 
                         // ---------- 1. 加载故事（使用 REST API） ----------
@@ -1771,18 +1771,43 @@
                             }
                         }
 
-                        // ---------- 8. 明暗主题 ----------
+                        // ---------- 8. 明暗主题（深色 / 浅色 / 跟随系统） ----------
                         const toggleBtn = document.getElementById('themeToggle');
                         const root = document.documentElement;
-                        function updateThemeIcon() { toggleBtn.textContent = root.getAttribute('data-theme') === 'light' ? '☀️' : '🌙'; }
-                        const savedTheme = localStorage.getItem('fkd-theme');
-                        if (savedTheme === 'light') root.setAttribute('data-theme', 'light');
-                        updateThemeIcon();
+                        const THEME_KEY = 'fkd-theme';
+                        const mql = window.matchMedia('(prefers-color-scheme: light)');
+                        // 应用主题：dark=移除 data-theme（用 :root 暗色），light=显式 light，system=跟随系统
+                        function applyTheme(theme) {
+                            if (theme === 'light') {
+                                root.setAttribute('data-theme', 'light');
+                            } else if (theme === 'system') {
+                                if (mql.matches) root.setAttribute('data-theme', 'light');
+                                else root.removeAttribute('data-theme');
+                            } else { // dark
+                                root.removeAttribute('data-theme');
+                            }
+                        }
+                        function updateThemeIcon(theme) {
+                            toggleBtn.textContent = theme === 'light' ? '☀️' : theme === 'system' ? '🖥️' : '🌙';
+                            toggleBtn.title = theme === 'light' ? '浅色模式（点击切换）' : theme === 'system' ? '跟随系统（点击切换）' : '深色模式（点击切换）';
+                        }
+                        const savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
+                        applyTheme(savedTheme);
+                        updateThemeIcon(savedTheme);
+                        // 循环：深色 → 浅色 → 跟随系统 → 深色
                         toggleBtn.addEventListener('click', () => {
-                            if (root.getAttribute('data-theme') === 'light') { root.removeAttribute('data-theme'); localStorage.setItem('fkd-theme', 'dark'); }
-                            else { root.setAttribute('data-theme', 'light'); localStorage.setItem('fkd-theme', 'light'); }
-                            updateThemeIcon();
+                            const cur = localStorage.getItem(THEME_KEY) || 'dark';
+                            const next = cur === 'dark' ? 'light' : cur === 'light' ? 'system' : 'dark';
+                            localStorage.setItem(THEME_KEY, next);
+                            applyTheme(next);
+                            updateThemeIcon(next);
                         });
+                        // 跟随系统：当主题为 system 时，系统配色变化实时生效
+                        if (mql.addEventListener) {
+                            mql.addEventListener('change', () => {
+                                if ((localStorage.getItem(THEME_KEY) || 'dark') === 'system') applyTheme('system');
+                            });
+                        }
                         window.addEventListener('scroll', () => {
                             document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
                         }, { passive: true });
