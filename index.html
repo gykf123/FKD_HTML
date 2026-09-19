@@ -462,6 +462,9 @@
                         }
                         .trade-status.active { background: rgba(90,158,62,0.15); color: var(--accent-green-light); border-color: var(--accent-green); }
                         .trade-status.sold { background: rgba(240,192,64,0.15); color: var(--accent-gold); border-color: var(--accent-gold); }
+                        .trade-sold-btn { display:inline-block; margin-top:0.6rem; padding:0.45rem 0.9rem; font-size:0.82rem; cursor:pointer; border:2px solid var(--accent-green); background:rgba(90,158,62,0.12); color:var(--accent-green-light); font-family:inherit; }
+                        .trade-sold-btn:hover:not(:disabled) { background:rgba(90,158,62,0.25); }
+                        .trade-sold-btn:disabled { opacity:0.6; cursor:default; }
                         .trade-item-name { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.3rem; color: var(--text-primary); }
                         .trade-price { font-size: 0.95rem; font-weight: 700; color: var(--accent-gold); margin-bottom: 0.6rem; }
                         .trade-desc { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.8rem; }
@@ -1102,16 +1105,6 @@
                                                                         placeholder="QQ号或游戏内联系"
                                                                 />
                                                         </div>
-                                                        <div class="form-group">
-                                                                <label>发布密码 *</label>
-                                                                <input
-                                                                        type="password"
-                                                                        id="tradePassword"
-                                                                        required
-                                                                        placeholder="请输入发布密码"
-                                                                />
-                                                        </div>
-                                                        <label class="anon-toggle"><input type="checkbox" id="tradeAnonymous" /> 🕶️ 匿名发布（不署名账号）</label>
                                                         <button
                                                                 type="submit"
                                                                 class="submit-btn"
@@ -1123,45 +1116,17 @@
                                                                 class="form-message"
                                                                 id="tradeFormMessage"
                                                         ></div>
-                                                        <!-- 管理码显示区域 -->
-                                                        <div
-                                                                id="manageCodeResult"
-                                                                class="manage-code-result"
-                                                                style="display:none; background:rgba(90,158,62,0.15); color:var(--accent-green-light); border:1px solid var(--accent-green); padding:0.8rem; border-radius:6px; margin-top:1rem;"
-                                                        >
-                                                                <strong>✅ 发布成功！</strong><br />
-                                                                您的管理码：<strong
-                                                                        id="manageCodeDisplay"
-                                                                        style="color:var(--accent-gold); font-size:1.1rem;"
-                                                                ></strong
-                                                                ><br />
-                                                                <span style="font-size:0.8rem;"
-                                                                        >请保存此管理码，用于标记交易已售出。</span
-                                                                >
-                                                        </div>
                                                 </form>
                                         </div>
 
-                                        <!-- 管理已发布的交易 -->
+                                        <!-- 管理已发布的交易：改用账号鉴权 -->
                                         <div class="manage-code-box" style="margin-bottom:2rem;">
                                                 <h3 style="margin-bottom:0.5rem; font-family:var(--mc-title-font);">🔑 管理我的交易</h3>
                                                 <p
-                                                        style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1rem;"
+                                                        style="color:var(--text-secondary); font-size:0.85rem; margin:0;"
                                                 >
-                                                        输入管理码，标记交易为已售出
+                                                        已改用账号管理：登录后，你发布的交易会在下方列表中显示「✅ 标记已售出」按钮，点击即可标记为已售出，无需再保存管理码。
                                                 </p>
-                                                <div style="display:flex; gap:0.8rem; flex-wrap:wrap;">
-                                                        <input
-                                                                type="text"
-                                                                id="manageCodeInput"
-                                                                placeholder="输入管理码"
-                                                                style="flex:1; min-width:200px; padding:0.7rem 0.9rem; border-radius:0; border:3px solid var(--border-color); background:var(--bg-secondary); color:var(--text-primary); font-size:0.9rem; outline:none;"
-                                                        />
-                                                        <button class="submit-btn" id="markSoldBtn">
-                                                                标记已售出
-                                                        </button>
-                                                </div>
-                                                <div class="form-message" id="manageCodeMessage"></div>
                                         </div>
 
                                         <!-- 交易列表 -->
@@ -1322,15 +1287,6 @@
                             } catch {
                                 return false;
                             }
-                        }
-
-                        function generateManageCode() {
-                            const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-                            let code = '';
-                            for (let i = 0; i < 10; i++) {
-                                code += chars.charAt(Math.floor(Math.random() * chars.length));
-                            }
-                            return code;
                         }
 
                         // ---------- 常量配置 ----------
@@ -1692,8 +1648,13 @@
                                 const isOwner = claims && trade.user_id && String(trade.user_id) === String(claims.sub);
                                 const canDelete = admin || isOwner;
                                 const delBtn = canDelete ? `<button class="post-del" data-type="trade" data-id="${trade.id}">🗑</button>` : '';
+                                const isSold = trade.status === 'sold';
+                                const statusBadge = isSold
+                                        ? `<span class="trade-status sold">已售出</span>`
+                                        : `<span class="trade-status active">在售</span>`;
+                                const soldBtn = (isOwner && !isSold) ? `<button class="trade-sold-btn" data-id="${trade.id}">✅ 标记已售出</button>` : '';
                                 card.innerHTML = `
-                                    <span class="trade-status active">在售</span>
+                                    ${statusBadge}
                                     ${delBtn}
                                     ${authorHTML ? `<div class="trade-author">${authorHTML}</div>` : ''}
                                     <div class="trade-item-name">${escapeHTML(trade.item_name)}</div>
@@ -1702,11 +1663,13 @@
                                     <div class="trade-seller">👤 卖家：${escapeHTML(trade.seller_name)}</div>
                                     <div class="trade-contact">📞 联系：${escapeHTML(trade.contact)}</div>
                                     <div class="trade-time">🕐 ${escapeHTML(timeStr)}</div>
+                                    ${soldBtn}
                                 `;
                                 container.appendChild(card);
                             });
                             wireAuthorChips(container);
                             container.querySelectorAll('.post-del').forEach(b => b.addEventListener('click', () => deletePost(b.dataset.type, b.dataset.id, b.closest('.trade-card'))));
+                            container.querySelectorAll('.trade-sold-btn').forEach(b => b.addEventListener('click', () => markSold(b.dataset.id, b)));
                         }
 
                         // 发布交易
@@ -1714,10 +1677,8 @@
                             e.preventDefault();
                             const btn = document.getElementById('submitTradeBtn');
                             const msg = document.getElementById('tradeFormMessage');
-                            const manageCodeResult = document.getElementById('manageCodeResult');
                             msg.className = 'form-message';
                             msg.textContent = '';
-                            manageCodeResult.style.display = 'none';
 
                             const itemName = document.getElementById('tradeItemName').value.trim();
                             const description = document.getElementById('tradeDescription').value.trim();
@@ -1734,9 +1695,6 @@
                             const claims = parseToken();
                             if (!claims) { showAuthRequired('tradeFormMessage'); return; }
 
-                            const anon = document.getElementById('tradeAnonymous') && document.getElementById('tradeAnonymous').checked;
-                            const manageCode = generateManageCode();
-
                             btn.disabled = true;
                             btn.textContent = '发布中...';
 
@@ -1749,16 +1707,15 @@
                                     'Prefer': 'return=minimal'
                                 };
                                 const body = JSON.stringify({
-                                    user_id: anon ? null : claims.sub,
-                                    author_name: anon ? null : claims.username,
-                                    author_avatar: anon ? null : (claims.avatar_url || null),
+                                    user_id: claims.sub,
+                                    author_name: claims.username,
+                                    author_avatar: claims.avatar_url || null,
                                     item_name: itemName,
                                     description,
                                     price,
                                     seller_name: sellerName,
                                     contact,
                                     status: 'active',
-                                    manage_code: manageCode,
                                     created_at: new Date().toISOString()
                                 });
                                 const response = await fetch(url, { method: 'POST', headers, body });
@@ -1769,8 +1726,6 @@
 
                                 msg.textContent = '✅ 交易发布成功！';
                                 msg.className = 'form-message success';
-                                document.getElementById('manageCodeDisplay').textContent = manageCode;
-                                manageCodeResult.style.display = 'block';
                                 document.getElementById('tradeForm').reset();
                                 await loadTrades();
                             } catch (err) {
@@ -1783,65 +1738,38 @@
                             }
                         });
 
-                        // 标记已售出
-                        document.getElementById('markSoldBtn').addEventListener('click', async () => {
-                            const manageCode = document.getElementById('manageCodeInput').value.trim();
-                            const msg = document.getElementById('manageCodeMessage');
-                            msg.className = 'form-message';
-                            msg.textContent = '';
-
-                            if (!manageCode) {
-                                msg.textContent = '请输入管理码';
-                                msg.className = 'form-message error';
-                                return;
-                            }
-
+                        // 标记已售出：账号鉴权（仅交易发布者本人可标记）
+                        async function markSold(id, btnEl) {
+                            const claims = parseToken();
+                            if (!claims || !claims.sub) { showError('❌ 请先登录后再标记'); openAuthModal('login'); return; }
+                            if (btnEl) { btnEl.disabled = true; btnEl.textContent = '标记中...'; }
                             try {
-                                // 先通过管理码查找交易
-                                const findUrl = `${SUPABASE_URL}/rest/v1/trades?manage_code=eq.${encodeURIComponent(manageCode)}&select=id,status`;
-                                const findResponse = await fetch(findUrl, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } });
-                                if (!findResponse.ok) throw new Error(`HTTP ${findResponse.status}`);
-                                const foundTrades = await findResponse.json();
-                                if (!foundTrades || foundTrades.length === 0) {
-                                    msg.textContent = '管理码不存在';
-                                    msg.className = 'form-message error';
-                                    return;
-                                }
-                                if (foundTrades[0].status === 'sold') {
-                                    msg.textContent = '该交易已标记为售出';
-                                    msg.className = 'form-message error';
-                                    return;
-                                }
-
-                                // 更新状态
-                                const tradeId = foundTrades[0].id;
-                                const updateUrl = `${SUPABASE_URL}/rest/v1/trades?id=eq.${tradeId}`;
-                                const updateHeaders = {
-                                    'apikey': SUPABASE_ANON_KEY,
-                                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                                    'Content-Type': 'application/json',
-                                    'Prefer': 'return=minimal'
-                                };
-                                const updateResponse = await fetch(updateUrl, {
+                                const response = await fetch(`${SUPABASE_URL}/rest/v1/trades?id=eq.${id}`, {
                                     method: 'PATCH',
-                                    headers: updateHeaders,
+                                    headers: {
+                                        'apikey': SUPABASE_ANON_KEY,
+                                        'Authorization': `Bearer ${getToken()}`,
+                                        'Content-Type': 'application/json',
+                                        'Prefer': 'return=minimal'
+                                    },
                                     body: JSON.stringify({ status: 'sold' })
                                 });
-                                if (!updateResponse.ok) {
-                                    const errText = await updateResponse.text();
-                                    throw new Error(`HTTP ${updateResponse.status}: ${errText}`);
+                                if (!response.ok) {
+                                    let detail = '';
+                                    try { detail = await response.text(); } catch {}
+                                    if (response.status === 401) {
+                                        clearToken(); updateAuthUI();
+                                        throw new Error('登录状态已失效，请重新登录后再操作');
+                                    }
+                                    throw new Error(`HTTP ${response.status} ${String(detail).slice(0, 120)}`);
                                 }
-
-                                msg.textContent = '✅ 已标记为售出！';
-                                msg.className = 'form-message success';
-                                document.getElementById('manageCodeInput').value = '';
+                                showError('✅ 已标记为售出');
                                 await loadTrades();
                             } catch (err) {
-                                msg.textContent = '❌ ' + err.message;
-                                msg.className = 'form-message error';
-                                showError('标记失败: ' + err.message);
+                                showError('❌ 标记失败：' + err.message);
+                                if (btnEl) { btnEl.disabled = false; btnEl.textContent = '✅ 标记已售出'; }
                             }
-                        });
+                        }
 
                         // ---------- 8. 明暗主题 ----------
                         const toggleBtn = document.getElementById('themeToggle');
