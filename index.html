@@ -1140,9 +1140,9 @@
                                                 class="trades-grid"
                                                 id="tradesContainer"
                                                 style="display:none;"
-                                        ></div>
+                                        ></divdiv>
                                         <div
-                                                id="tradesEmpty"
+                                                id="trades class="section-headerEmpty"
                                                 style="display:none; text-align:center; padding:2rem; color:var(--text-muted);"
                                         >
                                                 暂无交易信息，快来发布第一笔交易吧！
@@ -1184,7 +1184,7 @@
                         <!-- ===================== 视图 5：投稿 ===================== -->
                         <section class="view" id="view-submit">
                                 <div class="container">
-                                        <div class="section-header">
+                                        <">
                                                 <div class="cat-badge community">✍️ 内容创作</div>
                                                 <h2 class="section-title">📝 投稿<span class="highlight">故事</span></h2>
                                                 <div class="section-divider"></div>
@@ -2170,22 +2170,14 @@
                                 }
                                 if (msg) { msg.textContent = '✅ 资料已保存'; msg.className = 'form-message success'; }
                                 updateAuthUI();
-                                // 同步本地 token 的 avatar_url，使后续发帖署名头像即时生效
+                                // 头像已成功写入数据库。只需更新本地"头像覆盖值"让 UI/发帖署名立即生效，
+                                // 绝不能再像以前那样改写 JWT 的 payload 却不重算签名——
+                                // 那会让 localStorage 里的 token 变成"签名失效"的破损 token，
+                                // 导致后续所有带该 token 的请求被 Supabase 以 401 PGRST301 拒绝（改一次头像后全失败）。
                                 try {
-                                        const t = getToken(); if (t) {
-                                                const parts = t.split('.');
-                                                const norm = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-                                                const pad = norm + '='.repeat((4 - norm.length % 4) % 4);
-                                                const bin = atob(pad);
-                                                const bytes = new Uint8Array(bin.length);
-                                                for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-                                                const p = JSON.parse(new TextDecoder().decode(bytes));
-                                                p.avatar_url = avatar || null;
-                                                const e = new TextEncoder(); const js = JSON.stringify(p); let s = '';
-                                                for (const b of e.encode(js)) s += String.fromCharCode(b);
-                                                parts[1] = btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-                                                setToken(parts.join('.'));
-                                        }
+                                        _avatarOverride = avatar || null;
+                                        if (_avatarOverride) { try { localStorage.setItem('fkd_avatar_override', _avatarOverride); } catch {} }
+                                        else { try { localStorage.removeItem('fkd_avatar_override'); } catch {} }
                                 } catch {}
                                 setTimeout(() => { const m = document.getElementById('myProfileModal'); if (m) m.classList.remove('active'); }, 700);
                         }
@@ -2226,6 +2218,12 @@
                         const AUTH_TOKEN_KEY = 'fkd_auth_token';
                         // 内存兜底：部分环境（file:// 或隐私模式）会禁用 localStorage，
                         // 此时用变量保存，至少保证当前页面会话内登录态可用
+                        // 头像覆盖值：改头像成功后仅用于 UI 显示/发帖署名，绝不改写 JWT 本身
+                        // （前端没有 JWT_SECRET，改写 payload 却不重算签名会让 token 失效 → 401 PGRST301）
+                        let _avatarOverride = null;
+                        try { _avatarOverride = localStorage.getItem('fkd_avatar_override') || null; } catch {}
+                        _avatarOverride = null;
+                        try { localStorage.removeItem('fkd_avatar_override'); } catch {}
                         let _memToken = null;
                         function getToken() {
                                 try { return localStorage.getItem(AUTH_TOKEN_KEY) || _memToken; }
@@ -2251,6 +2249,7 @@
                                         const bytes = new Uint8Array(bin.length);
                                         for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
                                         const p = JSON.parse(new TextDecoder().decode(bytes));
+                                        if (_avatarOverride) p.avatar_url = _avatarOverride;
                                         if (p.exp && p.exp * 1000 < Date.now()) { clearToken(); return null; }
                                         return p;
                                 } catch { return null; }
@@ -2449,6 +2448,3 @@
                                         document.getElementById('formMessage')
                                 ));
                         })();
-                </script>
-        </body>
-</html>
