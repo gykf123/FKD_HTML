@@ -1242,15 +1242,6 @@
                                                                 />
                                                         </div>
                                                         <div class="form-group">
-                                                                <label>作者 *</label>
-                                                                <input
-                                                                        type="text"
-                                                                        id="storyAuthor"
-                                                                        required
-                                                                        maxlength="50"
-                                                                />
-                                                        </div>
-                                                        <div class="form-group">
                                                                 <label>日期</label>
                                                                 <input type="date" id="storyDate" />
                                                         </div>
@@ -1284,15 +1275,6 @@
                                                                         <img id="storyImagePreview" class="img-preview" alt="" style="display:none" />
                                                                 </div>
                                                         </div>
-                                                        <div class="form-group">
-                                                                <label>投稿密码 *</label>
-                                                                <input
-                                                                        type="password"
-                                                                        id="submitPassword"
-                                                                        required
-                                                                />
-                                                        </div>
-                                                        <label class="anon-toggle"><input type="checkbox" id="storyAnonymous" /> 🕶️ 匿名发布（不署名账号）</label>
                                                         <button type="submit" class="submit-btn" id="submitBtn">
                                                                 提交故事
                                                         </button>
@@ -1515,15 +1497,10 @@
                             const tag = document.getElementById('storyTag').value.trim() || '其他';
                             const content = document.getElementById('storyContent').value.trim();
                             const imagesInput = document.getElementById('storyImages').value.trim();
-                            const anon = document.getElementById('storyAnonymous') && document.getElementById('storyAnonymous').checked;
-
-                            let author, author_name, author_avatar;
-                            if (anon) {
-                                author = (document.getElementById('storyAuthor').value || '').trim() || '匿名玩家';
-                                author_name = null; author_avatar = null;
-                            } else {
-                                author = claims.username; author_name = claims.username; author_avatar = claims.avatar_url || null;
-                            }
+                            // 故事必须关联账户：作者与署名快照均取自登录账号，不支持匿名
+                            const author = claims.username;
+                            const author_name = claims.username;
+                            const author_avatar = claims.avatar_url || null;
 
                             if (!title || !content) {
                                 msg.textContent = '请填写标题和内容';
@@ -1533,7 +1510,7 @@
 
                             const imageUrls = imagesInput ? imagesInput.split(/[,\n]/).map(s => s.trim()).filter(Boolean) : [];
                             // 关键：stories 表的 insert RLS 要求 user_id = auth.uid()，必须显式带上当前登录用户的 id，
-                            // 否则会被行级安全策略拦截（HTTP 403）。匿名仅控制展示用的 author_name/author_avatar，归属仍绑定账号（便于本人/管理员删帖）。
+                            // 否则会被行级安全策略拦截（HTTP 403）。故事强制关联账户：作者与署名均取自登录账号，便于本人/管理员删帖。
                             const storyData = { title, author, author_name, author_avatar, user_id: claims.sub, date: date || new Date().toISOString().slice(0,10), tag: tag || '', content, image_urls: imageUrls };
 
                             btn.disabled = true;
