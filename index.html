@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- FKD-Web 版本 v1.6 · 2026-09-19 21:48 · 改动：主题三态(深/浅/跟随系统) + 定位改"FKD服务器社区" + 列表作者头像补全 + 版本注释 -->
 <html lang="zh-CN">
         <head>
                 <meta charset="UTF-8" />
@@ -1391,6 +1392,7 @@
                                         container.appendChild(card);
                                 });
                                 wireAuthorChips(container);
+                                hydrateAuthorAvatars(container);
                                 container.querySelectorAll('.post-del').forEach(b => b.addEventListener('click', () => deletePost(b.dataset.type, b.dataset.id, b.closest('.story-card'))));
                         }
 
@@ -1560,6 +1562,7 @@
                                 listEl.appendChild(card);
                             });
                             wireAuthorChips(listEl);
+                            hydrateAuthorAvatars(listEl);
                             listEl.querySelectorAll('.post-del').forEach(b => b.addEventListener('click', () => deletePost(b.dataset.type, b.dataset.id, b.closest('.message-card'))));
                         }
 
@@ -1668,6 +1671,7 @@
                                 container.appendChild(card);
                             });
                             wireAuthorChips(container);
+                            hydrateAuthorAvatars(container);
                             container.querySelectorAll('.post-del').forEach(b => b.addEventListener('click', () => deletePost(b.dataset.type, b.dataset.id, b.closest('.trade-card'))));
                             container.querySelectorAll('.trade-sold-btn').forEach(b => b.addEventListener('click', () => markSold(b.dataset.id, b)));
                         }
@@ -2005,6 +2009,40 @@
                                         const go = () => openProfile(el.dataset.username);
                                         el.addEventListener('click', go);
                                         el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+                                });
+                        }
+
+                        // 作者头像补全：老帖子/缺失 author_avatar 的账号帖，按用户名查 users 表拿“当前头像”，
+                        // 把纯色文字占位替换成真实头像；匿名帖（无账号署名）保持原样。
+                        const authorAvatarCache = {};
+                        async function prefetchAuthorAvatars(names) {
+                                const list = [...new Set((names || []).filter(Boolean))].filter(n => !(n in authorAvatarCache));
+                                if (!list.length) return;
+                                const enc = encodeURIComponent('(' + list.join(',') + ')');
+                                try {
+                                        const h = { 'apikey': SUPABASE_ANON_KEY };
+                                        const tok = getToken();
+                                        if (tok) h['Authorization'] = 'Bearer ' + tok;
+                                        const r = await fetch(`${SUPABASE_URL}/rest/v1/users?username=in.${enc}&select=username,avatar_url&status=eq.approved`, { headers: h });
+                                        if (!r.ok) return;
+                                        const arr = await r.json();
+                                        (arr || []).forEach(u => { if (u.username) authorAvatarCache[u.username] = u.avatar_url || ''; });
+                                } catch (e) {}
+                        }
+                        async function hydrateAuthorAvatars(root) {
+                                const scope = root || document;
+                                const chips = scope.querySelectorAll('.author-chip[data-username]');
+                                const names = [...new Set([...chips].map(c => c.dataset.username).filter(Boolean))];
+                                if (!names.length) return;
+                                await prefetchAuthorAvatars(names);
+                                chips.forEach(chip => {
+                                        const url = authorAvatarCache[chip.dataset.username];
+                                        if (!url) return; // 无头像：保留纯色占位（匿名/未设置）
+                                        const img = `<img class="author-avatar" src="${escapeHTML(url)}" alt="" onerror="this.style.display='none'">`;
+                                        const existing = chip.querySelector('img.author-avatar');
+                                        const placeholder = chip.querySelector('.author-avatar--default');
+                                        if (existing) existing.outerHTML = img;
+                                        else if (placeholder) placeholder.outerHTML = img;
                                 });
                         }
 
