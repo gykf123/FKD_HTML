@@ -2103,11 +2103,18 @@
                         }
 
                         // 我的资料：编辑头像（图床上传）与简介
+                        // 防竞态：打开“我的资料”会异步查库回填头像。弱网下该回填可能晚于用户上传才返回，
+                        // 会把用户刚上传的新头像 URL 覆盖回旧值，导致“上传成功、保存成功，头像却没变”的假成功。
+                        // 用 _mpTouched 记录用户是否已上传/改过头像；_mpLoadSeq 保证只有本次打开的回填才生效。
+                        let _mpLoadSeq = 0;
+                        let _mpTouched = false;
                         async function openMyProfile() {
                                 const claims = parseToken();
                                 if (!claims) { openAuthModal('login'); return; }
                                 const modal = document.getElementById('myProfileModal');
                                 if (!modal) return;
+                                const seq = ++_mpLoadSeq;
+                                _mpTouched = false;
                                 const prev = document.getElementById('mpAvatarPreview');
                                 if (prev) { prev.src = claims.avatar_url || ''; prev.style.display = claims.avatar_url ? 'block' : 'none'; }
                                 const bioEl = document.getElementById('mpBio'); if (bioEl) bioEl.value = '';
@@ -2121,11 +2128,15 @@
                                                         headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}` }
                                                 });
                                                 const arr = await r.json();
-                                                if (r.ok && Array.isArray(arr) && arr[0]) {
+                                                // 仅当“仍是本次打开(seq 未变)”且“用户尚未上传/改过头像(!_mpTouched)”时，才允许回填覆盖头像；
+                                                // 否则保留用户刚上传的新头像，避免把新值覆盖回旧值。bio 始终回填。
+                                                if (seq === _mpLoadSeq && r.ok && Array.isArray(arr) && arr[0]) {
                                                         const dbAvatar = arr[0].avatar_url || '';
                                                         const dbBio = arr[0].bio || '';
-                                                        if (prev) { prev.src = dbAvatar; prev.style.display = dbAvatar ? 'block' : 'none'; }
-                                                        if (urlEl) urlEl.value = dbAvatar;
+                                                        if (!_mpTouched) {
+                                                                if (prev) { prev.src = dbAvatar; prev.style.display = dbAvatar ? 'block' : 'none'; }
+                                                                if (urlEl) urlEl.value = dbAvatar;
+                                                        }
                                                         if (bioEl) bioEl.value = dbBio;
                                                 }
                                         } catch {}
@@ -2192,6 +2203,7 @@
                                                 // replace：单图场景（头像），直接覆盖；append：多图场景（故事配图），用逗号追加
                                                 if (mode === 'replace') {
                                                         urlInput.value = url;
+                                                        _mpTouched = true; // 用户已上传头像：阻止迟到的异步回填把新头像覆盖回旧值
                                                 } else {
                                                         const cur = (urlInput.value || '').trim(); urlInput.value = cur ? (cur + ',' + url) : url;
                                                 }
