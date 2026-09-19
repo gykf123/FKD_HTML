@@ -2103,7 +2103,7 @@
                         }
 
                         // 我的资料：编辑头像（图床上传）与简介
-                        function openMyProfile() {
+                        async function openMyProfile() {
                                 const claims = parseToken();
                                 if (!claims) { openAuthModal('login'); return; }
                                 const modal = document.getElementById('myProfileModal');
@@ -2114,6 +2114,22 @@
                                 const urlEl = document.getElementById('mpAvatarUrl'); if (urlEl) urlEl.value = claims.avatar_url || '';
                                 const msg = document.getElementById('mpMessage'); if (msg) { msg.textContent = ''; msg.className = 'form-message'; }
                                 modal.classList.add('active');
+                                // 回填数据库里的最新资料：token 里没有 bio，且 avatar_url 可能只是登录时的旧快照
+                                if (claims.sub) {
+                                        try {
+                                                const r = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${claims.sub}&select=avatar_url,bio`, {
+                                                        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}` }
+                                                });
+                                                const arr = await r.json();
+                                                if (r.ok && Array.isArray(arr) && arr[0]) {
+                                                        const dbAvatar = arr[0].avatar_url || '';
+                                                        const dbBio = arr[0].bio || '';
+                                                        if (prev) { prev.src = dbAvatar; prev.style.display = dbAvatar ? 'block' : 'none'; }
+                                                        if (urlEl) urlEl.value = dbAvatar;
+                                                        if (bioEl) bioEl.value = dbBio;
+                                                }
+                                        } catch {}
+                                }
                         }
                         async function saveMyProfile() {
                                 const msg = document.getElementById('mpMessage');
@@ -2125,18 +2141,24 @@
                                 try {
                                         const response = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${claims.sub}`, {
                                                 method: 'PATCH',
-                                                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                                                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
                                                 body: JSON.stringify({ avatar_url: avatar || null, bio })
                                         });
                                         if (!response.ok) {
                                                 const t = await response.text().catch(() => '');
                                                 throw new Error(`HTTP ${response.status} ${t.slice(0, 120)}`);
                                         }
+                                        // 用 return=representation 校验确实改到了行，避免 RLS 静默拦截 / token 过期导致的"假成功"
+                                        const updated = await response.json().catch(() => []);
+                                        if (!Array.isArray(updated) || updated.length === 0) {
+                                                throw new Error('保存未生效：未匹配到你的账号，登录可能已过期，请重新登录后再试');
+                                        }
                                 } catch (err) {
                                         if (msg) { msg.textContent = '❌ ' + err.message; msg.className = 'form-message error'; }
                                         return;
                                 }
                                 if (msg) { msg.textContent = '✅ 资料已保存'; msg.className = 'form-message success'; }
+                                updateAuthUI();
                                 // 同步本地 token 的 avatar_url，使后续发帖署名头像即时生效
                                 try {
                                         const t = getToken(); if (t) {
@@ -2160,13 +2182,20 @@
                         function modalClose(id) { const m = document.getElementById(id); if (m) m.classList.remove('active'); }
 
                         // 通用图片上传（图床）
-                        async function handleImageUpload(fileInput, urlInput, previewEl, msgEl) {
+                        async function handleImageUpload(fileInput, urlInput, previewEl, msgEl, mode) {
                                 const file = fileInput && fileInput.files && fileInput.files[0];
                                 if (!file) { showError('请先选择一张图片'); return; }
                                 if (msgEl) { msgEl.textContent = '图片上传中...'; msgEl.className = 'form-message'; }
                                 try {
                                         const url = await uploadToImageHost(file);
-                                        if (urlInput) { const cur = (urlInput.value || '').trim(); urlInput.value = cur ? (cur + ',' + url) : url; }
+                                        if (urlInput) {
+                                                // replace：单图场景（头像），直接覆盖；append：多图场景（故事配图），用逗号追加
+                                                if (mode === 'replace') {
+                                                        urlInput.value = url;
+                                                } else {
+                                                        const cur = (urlInput.value || '').trim(); urlInput.value = cur ? (cur + ',' + url) : url;
+                                                }
+                                        }
                                         if (previewEl) { previewEl.src = url; previewEl.style.display = 'block'; }
                                         if (msgEl) { msgEl.textContent = '✅ 图片已上传（图床）'; msgEl.className = 'form-message success'; }
                                 } catch (e) {
@@ -2396,7 +2425,8 @@
                                         document.getElementById('mpAvatarFile'),
                                         document.getElementById('mpAvatarUrl'),
                                         document.getElementById('mpAvatarPreview'),
-                                        document.getElementById('mpMessage')
+                                        document.getElementById('mpMessage'),
+                                        'replace'
                                 ));
 
                                 const siu = document.getElementById('storyImageUploadBtn');
