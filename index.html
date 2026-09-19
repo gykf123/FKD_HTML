@@ -596,6 +596,43 @@
                         }
                         .admin-approve { border-color: var(--accent-green); color: var(--accent-green-light); }
                         .admin-reject { border-color: #ff6b6b; color: #ff6b6b; }
+
+                        /* ===== 新版账户系统样式 ===== */
+                        .author-chip { display:inline-flex; align-items:center; gap:.35rem; cursor:pointer; color:var(--accent-gold); font-weight:600; padding:.1rem .4rem; border:1px solid transparent; border-radius:6px; transition:all .15s; }
+                        .author-chip:hover { background:rgba(255,255,255,.08); border-color:var(--accent-gold); }
+                        .author-avatar { width:22px; height:22px; border-radius:50%; object-fit:cover; border:2px solid var(--accent-gold); display:inline-block; }
+                        .author-avatar--default { background:var(--accent-green); color:#fff; display:inline-flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; }
+                        .message-author-wrap { display:inline-flex; }
+                        .post-del { position:absolute; top:.5rem; right:.5rem; background:rgba(0,0,0,.35); border:1px solid #ff6b6b; color:#ff8787; border-radius:6px; cursor:pointer; padding:.1rem .4rem; font-size:.85rem; line-height:1; }
+                        .post-del:hover { background:#ff6b6b; color:#fff; }
+                        .message-card, .trade-card, .story-card { position:relative; }
+                        .role-badge { font-size:.7rem; padding:.1rem .4rem; border-radius:4px; margin-left:.3rem; }
+                        .role-badge.role-admin { background:var(--accent-gold); color:#1a1a1a; }
+                        .trade-author { margin-bottom:.4rem; }
+                        .anon-toggle { display:flex; align-items:center; gap:.4rem; font-size:.82rem; color:var(--text-secondary); margin:.4rem 0 .2rem; cursor:pointer; }
+                        .auth-mini-avatar { width:20px; height:20px; border-radius:50%; object-fit:cover; vertical-align:middle; border:1px solid var(--accent-gold); }
+                        .modal-wide { max-width:680px; }
+                        #profileBody .profile-loading, #profileBody .profile-empty { text-align:center; padding:2.5rem 1rem; color:var(--text-muted); }
+                        .profile-header { display:flex; gap:1.2rem; align-items:center; padding:1rem 0 1.2rem; border-bottom:2px solid var(--mc-edge); margin-bottom:1rem; }
+                        .profile-avatar { width:84px; height:84px; border-radius:50%; object-fit:cover; border:3px solid var(--accent-gold); box-shadow:3px 3px 0 rgba(0,0,0,.4); }
+                        .profile-avatar--default { width:84px; height:84px; border-radius:50%; background:var(--accent-green); color:#fff; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:800; border:3px solid var(--accent-gold); }
+                        .profile-name { font-size:1.3rem; font-weight:800; font-family:var(--mc-title-font); }
+                        .profile-sub { color:var(--text-secondary); font-size:.85rem; margin:.25rem 0; }
+                        .profile-stats { display:flex; gap:1rem; font-size:.85rem; color:var(--accent-gold); margin-top:.4rem; }
+                        .profile-bio { background:var(--bg-secondary); border:2px solid var(--mc-edge); padding:.8rem 1rem; margin-bottom:1rem; line-height:1.6; }
+                        .profile-bio .muted { color:var(--text-muted); }
+                        .profile-tabs { display:flex; gap:.5rem; margin-bottom:.8rem; }
+                        .profile-tabs .ptab { background:var(--bg-secondary); border:2px solid var(--mc-edge); color:var(--text-primary); padding:.4rem 1rem; cursor:pointer; font-family:var(--mc-title-font); }
+                        .profile-tabs .ptab.active { border-color:var(--accent-gold); color:var(--accent-gold); }
+                        .profile-post { background:var(--bg-secondary); border:2px solid var(--mc-edge); padding:.7rem .9rem; margin-bottom:.6rem; }
+                        .pp-content { line-height:1.6; }
+                        .pp-title { font-weight:700; color:var(--accent-gold); }
+                        .pp-time { font-size:.78rem; color:var(--text-muted); margin-top:.3rem; }
+                        .avatar-upload-row { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; margin-top:.4rem; }
+                        .mp-avatar-preview { width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid var(--accent-gold); }
+                        .img-upload-row { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; margin-top:.5rem; }
+                        .img-preview { width:52px; height:52px; object-fit:cover; border:2px solid var(--accent-gold); }
+                        .submit-btn.small { padding:.4rem .8rem; font-size:.85rem; }
                 </style>
         </head>
         <body>
@@ -699,6 +736,37 @@
                                 <button class="modal-close" id="closeAdminModal">&times;</button>
                                 <h3>🛡️ 待审核申请</h3>
                                 <div class="admin-list" id="adminList"></div>
+                        </div>
+                </div>
+
+                <!-- 个人主页（公开） -->
+                <div class="modal-overlay" id="profileModal">
+                        <div class="modal modal-wide">
+                                <button class="modal-close" id="closeProfileModal">&times;</button>
+                                <div id="profileBody"></div>
+                        </div>
+                </div>
+
+                <!-- 我的资料（编辑头像 / 简介） -->
+                <div class="modal-overlay" id="myProfileModal">
+                        <div class="modal">
+                                <button class="modal-close" id="closeMyProfileModal">&times;</button>
+                                <h3>✏️ 我的资料</h3>
+                                <div class="form-group">
+                                        <label>头像（走图床上传，数据库只存链接）</label>
+                                        <div class="avatar-upload-row">
+                                                <img id="mpAvatarPreview" class="mp-avatar-preview" alt="" style="display:none" />
+                                                <input type="file" id="mpAvatarFile" accept="image/*" />
+                                                <button type="button" class="submit-btn small" id="mpAvatarUploadBtn">📷 上传头像</button>
+                                        </div>
+                                        <input type="text" id="mpAvatarUrl" placeholder="或在此粘贴头像图片链接（http(s)）" style="margin-top:.5rem;" />
+                                </div>
+                                <div class="form-group">
+                                        <label>个人简介（最多 200 字）</label>
+                                        <textarea id="mpBio" rows="3" placeholder="介绍一下你自己~"></textarea>
+                                </div>
+                                <button class="submit-btn" id="mpSaveBtn">保存资料</button>
+                                <div class="form-message" id="mpMessage"></div>
                         </div>
                 </div>
 
@@ -939,6 +1007,7 @@
                                                                                 rows="4"
                                                                         ></textarea>
                                                                 </div>
+                                                                <label class="anon-toggle"><input type="checkbox" id="messageAnonymous" /> 🕶️ 匿名发布（不署名账号）</label>
                                                                 <button
                                                                         type="submit"
                                                                         class="submit-btn"
@@ -1042,6 +1111,7 @@
                                                                         placeholder="请输入发布密码"
                                                                 />
                                                         </div>
+                                                        <label class="anon-toggle"><input type="checkbox" id="tradeAnonymous" /> 🕶️ 匿名发布（不署名账号）</label>
                                                         <button
                                                                 type="submit"
                                                                 class="submit-btn"
@@ -1202,12 +1272,17 @@
                                                                 ></textarea>
                                                         </div>
                                                         <div class="form-group">
-                                                                <label>图片链接（多个用逗号分隔）</label>
+                                                                <label>图片链接（多个用逗号分隔，也可走图床上传）</label>
                                                                 <input
                                                                         type="text"
                                                                         id="storyImages"
                                                                         placeholder="https://..."
                                                                 />
+                                                                <div class="img-upload-row">
+                                                                        <input type="file" id="storyImageFile" accept="image/*" />
+                                                                        <button type="button" class="submit-btn small" id="storyImageUploadBtn">📷 图床上传</button>
+                                                                        <img id="storyImagePreview" class="img-preview" alt="" style="display:none" />
+                                                                </div>
                                                         </div>
                                                         <div class="form-group">
                                                                 <label>投稿密码 *</label>
@@ -1217,6 +1292,7 @@
                                                                         required
                                                                 />
                                                         </div>
+                                                        <label class="anon-toggle"><input type="checkbox" id="storyAnonymous" /> 🕶️ 匿名发布（不署名账号）</label>
                                                         <button type="submit" class="submit-btn" id="submitBtn">
                                                                 提交故事
                                                         </button>
@@ -1285,7 +1361,13 @@
                             owner: 'FKD乄老果',
                             githubNote: '基于 GitHub + Supabase 托管',
                             contactQQ: '3658683821',
-                            generatedBy: '由权威deep seek生成'
+                            generatedBy: '由权威deep seek生成',
+                            // 图床：上传头像/配图只存 URL，不直接在库里塞图片。
+                            // 优先级：supabase(自家 Storage，最稳、不受第三方可用性影响) → sm.ms → imgtp → 全部失败可手动粘贴图片链接兜底。
+                            // 重要：务必用 http(s) 访问本页面（不要 file:// 双击打开），否则浏览器会拦截所有跨域请求（图床/接口全部 Load failed）。
+                            imageHost: 'supabase,smms,imgtp',
+                            // 旧版功能保持匿名选项；勾选“匿名发布”则不署名账号
+                            allowAnonymous: true
                         };
                         document.getElementById('footerText').innerHTML = `
                             服主：${SITE_CONFIG.owner} | 赛季 ${SITE_CONFIG.season} | ${SITE_CONFIG.githubNote}<br>
@@ -1325,41 +1407,53 @@
                         }
 
                         function renderStories(stories) {
-                            const container = document.getElementById('storiesContainer');
-                            const emptyEl = document.getElementById('storiesEmpty');
-                            container.innerHTML = '';
-                            if (!stories || stories.length === 0) {
-                                emptyEl.style.display = 'block';
-                                container.style.display = 'none';
-                                return;
-                            }
-                            emptyEl.style.display = 'none';
-                            container.style.display = 'grid';
+                                const container = document.getElementById('storiesContainer');
+                                const emptyEl = document.getElementById('storiesEmpty');
+                                container.innerHTML = '';
+                                if (!stories || stories.length === 0) {
+                                        emptyEl.style.display = 'block';
+                                        container.style.display = 'none';
+                                        return;
+                                }
+                                emptyEl.style.display = 'none';
+                                container.style.display = 'grid';
+                                const claims = parseToken();
+                                const admin = isAdmin();
 
-                            stories.forEach(story => {
-                                let images = [];
-                                if (story.image_urls) {
-                                    if (Array.isArray(story.image_urls)) images = story.image_urls;
-                                    else if (typeof story.image_urls === 'string') images = story.image_urls.split(',').map(s => s.trim()).filter(Boolean);
-                                }
-                                images = images.filter(isValidImageUrl);
-                                const contentHTML = (story.content || '').split('\n').filter(p => p.trim()).map(p => `<p>${escapeHTML(p)}</p>`).join('');
-                                let imagesHTML = '';
-                                if (images.length > 0) {
-                                    imagesHTML = `<div class="story-images">` + images.map(url => `<img src="${escapeHTML(url)}" loading="lazy" alt="故事图片">`).join('') + `</div>`;
-                                }
-                                const dateStr = story.date || '';
-                                const card = document.createElement('article');
-                                card.className = 'story-card';
-                                card.innerHTML = `
-                                    <span class="story-tag">${escapeHTML(story.tag || '其他')}</span>
-                                    <h3 class="story-title">${escapeHTML(story.title)}</h3>
-                                    <div class="story-meta"><span class="author">✎ ${escapeHTML(story.author)}</span> · 📅 ${escapeHTML(dateStr)}</div>
-                                    <div class="story-content">${contentHTML}</div>
-                                    ${imagesHTML}
-                                `;
-                                container.appendChild(card);
-                            });
+                                stories.forEach(story => {
+                                        let images = [];
+                                        if (story.image_urls) {
+                                                if (Array.isArray(story.image_urls)) images = story.image_urls;
+                                                else if (typeof story.image_urls === 'string') images = story.image_urls.split(',').map(s => s.trim()).filter(Boolean);
+                                        }
+                                        images = images.filter(isValidImageUrl);
+                                        const contentHTML = (story.content || '').split('\n').filter(p => p.trim()).map(p => `<p>${escapeHTML(p)}</p>`).join('');
+                                        let imagesHTML = '';
+                                        if (images.length > 0) {
+                                                imagesHTML = `<div class="story-images">` + images.map(url => `<img src="${escapeHTML(url)}" loading="lazy" alt="故事图片">`).join('') + `</div>`;
+                                        }
+                                        const dateStr = story.date || '';
+                                        const signedName = story.author_name || null; // 有署名快照才是账号帖
+                                        const authorHTML = signedName
+                                                ? authorChip(signedName, story.author_avatar)
+                                                : `<span class="author">✎ ${escapeHTML(story.author)}</span>`;
+                                        const isOwner = claims && story.user_id && String(story.user_id) === String(claims.sub);
+                                        const canDelete = admin || isOwner;
+                                        const delBtn = canDelete ? `<button class="post-del" data-type="story" data-id="${story.id}">🗑</button>` : '';
+                                        const card = document.createElement('article');
+                                        card.className = 'story-card';
+                                        card.innerHTML = `
+                                                <span class="story-tag">${escapeHTML(story.tag || '其他')}</span>
+                                                ${delBtn}
+                                                <h3 class="story-title">${escapeHTML(story.title)}</h3>
+                                                <div class="story-meta">${authorHTML} · 📅 ${escapeHTML(dateStr)}</div>
+                                                <div class="story-content">${contentHTML}</div>
+                                                ${imagesHTML}
+                                        `;
+                                        container.appendChild(card);
+                                });
+                                wireAuthorChips(container);
+                                container.querySelectorAll('.post-del').forEach(b => b.addEventListener('click', () => deletePost(b.dataset.type, b.dataset.id, b.closest('.story-card'))));
                         }
 
                         // ---------- 2. 访问计数（独立模块，REST API） ----------
@@ -1413,48 +1507,52 @@
                             msg.className = 'form-message';
                             msg.textContent = '';
 
+                            const claims = parseToken();
+                            if (!claims) { showAuthRequired('formMessage'); return; }
+
                             const title = document.getElementById('storyTitle').value.trim();
-                            const author = document.getElementById('storyAuthor').value.trim();
                             const date = document.getElementById('storyDate').value;
                             const tag = document.getElementById('storyTag').value.trim() || '其他';
                             const content = document.getElementById('storyContent').value.trim();
                             const imagesInput = document.getElementById('storyImages').value.trim();
+                            const anon = document.getElementById('storyAnonymous') && document.getElementById('storyAnonymous').checked;
 
-                            if (!title || !author || !content) {
-                                msg.textContent = '请填写标题、作者和内容';
+                            let author, author_name, author_avatar;
+                            if (anon) {
+                                author = (document.getElementById('storyAuthor').value || '').trim() || '匿名玩家';
+                                author_name = null; author_avatar = null;
+                            } else {
+                                author = claims.username; author_name = claims.username; author_avatar = claims.avatar_url || null;
+                            }
+
+                            if (!title || !content) {
+                                msg.textContent = '请填写标题和内容';
                                 msg.className = 'form-message error';
                                 return;
                             }
 
-                            const claims = parseToken();
-                            if (!claims) { showAuthRequired('formMessage'); return; }
-
                             const imageUrls = imagesInput ? imagesInput.split(/[,\n]/).map(s => s.trim()).filter(Boolean) : [];
-                            const storyData = { title, author, date: date || new Date().toISOString().slice(0,10), tag: tag || '', content, image_urls: imageUrls };
+                            // 关键：stories 表的 insert RLS 要求 user_id = auth.uid()，必须显式带上当前登录用户的 id，
+                            // 否则会被行级安全策略拦截（HTTP 403）。匿名仅控制展示用的 author_name/author_avatar，归属仍绑定账号（便于本人/管理员删帖）。
+                            const storyData = { title, author, author_name, author_avatar, user_id: claims.sub, date: date || new Date().toISOString().slice(0,10), tag: tag || '', content, image_urls: imageUrls };
 
                             btn.disabled = true;
                             btn.textContent = '提交中...';
 
                             try {
-                                const controller = new AbortController();
-                                const timeoutId = setTimeout(() => controller.abort(), 20000);
-                                const response = await fetch('https://yowwyasttkywyqgseuqz.supabase.co/functions/v1/submit-story', {
+                                const response = await fetch(`${SUPABASE_URL}/rest/v1/stories`, {
                                     method: 'POST',
-                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-                                    body: JSON.stringify(storyData),
-                                    signal: controller.signal
+                                    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                                    body: JSON.stringify(storyData)
                                 });
-                                clearTimeout(timeoutId);
-                                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                                const result = await response.json();
-                                if (result.success) {
-                                    msg.textContent = '✅ 故事提交成功！';
-                                    msg.className = 'form-message success';
-                                    document.getElementById('storyForm').reset();
-                                    await loadStories();
-                                } else {
-                                    throw new Error(result.error || '提交失败');
+                                if (!response.ok) {
+                                    const t = await response.text().catch(() => '');
+                                    throw new Error(`HTTP ${response.status} ${t.slice(0, 120)}`);
                                 }
+                                msg.textContent = '✅ 故事提交成功！';
+                                msg.className = 'form-message success';
+                                document.getElementById('storyForm').reset();
+                                await loadStories();
                             } catch (err) {
                                 msg.textContent = '❌ ' + err.message;
                                 msg.className = 'form-message error';
@@ -1512,13 +1610,24 @@
                             const listEl = document.getElementById('messagesList');
                             if (!messages || messages.length === 0) { listEl.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);">还没有留言，快来抢沙发！</div>'; return; }
                             listEl.innerHTML = '';
+                            const claims = parseToken();
+                            const admin = isAdmin();
                             messages.forEach(msg => {
                                 const card = document.createElement('div');
                                 card.className = 'message-card';
                                 const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleString('zh-CN') : '';
-                                card.innerHTML = `<div class="message-header"><span class="message-nickname">${escapeHTML(msg.nickname||'匿名')}</span><span class="message-time">${escapeHTML(timeStr)}</span></div><div class="message-content">${escapeHTML(msg.content)}</div>`;
+                                const signedName = msg.author_name || null;
+                                const authorHTML = signedName
+                                        ? authorChip(signedName, msg.author_avatar)
+                                        : `<span class="message-nickname">${escapeHTML(msg.nickname||'匿名')}</span>`;
+                                const isOwner = claims && msg.user_id && String(msg.user_id) === String(claims.sub);
+                                const canDelete = admin || isOwner;
+                                const delBtn = canDelete ? `<button class="post-del" data-type="message" data-id="${msg.id}">🗑</button>` : '';
+                                card.innerHTML = `<div class="message-header"><span class="message-author-wrap">${authorHTML}</span><span class="message-time">${escapeHTML(timeStr)}</span>${delBtn}</div><div class="message-content">${escapeHTML(msg.content)}</div>`;
                                 listEl.appendChild(card);
                             });
+                            wireAuthorChips(listEl);
+                            listEl.querySelectorAll('.post-del').forEach(b => b.addEventListener('click', () => deletePost(b.dataset.type, b.dataset.id, b.closest('.message-card'))));
                         }
 
                         document.getElementById('messageForm').addEventListener('submit', async (e) => {
@@ -1531,12 +1640,19 @@
                             if (!content) { msgEl.textContent = '留言内容不能为空'; msgEl.className = 'form-message error'; return; }
                             const claims = parseToken();
                             if (!claims) { showAuthRequired('messageFormMessage'); return; }
+                            const anon = document.getElementById('messageAnonymous') && document.getElementById('messageAnonymous').checked;
                             btn.disabled = true;
                             btn.textContent = '发布中...';
                             try {
                                 const url = `${SUPABASE_URL}/rest/v1/messages`;
                                 const headers = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
-                                const body = JSON.stringify({ user_id: claims.sub, nickname: claims.username, content, created_at: new Date().toISOString() });
+                                const nickname = anon ? ((document.getElementById('messageNickname').value || '').trim() || '匿名') : claims.username;
+                                const body = JSON.stringify({
+                                    user_id: anon ? null : claims.sub,
+                                    author_name: anon ? null : claims.username,
+                                    author_avatar: anon ? null : (claims.avatar_url || null),
+                                    nickname, content, created_at: new Date().toISOString()
+                                });
                                 const response = await fetch(url, { method: 'POST', headers, body });
                                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                                 msgEl.textContent = '✅ 留言成功！';
@@ -1588,12 +1704,21 @@
                             }
                             emptyEl.style.display = 'none';
                             container.style.display = 'grid';
+                            const claims = parseToken();
+                            const admin = isAdmin();
                             trades.forEach(trade => {
                                 const card = document.createElement('div');
                                 card.className = 'trade-card';
                                 const timeStr = trade.created_at ? new Date(trade.created_at).toLocaleString('zh-CN') : '';
+                                const signedName = trade.author_name || null;
+                                const authorHTML = signedName ? authorChip(signedName, trade.author_avatar) : '';
+                                const isOwner = claims && trade.user_id && String(trade.user_id) === String(claims.sub);
+                                const canDelete = admin || isOwner;
+                                const delBtn = canDelete ? `<button class="post-del" data-type="trade" data-id="${trade.id}">🗑</button>` : '';
                                 card.innerHTML = `
                                     <span class="trade-status active">在售</span>
+                                    ${delBtn}
+                                    ${authorHTML ? `<div class="trade-author">${authorHTML}</div>` : ''}
                                     <div class="trade-item-name">${escapeHTML(trade.item_name)}</div>
                                     <div class="trade-price">💰 ${escapeHTML(trade.price)}</div>
                                     <div class="trade-desc">${escapeHTML(trade.description)}</div>
@@ -1603,6 +1728,8 @@
                                 `;
                                 container.appendChild(card);
                             });
+                            wireAuthorChips(container);
+                            container.querySelectorAll('.post-del').forEach(b => b.addEventListener('click', () => deletePost(b.dataset.type, b.dataset.id, b.closest('.trade-card'))));
                         }
 
                         // 发布交易
@@ -1630,6 +1757,7 @@
                             const claims = parseToken();
                             if (!claims) { showAuthRequired('tradeFormMessage'); return; }
 
+                            const anon = document.getElementById('tradeAnonymous') && document.getElementById('tradeAnonymous').checked;
                             const manageCode = generateManageCode();
 
                             btn.disabled = true;
@@ -1644,11 +1772,13 @@
                                     'Prefer': 'return=minimal'
                                 };
                                 const body = JSON.stringify({
-                                    user_id: claims.sub,
+                                    user_id: anon ? null : claims.sub,
+                                    author_name: anon ? null : claims.username,
+                                    author_avatar: anon ? null : (claims.avatar_url || null),
                                     item_name: itemName,
                                     description,
                                     price,
-                                    seller_name: claims.username,
+                                    seller_name: sellerName,
                                     contact,
                                     status: 'active',
                                     manage_code: manageCode,
@@ -1870,6 +2000,281 @@
                                 applyState();
                         })();
 
+                        // ---------- 12.5 新版账户系统增强（个人主页 / 管理员删帖 / 图床 / 我的资料） ----------
+                        // 纯增量，不改动旧版任何逻辑；旧帖子无署名快照时自动回退为纯文本 / 无删除按钮。
+
+                        // 图床上传：头像与故事配图都走图床，DB 只存 URL（不直接塞图片）。
+                        // 多级图床自动降级：sm.ms(主) → imgtp(备) → Supabase Storage(长备) → 全部失败才提示手动粘贴。
+                        // 注意：务必用 http(s) 访问本页面（不要用 file:// 双击打开），否则浏览器会拦截对图床/接口的所有跨域请求。
+                        async function uploadToImageHost(file) {
+                                const cfg = (SITE_CONFIG.imageHost || 'smms,imgtp,supabase').toLowerCase();
+                                const hosts = cfg.split(',').map(s => s.trim()).filter(Boolean);
+                                let lastErr;
+                                for (const host of hosts) {
+                                        try {
+                                                if (host === 'smms' || host === 'sm') {
+                                                        const fd = new FormData();
+                                                        fd.append('smfile', file);
+                                                        const ctrl = new AbortController();
+                                                        const to = setTimeout(() => ctrl.abort(), 20000);
+                                                        try {
+                                                                const r = await fetch('https://sm.ms/api/v2/upload', { method: 'POST', body: fd, signal: ctrl.signal });
+                                                                const j = await r.json();
+                                                                if (j && j.success && j.data && j.data.url) return j.data.url;
+                                                                if (j && j.images) return j.images;
+                                                                throw new Error((j && j.message) || 'sm.ms 上传失败');
+                                                        } finally { clearTimeout(to); }
+                                                } else if (host === 'imgtp') {
+                                                        const fd = new FormData();
+                                                        fd.append('file', file);
+                                                        const ctrl = new AbortController();
+                                                        const to = setTimeout(() => ctrl.abort(), 20000);
+                                                        try {
+                                                                const r = await fetch('https://imgtp.com/api/upload', { method: 'POST', body: fd, signal: ctrl.signal });
+                                                                const j = await r.json();
+                                                                if (j && (j.code === 200 || j.success) && j.data && j.data.url) return j.data.url;
+                                                                if (j && j.url) return j.url;
+                                                                throw new Error((j && (j.msg || j.message)) || '路过图床上传失败');
+                                                        } finally { clearTimeout(to); }
+                                                } else if (host === 'supabase') {
+                                                        const ext = (file.name && file.name.split('.').pop()) || (file.type ? (file.type.split('/')[1] || 'png') : 'png');
+                                                        const safeExt = (ext || 'png').replace(/[^a-z0-9]/gi, '').slice(0, 5) || 'png';
+                                                        const path = `avatars/${Date.now()}_${Math.random().toString(36).slice(2, 10)}.${safeExt}`;
+                                                        const headers = {
+                                                                'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                                                                'Content-Type': file.type || 'image/png',
+                                                                'cache-control': 'max-age=31536000'
+                                                        };
+                                                        const ctrl = new AbortController();
+                                                        const to = setTimeout(() => ctrl.abort(), 25000);
+                                                        try {
+                                                                const r = await fetch(`${SUPABASE_URL}/storage/v1/object/uploads/${path}`, { method: 'POST', body: file, headers, signal: ctrl.signal });
+                                                                if (!r.ok) { const t = await r.text().catch(() => ''); throw new Error(`Storage HTTP ${r.status} ${t.slice(0, 80)}`); }
+                                                                const j = await r.json().catch(() => ({}));
+                                                                const key = (j && j.Key) || `uploads/${path}`;
+                                                                return `${SUPABASE_URL}/storage/v1/object/public/${key}`;
+                                                        } finally { clearTimeout(to); }
+                                                } else {
+                                                        throw new Error('未知图床：' + host);
+                                                }
+                                        } catch (e) { lastErr = e; }
+                                }
+                                throw lastErr || new Error('图床上传失败');
+                        }
+
+                        // 作者署名：有署名快照 → 可点击跳主页；否则返回空（兼容旧匿名帖）
+                        function authorChip(name, avatar) {
+                                if (!name) return '';
+                                const av = avatar
+                                        ? `<img class="author-avatar" src="${escapeHTML(avatar)}" alt="" onerror="this.style.display='none'">`
+                                        : `<span class="author-avatar author-avatar--default">${escapeHTML((name[0] || '?'))}</span>`;
+                                return `<span class="author-chip" data-username="${escapeHTML(name)}" role="button" tabindex="0">${av}<span class="author-name">${escapeHTML(name)}</span></span>`;
+                        }
+                        function wireAuthorChips(root) {
+                                (root || document).querySelectorAll('.author-chip').forEach(el => {
+                                        const go = () => openProfile(el.dataset.username);
+                                        el.addEventListener('click', go);
+                                        el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+                                });
+                        }
+
+                        // 个人主页（公开）：直接查 users 表 + 各帖表，无需后端函数
+                        async function openProfile(username) {
+                                const modal = document.getElementById('profileModal');
+                                if (!modal) return;
+                                modal.classList.add('active');
+                                const body = document.getElementById('profileBody');
+                                if (body) body.innerHTML = '<div class="profile-loading"><span class="spinner"></span> 加载主页中...</div>';
+                                const h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` };
+                                const enc = encodeURIComponent(username);
+                                try {
+                                        const pr = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${enc}&select=id,username,avatar_url,bio,role,created_at&status=eq.approved&limit=1`, { headers: h });
+                                        const arr = await pr.json();
+                                        if (!pr.ok || !arr || !arr.length) {
+                                                if (body) body.innerHTML = '<div class="profile-empty">该用户不存在或未通过审核</div>';
+                                                return;
+                                        }
+                                        const p = arr[0];
+                                        const [msgs, stories, trades] = await Promise.all([
+                                                fetch(`${SUPABASE_URL}/rest/v1/messages?user_id=eq.${p.id}&select=id,content,created_at&order=created_at.desc&limit=50`, { headers: h }).then(r => r.json()),
+                                                fetch(`${SUPABASE_URL}/rest/v1/stories?user_id=eq.${p.id}&select=id,title,tag,date,created_at&order=created_at.desc&limit=50`, { headers: h }).then(r => r.json()),
+                                                fetch(`${SUPABASE_URL}/rest/v1/trades?user_id=eq.${p.id}&select=id,item_name,price,status,created_at&order=created_at.desc&limit=50`, { headers: h }).then(r => r.json())
+                                        ]);
+                                        const counts = { messages: msgs.length, stories: stories.length, trades: trades.length };
+                                        renderProfile({ success: true, profile: p, counts, messages: msgs, stories, trades }, username);
+                                } catch (e) {
+                                        if (body) body.innerHTML = '<div class="profile-empty">主页加载失败：' + escapeHTML(e.message) + '</div>';
+                                }
+                        }
+                        function renderProfile(j, fallbackName) {
+                                const body = document.getElementById('profileBody');
+                                if (!body) return;
+                                if (!j || !j.success) { body.innerHTML = '<div class="profile-empty">' + escapeHTML((j && j.error) || '加载失败') + '</div>'; return; }
+                                const p = j.profile;
+                                const name = p.username || fallbackName;
+                                const av = p.avatar_url
+                                        ? `<img class="profile-avatar" src="${escapeHTML(p.avatar_url)}" alt="" onerror="this.style.display='none'">`
+                                        : `<div class="profile-avatar profile-avatar--default">${escapeHTML((name[0] || '?'))}</div>`;
+                                const roleBadge = p.role === 'admin' ? '<span class="role-badge role-admin">管理员</span>' : '';
+                                const joined = p.created_at ? new Date(p.created_at).toLocaleDateString('zh-CN') : '—';
+                                const bio = p.bio ? escapeHTML(p.bio).replace(/\n/g, '<br>') : '<span class="muted">这个人很神秘，什么都没留下~</span>';
+                                const c = j.counts || {};
+                                body.innerHTML = `
+                                        <div class="profile-header">
+                                                ${av}
+                                                <div class="profile-meta">
+                                                        <div class="profile-name">${escapeHTML(name)} ${roleBadge}</div>
+                                                        <div class="profile-sub">📅 加入于 ${escapeHTML(joined)}</div>
+                                                        <div class="profile-stats">
+                                                                <span>💬 留言 ${c.messages || 0}</span>
+                                                                <span>📖 故事 ${c.stories || 0}</span>
+                                                                <span>📦 交易 ${c.trades || 0}</span>
+                                                        </div>
+                                                </div>
+                                        </div>
+                                        <div class="profile-bio">${bio}</div>
+                                        <div class="profile-tabs">
+                                                <button class="ptab active" data-ptab="pmsg">留言</button>
+                                                <button class="ptab" data-ptab="pstory">故事</button>
+                                                <button class="ptab" data-ptab="ptrade">交易</button>
+                                        </div>
+                                        <div class="profile-list" id="profileList"></div>`;
+                                const list = body.querySelector('#profileList');
+                                function show(tab) {
+                                        let html = '';
+                                        if (tab === 'pmsg') {
+                                                const a = j.messages || [];
+                                                html = a.length ? a.map(m => `<div class="profile-post"><div class="pp-content">${escapeHTML(m.content)}</div><div class="pp-time">${escapeHTML(new Date(m.created_at).toLocaleString('zh-CN'))}</div></div>`).join('') : '<div class="profile-empty">还没有留言</div>';
+                                        } else if (tab === 'pstory') {
+                                                const a = j.stories || [];
+                                                html = a.length ? a.map(s => `<div class="profile-post"><div class="pp-title">${escapeHTML(s.title)}</div><div class="pp-time">${escapeHTML(((s.tag || '') + ' · ' + (s.date || '')).trim())}</div></div>`).join('') : '<div class="profile-empty">还没有故事</div>';
+                                        } else {
+                                                const a = j.trades || [];
+                                                html = a.length ? a.map(tr => `<div class="profile-post"><div class="pp-title">${escapeHTML(tr.item_name)} · ${escapeHTML(tr.price)}</div><div class="pp-time">${escapeHTML(tr.status)}</div></div>`).join('') : '<div class="profile-empty">还没有交易</div>';
+                                        }
+                                        list.innerHTML = html;
+                                }
+                                show('pmsg');
+                                body.querySelectorAll('.ptab').forEach(b => b.addEventListener('click', () => {
+                                        body.querySelectorAll('.ptab').forEach(x => x.classList.remove('active'));
+                                        b.classList.add('active');
+                                        show(b.dataset.ptab);
+                                }));
+                        }
+
+                        // 删帖：管理员可删任意；用户可删自己的（RLS 策略内校验权限）
+                        async function deletePost(type, id, cardEl) {
+                                // 登录态校验：token 缺失/失效时不发无效请求，避免 401 困扰
+                                const claims = parseToken();
+                                if (!claims || !claims.sub) {
+                                        showError('❌ 请先登录后再删除');
+                                        openAuthModal('login');
+                                        return;
+                                }
+                                if (!confirm('确定删除这条内容吗？不可撤销。')) return;
+                                // 表名映射：按钮 data-type 用单数，实际表名为复数
+                                const TABLE = { story: 'stories', message: 'messages', trade: 'trades' };
+                                const table = TABLE[type] || type;
+                                try {
+                                        const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+                                                method: 'DELETE',
+                                                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}`, 'Prefer': 'return=minimal' }
+                                        });
+                                        if (!response.ok) {
+                                                let detail = '';
+                                                try { detail = (await response.text()).catch(() => ''); detail = detail.slice(0, 120); } catch {}
+                                                // 401 通常是登录 token 失效/无法验签：清除并引导重新登录
+                                                if (response.status === 401) {
+                                                        clearToken(); updateAuthUI();
+                                                        throw new Error('登录状态已失效，请点右上角重新登录后再删除');
+                                                }
+                                                throw new Error(`HTTP ${response.status} ${detail}`);
+                                        }
+                                        if (cardEl && cardEl.parentNode) cardEl.parentNode.removeChild(cardEl);
+                                        showError('✅ 已删除');
+                                } catch (err) {
+                                        showError('❌ 删除失败：' + err.message);
+                                }
+                        }
+
+                        // 我的资料：编辑头像（图床上传）与简介
+                        function openMyProfile() {
+                                const claims = parseToken();
+                                if (!claims) { openAuthModal('login'); return; }
+                                const modal = document.getElementById('myProfileModal');
+                                if (!modal) return;
+                                const prev = document.getElementById('mpAvatarPreview');
+                                if (prev) { prev.src = claims.avatar_url || ''; prev.style.display = claims.avatar_url ? 'block' : 'none'; }
+                                const bioEl = document.getElementById('mpBio'); if (bioEl) bioEl.value = '';
+                                const urlEl = document.getElementById('mpAvatarUrl'); if (urlEl) urlEl.value = claims.avatar_url || '';
+                                const msg = document.getElementById('mpMessage'); if (msg) { msg.textContent = ''; msg.className = 'form-message'; }
+                                modal.classList.add('active');
+                        }
+                        async function saveMyProfile() {
+                                const msg = document.getElementById('mpMessage');
+                                if (msg) { msg.textContent = ''; msg.className = 'form-message'; }
+                                const bio = (document.getElementById('mpBio').value || '').trim();
+                                const avatar = (document.getElementById('mpAvatarUrl').value || '').trim();
+                                const claims = parseToken();
+                                if (!claims || !claims.sub) { if (msg) { msg.textContent = '❌ 请先登录'; msg.className = 'form-message error'; } return; }
+                                try {
+                                        const response = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${claims.sub}`, {
+                                                method: 'PATCH',
+                                                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                                                body: JSON.stringify({ avatar_url: avatar || null, bio })
+                                        });
+                                        if (!response.ok) {
+                                                const t = await response.text().catch(() => '');
+                                                throw new Error(`HTTP ${response.status} ${t.slice(0, 120)}`);
+                                        }
+                                } catch (err) {
+                                        if (msg) { msg.textContent = '❌ ' + err.message; msg.className = 'form-message error'; }
+                                        return;
+                                }
+                                if (msg) { msg.textContent = '✅ 资料已保存'; msg.className = 'form-message success'; }
+                                // 同步本地 token 的 avatar_url，使后续发帖署名头像即时生效
+                                try {
+                                        const t = getToken(); if (t) {
+                                                const parts = t.split('.');
+                                                const norm = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+                                                const pad = norm + '='.repeat((4 - norm.length % 4) % 4);
+                                                const bin = atob(pad);
+                                                const bytes = new Uint8Array(bin.length);
+                                                for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+                                                const p = JSON.parse(new TextDecoder().decode(bytes));
+                                                p.avatar_url = avatar || null;
+                                                const e = new TextEncoder(); const js = JSON.stringify(p); let s = '';
+                                                for (const b of e.encode(js)) s += String.fromCharCode(b);
+                                                parts[1] = btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                                                setToken(parts.join('.'));
+                                        }
+                                } catch {}
+                                setTimeout(() => { const m = document.getElementById('myProfileModal'); if (m) m.classList.remove('active'); }, 700);
+                        }
+
+                        function modalClose(id) { const m = document.getElementById(id); if (m) m.classList.remove('active'); }
+
+                        // 通用图片上传（图床）
+                        async function handleImageUpload(fileInput, urlInput, previewEl, msgEl) {
+                                const file = fileInput && fileInput.files && fileInput.files[0];
+                                if (!file) { showError('请先选择一张图片'); return; }
+                                if (msgEl) { msgEl.textContent = '图片上传中...'; msgEl.className = 'form-message'; }
+                                try {
+                                        const url = await uploadToImageHost(file);
+                                        if (urlInput) { const cur = (urlInput.value || '').trim(); urlInput.value = cur ? (cur + ',' + url) : url; }
+                                        if (previewEl) { previewEl.src = url; previewEl.style.display = 'block'; }
+                                        if (msgEl) { msgEl.textContent = '✅ 图片已上传（图床）'; msgEl.className = 'form-message success'; }
+                                } catch (e) {
+                                        if (msgEl) {
+                                                const isFile = (typeof location !== 'undefined') && location.protocol === 'file:';
+                                                const hint = isFile
+                                                        ? '图床上传失败：当前是用 file:// 方式打开页面，浏览器会拦截对图床的跨域请求。请用 http 访问（在文件所在目录运行 python3 -m http.server 8000，再打开 http://localhost:8000），或部署到网站域名后访问。也可以直接“手动粘贴图片链接”。'
+                                                        : '❌ 图床上传失败，可手动粘贴图片链接：' + e.message;
+                                                msgEl.textContent = hint; msgEl.className = 'form-message error';
+                                        }
+                                }
+                        }
+
                         // ---------- 13. 用户系统（方案A：申请注册 + 后台审核） ----------
                         const FUNCTIONS_BASE = `${SUPABASE_URL}/functions/v1`;
                         const AUTH_TOKEN_KEY = 'fkd_auth_token';
@@ -1945,14 +2350,18 @@
                                 const claims = parseToken();
                                 if (claims) {
                                         const adminBtn = isAdmin() ? `<button class="auth-btn admin" id="openAdminBtn">🛡️ 审核</button>` : '';
+                                        const av = claims.avatar_url ? `<img class="auth-mini-avatar" src="${escapeHTML(claims.avatar_url)}" alt="" onerror="this.style.display='none'">` : '';
                                         area.innerHTML = `
-                                                <span class="auth-user">👤 ${escapeHTML(claims.username)}</span>
+                                                <span class="auth-user">${av}👤 ${escapeHTML(claims.username)}</span>
+                                                <button class="auth-btn" id="openMyProfileBtn">✏️ 资料</button>
                                                 ${adminBtn}
                                                 <button class="auth-btn" id="logoutBtn">退出</button>`;
                                         const lb = document.getElementById('logoutBtn');
                                         if (lb) lb.addEventListener('click', () => { clearToken(); updateAuthUI(); showError('已退出登录'); });
                                         const ab = document.getElementById('openAdminBtn');
                                         if (ab) ab.addEventListener('click', openAdminModal);
+                                        const mp = document.getElementById('openMyProfileBtn');
+                                        if (mp) mp.addEventListener('click', openMyProfile);
                                 } else {
                                         area.innerHTML = `<button class="auth-btn primary" id="openAuthBtn">🔑 登录 / 注册</button>`;
                                         const ob = document.getElementById('openAuthBtn');
@@ -2066,6 +2475,32 @@
                                 if (amm) amm.addEventListener('click', (e) => { if (e.target === amm) closeAdminModal(); });
 
                                 updateAuthUI();
+                        })();
+
+                        // ---------- 14. 新版 UI 事件绑定 ----------
+                        (function wireNewFeatures() {
+                                const cp = document.getElementById('closeProfileModal'); if (cp) cp.addEventListener('click', () => modalClose('profileModal'));
+                                const pm = document.getElementById('profileModal'); if (pm) pm.addEventListener('click', e => { if (e.target === pm) modalClose('profileModal'); });
+
+                                const cmp = document.getElementById('closeMyProfileModal'); if (cmp) cmp.addEventListener('click', () => modalClose('myProfileModal'));
+                                const mpm = document.getElementById('myProfileModal'); if (mpm) mpm.addEventListener('click', e => { if (e.target === mpm) modalClose('myProfileModal'); });
+
+                                const ms = document.getElementById('mpSaveBtn'); if (ms) ms.addEventListener('click', saveMyProfile);
+                                const mup = document.getElementById('mpAvatarUploadBtn');
+                                if (mup) mup.addEventListener('click', () => handleImageUpload(
+                                        document.getElementById('mpAvatarFile'),
+                                        document.getElementById('mpAvatarUrl'),
+                                        document.getElementById('mpAvatarPreview'),
+                                        document.getElementById('mpMessage')
+                                ));
+
+                                const siu = document.getElementById('storyImageUploadBtn');
+                                if (siu) siu.addEventListener('click', () => handleImageUpload(
+                                        document.getElementById('storyImageFile'),
+                                        document.getElementById('storyImages'),
+                                        document.getElementById('storyImagePreview'),
+                                        document.getElementById('formMessage')
+                                ));
                         })();
                 </script>
         </body>
