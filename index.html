@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FKD-Web 版本 v1.6 · 2026-09-19 21:48 · 改动：主题三态(深/浅/跟随系统) + 定位改"FKD服务器社区" + 列表作者头像补全 + 版本注释 -->
+<!-- FKD-Web 版本 v1.7 · 2026-09-20 22:50 · 改动：故事详情页(独立视图) + 点赞(一人一赞) + 评论(登录发表/本人+管理员可删) + 列表卡片计数徽标(❤️赞/💬评论) -->
 <html lang="zh-CN">
         <head>
                 <meta charset="UTF-8" />
@@ -609,6 +609,38 @@
                         .message-author-wrap { display:inline-flex; }
                         .post-del { position:absolute; top:.5rem; right:.5rem; background:rgba(0,0,0,.35); border:1px solid #ff6b6b; color:#ff8787; border-radius:6px; cursor:pointer; padding:.1rem .4rem; font-size:.85rem; line-height:1; }
                         .post-del:hover { background:#ff6b6b; color:#fff; }
+                        /* ===== 故事详情页（新） ===== */
+                        .back-btn { display:inline-flex; align-items:center; gap:.4rem; background:var(--bg-card); border:3px solid var(--mc-edge); color:var(--text-primary); padding:.5rem 1rem; cursor:pointer; font-family:var(--mc-title-font); box-shadow:3px 3px 0 0 rgba(0,0,0,.5); transition:all .15s; margin-bottom:1.2rem; }
+                        .back-btn:hover { transform:translate(-2px,-2px); box-shadow:5px 5px 0 0 rgba(0,0,0,.6); border-color:var(--accent-green); }
+                        .story-card { cursor:pointer; }
+                        .story-stats { display:flex; gap:1rem; margin-top:1rem; padding-top:.8rem; border-top:2px dashed var(--border-light); font-size:.8rem; color:var(--text-muted); }
+                        .story-detail { background:var(--bg-card); border:3px solid var(--mc-edge); box-shadow:4px 4px 0 0 rgba(0,0,0,.5); padding:2rem; }
+                        .story-detail-tag { display:inline-block; font-size:.65rem; letter-spacing:1px; text-transform:uppercase; color:var(--accent-green-light); background:var(--bg-accent); padding:.2rem .6rem; font-weight:600; border:2px solid var(--accent-green); margin-bottom:.8rem; }
+                        .story-detail-title { font-size:1.6rem; font-weight:800; font-family:var(--mc-title-font); margin-bottom:.5rem; line-height:1.35; }
+                        .story-detail-meta { font-size:.85rem; color:var(--text-muted); margin-bottom:1.2rem; display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+                        .story-detail-content { font-size:.95rem; color:var(--text-secondary); line-height:2; }
+                        .story-detail-content p { margin-bottom:.9rem; }
+                        .story-detail-images { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:.7rem; margin-top:1.2rem; padding-top:1rem; border-top:2px dashed var(--border-light); }
+                        .story-detail-images img { width:100%; height:100%; object-fit:cover; border:2px solid var(--mc-edge); }
+                        .story-like-bar { display:flex; align-items:center; gap:1rem; margin-top:1.6rem; padding-top:1.2rem; border-top:2px solid var(--mc-edge); }
+                        .like-btn { display:inline-flex; align-items:center; gap:.4rem; background:var(--bg-secondary); border:3px solid var(--mc-edge); color:var(--text-primary); padding:.5rem 1.1rem; cursor:pointer; font-size:.95rem; box-shadow:3px 3px 0 0 rgba(0,0,0,.5); transition:all .15s; }
+                        .like-btn:hover { transform:translate(-2px,-2px); box-shadow:5px 5px 0 0 rgba(0,0,0,.6); }
+                        .like-btn.liked { background:var(--bg-gold); border-color:var(--accent-gold); color:var(--accent-gold); }
+                        .like-btn:disabled { opacity:.6; cursor:default; transform:none; box-shadow:3px 3px 0 0 rgba(0,0,0,.5); }
+                        .story-stats-inline { color:var(--text-muted); font-size:.85rem; }
+                        .comment-section { margin-top:2rem; padding-top:1.4rem; border-top:2px solid var(--mc-edge); }
+                        .comment-section h3 { font-family:var(--mc-title-font); font-size:1.15rem; margin-bottom:1rem; }
+                        .comment-list { display:flex; flex-direction:column; gap:.9rem; margin-bottom:1.2rem; }
+                        .comment-item { background:var(--bg-secondary); border:2px solid var(--mc-edge); padding:.8rem 1rem; }
+                        .comment-head { display:flex; align-items:center; gap:.5rem; font-size:.8rem; color:var(--text-muted); margin-bottom:.4rem; }
+                        .comment-body { font-size:.9rem; color:var(--text-secondary); line-height:1.7; white-space:pre-wrap; word-break:break-word; }
+                        .comment-del { background:transparent; border:none; color:#ff8787; cursor:pointer; font-size:.85rem; padding:0 .2rem; }
+                        .comment-empty { color:var(--text-muted); text-align:center; padding:1.2rem; font-size:.9rem; }
+                        .comment-form { display:flex; flex-direction:column; gap:.6rem; }
+                        .comment-form textarea { width:100%; padding:.7rem .9rem; border:3px solid var(--border-color); background:var(--bg-secondary); color:var(--text-primary); font-size:.9rem; outline:none; min-height:80px; resize:vertical; font-family:inherit; }
+                        .comment-form textarea:focus { border-color:var(--accent-green); box-shadow:3px 3px 0 0 rgba(90,158,62,.35); }
+                        .comment-login-hint { color:var(--text-muted); font-size:.85rem; padding:.9rem; background:var(--bg-secondary); border:2px dashed var(--border-light); text-align:center; }
+                        .comment-login-hint a { color:var(--accent-gold); font-weight:600; cursor:pointer; }
                         .message-card, .trade-card, .story-card { position:relative; }
                         .role-badge { font-size:.7rem; padding:.1rem .4rem; border-radius:4px; margin-left:.3rem; }
                         .role-badge.role-admin { background:var(--accent-gold); color:#1a1a1a; }
@@ -1038,6 +1070,53 @@
                                 </div>
                         </section>
 
+                        <!-- ===================== 视图：故事详情（新） ===================== -->
+                        <section class="view" id="view-story-detail">
+                                <div class="container">
+                                        <button class="back-btn" id="storyDetailBack">← 返回故事列表</button>
+                                        <article class="story-detail">
+                                                <div id="storyDetailMain">
+                                                        <div
+                                                                style="text-align:center; padding:2.5rem; color:var(--text-muted);"
+                                                        >
+                                                                <span class="spinner"></span> 加载中...
+                                                        </div>
+                                                </div>
+                                                <div class="story-like-bar" id="storyLikeBar" style="display:none">
+                                                        <button class="like-btn" id="storyLikeBtn" data-liked="0">
+                                                                🤍 点赞 <span class="like-count-num">0</span>
+                                                        </button>
+                                                        <span class="story-stats-inline" id="storyCommentCountInline"></span>
+                                                </div>
+                                                <div class="comment-section" id="storyCommentSection" style="display:none">
+                                                        <h3>
+                                                                💬 评论
+                                                                <span
+                                                                        id="storyCommentCount"
+                                                                        style="color:var(--text-muted); font-size:.9rem;"
+                                                                ></span>
+                                                        </h3>
+                                                        <div class="comment-list" id="storyCommentList"></div>
+                                                        <div class="comment-form" id="storyCommentForm">
+                                                                <textarea
+                                                                        id="storyCommentInput"
+                                                                        placeholder="写下你的评论..."
+                                                                        maxlength="1000"
+                                                                ></textarea>
+                                                                <div style="display:flex; justify-content:flex-end;">
+                                                                        <button class="submit-btn small" id="storyCommentSubmit">发表评论</button>
+                                                                </div>
+                                                                <div class="form-message" id="storyCommentMessage"></div>
+                                                        </div>
+                                                        <div class="comment-login-hint" id="storyCommentLoginHint" style="display:none">
+                                                                登录后即可发表评论 ·
+                                                                <a id="storyCommentLoginLink">去登录</a>
+                                                        </div>
+                                                </div>
+                                        </article>
+                                </div>
+                        </section>
+
                         <!-- ===================== 视图 3：交易 ===================== -->
                         <section class="view" id="view-trades">
                                 <div class="container">
@@ -1338,6 +1417,7 @@
                                 }
                                 const data = await response.json();
                                 renderStories(data);
+                                loadStoryStats();
                                 loadingEl.style.display = 'none';
                             } catch (err) {
                                 loadingEl.innerHTML = '❌ ' + escapeHTML(err.message);
@@ -1381,6 +1461,7 @@
                                         const delBtn = canDelete ? `<button class="post-del" data-type="story" data-id="${story.id}">🗑</button>` : '';
                                         const card = document.createElement('article');
                                         card.className = 'story-card';
+                                        card.dataset.storyId = story.id;
                                         card.innerHTML = `
                                                 <span class="story-tag">${escapeHTML(story.tag || '其他')}</span>
                                                 ${delBtn}
@@ -1388,13 +1469,256 @@
                                                 <div class="story-meta">${authorHTML} · 📅 ${escapeHTML(dateStr)}</div>
                                                 <div class="story-content">${contentHTML}</div>
                                                 ${imagesHTML}
+                                                <div class="story-stats" data-story-id="${story.id}">❤️ 0 · 💬 0</div>
                                         `;
+                                        storyCache[String(story.id)] = story;
+                                        card.addEventListener('click', (e) => {
+                                                // 点作者署名/删除按钮时不进详情
+                                                if (e.target.closest('.author-chip') || e.target.closest('.post-del')) return;
+                                                openStoryDetail(String(story.id));
+                                        });
                                         container.appendChild(card);
                                 });
                                 wireAuthorChips(container);
                                 hydrateAuthorAvatars(container);
                                 container.querySelectorAll('.post-del').forEach(b => b.addEventListener('click', () => deletePost(b.dataset.type, b.dataset.id, b.closest('.story-card'))));
                         }
+
+                        // ---------- 1b. 故事详情页（点赞 + 评论，新增） ----------
+                        // 数据表：story_likes(复合主键一人一赞) / story_comments(署名快照)，RLS 见迁移 0003。
+                        // 读走 anon key（公开），写走 getToken()（登录用户 JWT，auth.uid() 生效）。
+                        const storyCache = {};                          // id -> story 对象（列表渲染时缓存，供详情页复用）
+                        const _storyStats = { likes: {}, comments: {} }; // 会话内计数缓存
+                        let _curStoryId = null;                          // 当前详情页的故事 id
+
+                        function parseStoryImages(story) {
+                                let images = [];
+                                if (story && story.image_urls) {
+                                        if (Array.isArray(story.image_urls)) images = story.image_urls;
+                                        else if (typeof story.image_urls === 'string') images = story.image_urls.split(',').map(s => s.trim());
+                                }
+                                return images.filter(isValidImageUrl);
+                        }
+
+                        // 批量拉取点赞/评论计数，回填列表卡片徽标（anon 公开读；失败静默，不影响主流程）
+                        async function loadStoryStats() {
+                                try {
+                                        const h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` };
+                                        const [lr, cr] = await Promise.all([
+                                                fetch(`${SUPABASE_URL}/rest/v1/story_likes?select=story_id`, { headers: h }).then(r => r.json()),
+                                                fetch(`${SUPABASE_URL}/rest/v1/story_comments?select=story_id`, { headers: h }).then(r => r.json())
+                                        ]);
+                                        const likes = {}, comments = {};
+                                        (Array.isArray(lr) ? lr : []).forEach(x => { likes[x.story_id] = (likes[x.story_id] || 0) + 1; });
+                                        (Array.isArray(cr) ? cr : []).forEach(x => { comments[x.story_id] = (comments[x.story_id] || 0) + 1; });
+                                        _storyStats.likes = likes; _storyStats.comments = comments;
+                                        document.querySelectorAll('.story-stats[data-story-id]').forEach(el => {
+                                                const id = el.dataset.storyId;
+                                                el.textContent = `❤️ ${likes[id] || 0} · 💬 ${comments[id] || 0}`;
+                                        });
+                                } catch (e) { /* 静默兜底 */ }
+                        }
+
+                        function refreshStoryBadge(id) {
+                                const el = document.querySelector(`.story-stats[data-story-id="${id}"]`);
+                                if (el) el.textContent = `❤️ ${_storyStats.likes[id] || 0} · 💬 ${_storyStats.comments[id] || 0}`;
+                        }
+
+                        function openStoryDetail(id) {
+                                const story = storyCache[String(id)];
+                                if (!story) return;
+                                _curStoryId = String(id);
+                                switchView('story-detail');
+                                const main = document.getElementById('storyDetailMain');
+                                if (!main) return;
+                                const images = parseStoryImages(story);
+                                const contentHTML = (story.content || '').split('\n').filter(p => p.trim()).map(p => `<p>${escapeHTML(p)}</p>`).join('');
+                                const imagesHTML = images.length
+                                        ? `<div class="story-detail-images">${images.map(u => `<img src="${escapeHTML(u)}" loading="lazy" alt="故事图片">`).join('')}</div>`
+                                        : '';
+                                const signedName = story.author_name || null;
+                                const authorHTML = signedName
+                                        ? authorChip(signedName, story.author_avatar)
+                                        : `<span class="author">✎ ${escapeHTML(story.author || '匿名')}</span>`;
+                                main.innerHTML = `
+                                        <span class="story-detail-tag">${escapeHTML(story.tag || '其他')}</span>
+                                        <h1 class="story-detail-title">${escapeHTML(story.title || '')}</h1>
+                                        <div class="story-detail-meta">${authorHTML}<span>·</span><span>📅 ${escapeHTML(story.date || '')}</span></div>
+                                        <div class="story-detail-content">${contentHTML}</div>
+                                        ${imagesHTML}
+                                `;
+                                wireAuthorChips(main);
+                                hydrateAuthorAvatars(main);
+                                window.scrollTo({ top: 0, behavior: 'auto' });
+                                // 评论区：按登录态切换「输入框 / 登录提示」
+                                const claims = parseToken();
+                                const formEl = document.getElementById('storyCommentForm');
+                                const hintEl = document.getElementById('storyCommentLoginHint');
+                                if (claims && claims.sub) {
+                                        if (formEl) formEl.style.display = 'flex';
+                                        if (hintEl) hintEl.style.display = 'none';
+                                } else {
+                                        if (formEl) formEl.style.display = 'none';
+                                        if (hintEl) hintEl.style.display = 'block';
+                                }
+                                loadStoryLike(_curStoryId);
+                                loadStoryComments(_curStoryId);
+                        }
+
+                        async function loadStoryLike(id) {
+                                const bar = document.getElementById('storyLikeBar');
+                                if (bar) bar.style.display = 'flex';
+                                const h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` };
+                                let userIds = [];
+                                try {
+                                        const r = await fetch(`${SUPABASE_URL}/rest/v1/story_likes?story_id=eq.${encodeURIComponent(id)}&select=user_id`, { headers: h });
+                                        const arr = await r.json();
+                                        if (Array.isArray(arr)) userIds = arr.map(x => x.user_id);
+                                } catch (e) { /* 静默 */ }
+                                _storyStats.likes[id] = userIds.length;
+                                const claims = parseToken();
+                                const liked = !!(claims && claims.sub && userIds.some(u => String(u) === String(claims.sub)));
+                                const btn = document.getElementById('storyLikeBtn');
+                                if (btn) {
+                                        btn.dataset.liked = liked ? '1' : '0';
+                                        btn.classList.toggle('liked', liked);
+                                        btn.innerHTML = `${liked ? '❤️' : '🤍'} 点赞 <span class="like-count-num">${userIds.length}</span>`;
+                                }
+                                refreshStoryBadge(id);
+                        }
+
+                        async function toggleStoryLike() {
+                                const id = _curStoryId;
+                                if (id == null) return;
+                                const claims = parseToken();
+                                if (!claims || !claims.sub) { openAuthModal('login'); return; }
+                                const btn = document.getElementById('storyLikeBtn');
+                                if (btn && btn.disabled) return;
+                                const liked = btn && btn.dataset.liked === '1';
+                                if (btn) btn.disabled = true;
+                                try {
+                                        if (liked) {
+                                                const r = await fetch(`${SUPABASE_URL}/rest/v1/story_likes?story_id=eq.${encodeURIComponent(id)}&user_id=eq.${encodeURIComponent(claims.sub)}`, {
+                                                        method: 'DELETE',
+                                                        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}` }
+                                                });
+                                                if (!r.ok) throw new Error('HTTP ' + r.status);
+                                        } else {
+                                                const r = await fetch(`${SUPABASE_URL}/rest/v1/story_likes`, {
+                                                        method: 'POST',
+                                                        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                                                        body: JSON.stringify({ story_id: Number(id), user_id: claims.sub })
+                                                });
+                                                if (!r.ok) throw new Error('HTTP ' + r.status);
+                                        }
+                                        await loadStoryLike(id);
+                                } catch (e) {
+                                        showError('点赞失败：' + e.message);
+                                } finally {
+                                        if (btn) btn.disabled = false;
+                                }
+                        }
+
+                        async function loadStoryComments(id) {
+                                const section = document.getElementById('storyCommentSection');
+                                if (section) section.style.display = 'block';
+                                const list = document.getElementById('storyCommentList');
+                                if (list) list.innerHTML = '<div class="comment-empty"><span class="spinner"></span> 加载评论中...</div>';
+                                const h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` };
+                                let arr = [];
+                                try {
+                                        const r = await fetch(`${SUPABASE_URL}/rest/v1/story_comments?story_id=eq.${encodeURIComponent(id)}&select=*&order=created_at.asc`, { headers: h });
+                                        const j = await r.json();
+                                        if (Array.isArray(j)) arr = j;
+                                } catch (e) { /* 静默 */ }
+                                _storyStats.comments[id] = arr.length;
+                                renderStoryComments(arr);
+                                const cnt = document.getElementById('storyCommentCount');
+                                if (cnt) cnt.textContent = arr.length ? `(${arr.length})` : '';
+                                refreshStoryBadge(id);
+                        }
+
+                        function renderStoryComments(arr) {
+                                const list = document.getElementById('storyCommentList');
+                                if (!list) return;
+                                const claims = parseToken();
+                                const admin = isAdmin();
+                                if (!arr.length) { list.innerHTML = '<div class="comment-empty">还没有评论，来抢沙发~</div>'; return; }
+                                list.innerHTML = arr.map(c => {
+                                        const name = c.author_name || '匿名';
+                                        const avHTML = c.author_name
+                                                ? authorChip(c.author_name, c.author_avatar)
+                                                : `<span class="author">✎ ${escapeHTML(name)}</span>`;
+                                        const isOwner = claims && c.user_id && String(c.user_id) === String(claims.sub);
+                                        const canDel = admin || isOwner;
+                                        const delBtn = canDel ? `<button class="comment-del" data-id="${c.id}" title="删除评论">🗑</button>` : '';
+                                        const t = c.created_at ? new Date(c.created_at).toLocaleString('zh-CN') : '';
+                                        return `<div class="comment-item"><div class="comment-head">${avHTML}<span>· ${escapeHTML(t)}</span><span style="flex:1"></span>${delBtn}</div><div class="comment-body">${escapeHTML(c.content || '').replace(/\n/g, '<br>')}</div></div>`;
+                                }).join('');
+                                wireAuthorChips(list);
+                                hydrateAuthorAvatars(list);
+                                list.querySelectorAll('.comment-del').forEach(b => b.addEventListener('click', () => deleteStoryComment(b.dataset.id)));
+                        }
+
+                        async function submitStoryComment() {
+                                const id = _curStoryId;
+                                if (id == null) return;
+                                const claims = parseToken();
+                                if (!claims || !claims.sub) { openAuthModal('login'); return; }
+                                const input = document.getElementById('storyCommentInput');
+                                const msg = document.getElementById('storyCommentMessage');
+                                const content = ((input && input.value) || '').trim();
+                                if (msg) { msg.textContent = ''; msg.className = 'form-message'; }
+                                if (!content) { if (msg) msg.textContent = '❌ 评论内容不能为空'; return; }
+                                const btn = document.getElementById('storyCommentSubmit');
+                                if (btn) btn.disabled = true;
+                                try {
+                                        const r = await fetch(`${SUPABASE_URL}/rest/v1/story_comments`, {
+                                                method: 'POST',
+                                                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                                                body: JSON.stringify({
+                                                        story_id: Number(id),
+                                                        user_id: claims.sub,
+                                                        author_name: claims.username || null,
+                                                        author_avatar: claims.avatar_url || null,
+                                                        content
+                                                })
+                                        });
+                                        if (!r.ok) { const t = await r.text(); throw new Error('HTTP ' + r.status + ' ' + t.slice(0, 120)); }
+                                        if (input) input.value = '';
+                                        await loadStoryComments(id);
+                                } catch (e) {
+                                        if (msg) msg.textContent = '❌ 发表失败：' + e.message;
+                                } finally {
+                                        if (btn) btn.disabled = false;
+                                }
+                        }
+
+                        async function deleteStoryComment(cid) {
+                                if (!confirm('确定删除这条评论吗？')) return;
+                                try {
+                                        const r = await fetch(`${SUPABASE_URL}/rest/v1/story_comments?id=eq.${encodeURIComponent(cid)}`, {
+                                                method: 'DELETE',
+                                                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}` }
+                                        });
+                                        if (!r.ok) throw new Error('HTTP ' + r.status);
+                                        await loadStoryComments(_curStoryId);
+                                } catch (e) {
+                                        showError('删除失败：' + e.message);
+                                }
+                        }
+
+                        // 详情页事件绑定（骨架为静态 HTML，脚本在 body 末尾执行，元素必已存在）
+                        (function wireStoryDetail() {
+                                const back = document.getElementById('storyDetailBack');
+                                if (back) back.addEventListener('click', () => { switchView('community'); switchSub('stories'); });
+                                const likeBtn = document.getElementById('storyLikeBtn');
+                                if (likeBtn) likeBtn.addEventListener('click', toggleStoryLike);
+                                const sub = document.getElementById('storyCommentSubmit');
+                                if (sub) sub.addEventListener('click', submitStoryComment);
+                                const lg = document.getElementById('storyCommentLoginLink');
+                                if (lg) lg.addEventListener('click', (e) => { e.preventDefault(); openAuthModal('login'); });
+                        })();
 
                         // ---------- 2. 访问计数（独立模块，REST API） ----------
                         (function visitCounter() {
