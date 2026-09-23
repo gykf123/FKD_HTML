@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FKD-Web 版本 v1.7 · 2026-09-20 22:50 · 改动：故事详情页(独立视图) + 点赞(一人一赞) + 评论(登录发表/本人+管理员可删) + 列表卡片计数徽标(❤️赞/💬评论) -->
+<!-- FKD-Web 版本 v1.8 · 2026-09-23 23:10 · 改动：用户活跃值(发帖/留言/每日登录/签到) + 名人榜(活跃值排名,管理员可±调控) + 我的资料显活跃值/签到 -->
 <html lang="zh-CN">
         <head>
                 <meta charset="UTF-8" />
@@ -641,6 +641,29 @@
                         .comment-form textarea:focus { border-color:var(--accent-green); box-shadow:3px 3px 0 0 rgba(90,158,62,.35); }
                         .comment-login-hint { color:var(--text-muted); font-size:.85rem; padding:.9rem; background:var(--bg-secondary); border:2px dashed var(--border-light); text-align:center; }
                         .comment-login-hint a { color:var(--accent-gold); font-weight:600; cursor:pointer; }
+                        /* ===== 活跃值 / 签到 / 名人榜 / Toast ===== */
+                        .mp-active-row { display:flex; align-items:center; justify-content:space-between; margin:.4rem 0; padding:.6rem .8rem; background:var(--bg-secondary); border:2px solid var(--border-color); }
+                        .mp-active-row span { color:var(--text-secondary); font-size:.9rem; }
+                        .mp-active-row strong { font-size:1.3rem; color:var(--accent-gold); }
+                        .mp-signin-row { display:flex; align-items:center; gap:.6rem; margin-top:.5rem; }
+                        .mp-signin-hint { font-size:.82rem; color:var(--text-muted); }
+                        .hall-list { display:flex; flex-direction:column; gap:.5rem; }
+                        .hall-item { display:flex; align-items:center; gap:.7rem; padding:.6rem .8rem; background:var(--bg-card); border:3px solid var(--mc-edge); box-shadow:3px 3px 0 0 rgba(0,0,0,.5); cursor:pointer; transition:transform .12s; }
+                        .hall-item:hover { transform:translate(-2px,-2px); }
+                        .hall-item.hall-top { border-color:var(--accent-gold); }
+                        .hall-rank { font-family:var(--mc-pixel-font); font-size:.8rem; width:1.8rem; text-align:center; color:var(--text-muted); }
+                        .hall-item.hall-top .hall-rank { color:var(--accent-gold); }
+                        .hall-avatar { width:34px; height:34px; border-radius:50%; object-fit:cover; border:2px solid var(--accent-gold); }
+                        .hall-avatar-empty { display:flex; align-items:center; justify-content:center; background:var(--bg-secondary); color:var(--text-secondary); font-weight:700; }
+                        .hall-name { flex:1; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+                        .hall-score { font-family:var(--mc-pixel-font); font-size:.9rem; color:var(--accent-gold); min-width:2.5rem; text-align:right; }
+                        .hall-ctrl { display:flex; gap:.3rem; }
+                        .hall-btn { background:var(--bg-secondary); border:2px solid var(--mc-edge); color:var(--text-primary); padding:.2rem .5rem; cursor:pointer; font-size:.8rem; box-shadow:2px 2px 0 0 rgba(0,0,0,.4); }
+                        .hall-btn:hover { border-color:var(--accent-green); }
+                        .empty-hint { text-align:center; color:var(--text-muted); padding:2rem; background:var(--bg-card); border:3px solid var(--mc-edge); }
+                        .toast { position:fixed; left:50%; bottom:2rem; transform:translateX(-50%); background:var(--bg-card); color:var(--text-primary); border:3px solid var(--mc-edge); box-shadow:4px 4px 0 0 rgba(0,0,0,.5); padding:.7rem 1.2rem; z-index:3000; font-size:.9rem; opacity:0; transition:opacity .25s, transform .25s; pointer-events:none; }
+                        .toast.show { opacity:1; transform:translateX(-50%) translateY(-6px); }
+                        .toast.error { border-color:#d0453b; color:#d0453b; }
                         .message-card, .trade-card, .story-card { position:relative; }
                         .role-badge { font-size:.7rem; padding:.1rem .4rem; border-radius:4px; margin-left:.3rem; }
                         .role-badge.role-admin { background:var(--accent-gold); color:#1a1a1a; }
@@ -800,6 +823,16 @@
                                 <div class="form-group">
                                         <label>个人简介（最多 200 字）</label>
                                         <textarea id="mpBio" rows="3" placeholder="介绍一下你自己~"></textarea>
+                                </div>
+                                <div class="form-group">
+                                        <div class="mp-active-row">
+                                                <span>我的活跃值</span>
+                                                <strong id="mpActiveValue">0</strong>
+                                        </div>
+                                        <div class="mp-signin-row">
+                                                <button type="button" class="submit-btn small" id="mpSignInBtn">📅 每日签到 +3</button>
+                                                <span id="mpSignInHint" class="mp-signin-hint"></span>
+                                        </div>
                                 </div>
                                 <button class="submit-btn" id="mpSaveBtn">保存资料</button>
                                 <div class="form-message" id="mpMessage"></div>
@@ -1061,11 +1094,11 @@
 
                                         <!-- 子面板：名人榜 -->
                                         <div class="subpanel" id="sub-hall">
-                                                <div
-                                                        style="text-align:center; padding:3rem 2rem; color:var(--text-muted); background:var(--bg-card); border:3px solid var(--mc-edge); box-shadow:4px 4px 0 0 rgba(0,0,0,0.5);"
-                                                >
-                                                        🏅 名人榜暂未更新，欢迎自荐或推荐优秀玩家！
+                                                <div class="section-header">
+                                                        <h2 class="section-title">🏅 名人榜 · 活跃值排名</h2>
+                                                        <div class="section-divider"></div>
                                                 </div>
+                                                <div id="hallList" class="hall-list"><div class="empty-hint">加载中...</div></div>
                                         </div>
                                 </div>
                         </section>
@@ -2164,10 +2197,54 @@
                             document.querySelectorAll('.subtab').forEach(t => t.classList.toggle('active', t.dataset.sub === tab));
                             const panel = document.getElementById('sub-' + tab);
                             if (panel) panel.classList.add('active');
+                            if (tab === 'hall') renderHall();
                         }
                         document.querySelectorAll('.subtab').forEach(t => {
                             t.addEventListener('click', () => switchSub(t.dataset.sub));
                         });
+
+                        // ---------- 名人榜：活跃值排名 ----------
+                        function showToast(text, isError) {
+                            let t = document.getElementById('fkdToast');
+                            if (!t) { t = document.createElement('div'); t.id = 'fkdToast'; t.className = 'toast'; document.body.appendChild(t); }
+                            t.textContent = text; t.className = 'toast' + (isError ? ' error' : '');
+                            requestAnimationFrame(() => t.classList.add('show'));
+                            clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+                        }
+                        function escapeHTML2(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+                        async function renderHall() {
+                            const box = document.getElementById('hallList');
+                            if (!box) return;
+                            box.innerHTML = '<div class="empty-hint">加载中...</div>';
+                            try {
+                                const r = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,username,avatar_url,role,active_value&status=eq.approved&order=active_value.desc&limit=50`, { headers: { 'apikey': SUPABASE_ANON_KEY } });
+                                const arr = await r.json();
+                                if (!Array.isArray(arr)) throw new Error('数据异常');
+                                if (!arr.length) { box.innerHTML = '<div class="empty-hint">还没有玩家上榜，快去发帖攒活跃值吧！</div>'; return; }
+                                const admin = isAdmin();
+                                box.innerHTML = arr.map((u, i) => {
+                                    const av = u.avatar_url ? `<img class="hall-avatar" src="${escapeHTML2(u.avatar_url)}" onerror="this.style.display='none'"/>` : `<div class="hall-avatar hall-avatar-empty">${escapeHTML2((u.username||'?').slice(0,1))}</div>`;
+                                    const roleBadge = u.role === 'admin' ? '<span class="role-badge role-admin">管理员</span>' : '';
+                                    const ctrl = admin ? `<div class="hall-ctrl"><button class="hall-btn" data-uid="${u.id}" data-d="5">＋5</button><button class="hall-btn" data-uid="${u.id}" data-d="-5">－5</button></div>` : '';
+                                    return `<div class="hall-item${i<3?' hall-top':''}" data-username="${escapeHTML2(u.username||'')}">
+                                        <span class="hall-rank">${i+1}</span>${av}
+                                        <span class="hall-name">${escapeHTML2(u.username||'匿名')}</span>${roleBadge}
+                                        <span class="hall-score">${u.active_value||0}</span>${ctrl}
+                                    </div>`;
+                                }).join('');
+                                box.querySelectorAll('.hall-item').forEach(el => el.addEventListener('click', e => { if (e.target.closest('.hall-ctrl')) return; const un = el.dataset.username; if (un) openProfile(un); }));
+                                box.querySelectorAll('.hall-btn').forEach(b => b.addEventListener('click', async e => {
+                                    e.stopPropagation();
+                                    const uid = b.dataset.uid, d = parseInt(b.dataset.d, 10);
+                                    const r2 = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_adjust_active`, { method:'POST', headers:{ 'apikey':SUPABASE_ANON_KEY, 'Authorization':`Bearer ${getToken()}`, 'Content-Type':'application/json' }, body: JSON.stringify({ p_user: uid, p_delta: d }) });
+                                    const j = await r2.json().catch(()=>({ok:false}));
+                                    if (j && j.ok) { const sc = b.closest('.hall-item').querySelector('.hall-score'); sc.textContent = (parseInt(sc.textContent,10)||0) + d; showToast(d>0?'已 +'+d:'已 '+d); }
+                                    else showToast((j && j.msg) || '调整失败', true);
+                                }));
+                            } catch (e) {
+                                box.innerHTML = '<div class="empty-hint">加载失败：' + escapeHTML2(String(e.message||e)) + '</div>';
+                            }
+                        }
 
                         // ---------- 11. 初始化 ----------
                         loadStories();
@@ -2511,22 +2588,42 @@
                                 // 回填数据库里的最新资料：token 里没有 bio，且 avatar_url 可能只是登录时的旧快照
                                 if (claims.sub) {
                                         try {
-                                                const r = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${claims.sub}&select=avatar_url,bio`, {
+                                                const r = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${claims.sub}&select=avatar_url,bio,active_value`, {
                                                         headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}` }
                                                 });
                                                 const arr = await r.json();
                                                 // 仅当“仍是本次打开(seq 未变)”且“用户尚未上传/改过头像(!_mpTouched)”时，才允许回填覆盖头像；
-                                                // 否则保留用户刚上传的新头像，避免把新值覆盖回旧值。bio 始终回填。
+                                                // 否则保留用户刚上传的新头像，避免把新值覆盖回旧值。bio / 活跃值 始终回填。
                                                 if (seq === _mpLoadSeq && r.ok && Array.isArray(arr) && arr[0]) {
                                                         const dbAvatar = arr[0].avatar_url || '';
                                                         const dbBio = arr[0].bio || '';
+                                                        const dbActive = arr[0].active_value || 0;
                                                         if (!_mpTouched) {
                                                                 if (prev) { prev.src = dbAvatar; prev.style.display = dbAvatar ? 'block' : 'none'; }
                                                                 if (urlEl) urlEl.value = dbAvatar;
                                                         }
                                                         if (bioEl) bioEl.value = dbBio;
+                                                        const avEl = document.getElementById('mpActiveValue'); if (avEl) avEl.textContent = dbActive;
                                                 }
                                         } catch {}
+                                }
+                                // 绑定“每日签到”按钮（每次打开重新绑定，避免重复监听）
+                                const signBtn = document.getElementById('mpSignInBtn');
+                                const signHint = document.getElementById('mpSignInHint');
+                                if (signBtn) {
+                                        signBtn.disabled = false;
+                                        if (signHint) signHint.textContent = '';
+                                        signBtn.onclick = async () => {
+                                                try {
+                                                        signBtn.disabled = true;
+                                                        const sr = await fetch(`${SUPABASE_URL}/rest/v1/rpc/do_sign_in`, { method:'POST', headers:{ 'apikey':SUPABASE_ANON_KEY, 'Authorization':`Bearer ${getToken()}`, 'Content-Type':'application/json' } });
+                                                        const sj = await sr.json().catch(()=>({ok:false}));
+                                                        if (sj && sj.ok) {
+                                                                if (sj.signed) { const avEl = document.getElementById('mpActiveValue'); if (avEl) avEl.textContent = (parseInt(avEl.textContent,10)||0) + (sj.delta||0); if (signHint) signHint.textContent = '今日已签到 +' + (sj.delta||0); showToast('📅 签到成功 +' + (sj.delta||0) + ' 活跃值'); }
+                                                                else { if (signHint) signHint.textContent = '今天已经签到过啦'; showToast('今天已签到'); }
+                                                        } else { if (signHint) signHint.textContent = (sj && sj.msg) || '签到失败'; signBtn.disabled = false; }
+                                                } catch { if (signBtn) signBtn.disabled = false; }
+                                        };
                                 }
                         }
                         async function saveMyProfile() {
@@ -2779,6 +2876,11 @@
                                         setToken(data.token);
                                         msg.textContent = '✅ 登录成功'; msg.className = 'form-message success';
                                         updateAuthUI();
+                                        // 每日登录奖励（每天一次，重复不叠加）
+                                        try {
+                                            const dl = await fetch(`${SUPABASE_URL}/rest/v1/rpc/grant_daily_login`, { method:'POST', headers:{ 'apikey':SUPABASE_ANON_KEY, 'Authorization':`Bearer ${getToken()}`, 'Content-Type':'application/json' } });
+                                            if (dl.ok) { const add = await dl.json().catch(()=>0); if (add === 2) showToast('📅 每日登录 +2 活跃值'); }
+                                        } catch {}
                                         setTimeout(closeAuthModal, 600);
                                 });
 
