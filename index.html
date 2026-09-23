@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FKD-Web 版本 v1.8 · 2026-09-23 23:10 · 改动：用户活跃值(发帖/留言/每日登录/签到) + 名人榜(活跃值排名,管理员可±调控) + 我的资料显活跃值/签到 -->
+<!-- FKD-Web 版本 v1.8.1 · 2026-09-23 23:30 · 改动：修复名人榜管理员±调控后不重新排名(整榜即时重排+名次/前三金框刷新,500ms静默校准,防连点) -->
 <html lang="zh-CN">
         <head>
                 <meta charset="UTF-8" />
@@ -2212,36 +2212,71 @@
                             clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2200);
                         }
                         function escapeHTML2(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-                        async function renderHall() {
+                        // 名人榜本地数据缓存：管理员调控后先本地即时重排，再静默校准
+                        let _hallData = null;
+                        let _hallSeq = 0;
+                        // 排序规则：活跃值降序；同分按用户名升序（与服务器 order 一致，保证本地重排与刷新后结果相同）
+                        function sortHall(arr) {
+                            return arr.slice().sort((a, b) => ((b.active_value || 0) - (a.active_value || 0)) || String(a.username || '').localeCompare(String(b.username || ''), 'zh-Hans-CN'));
+                        }
+                        // 统一渲染：排序 → 重绘名次/前三金框/头像/角色徽章 → 重新绑定事件
+                        function paintHall(arr) {
                             const box = document.getElementById('hallList');
                             if (!box) return;
-                            box.innerHTML = '<div class="empty-hint">加载中...</div>';
-                            try {
-                                const r = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,username,avatar_url,role,active_value&status=eq.approved&order=active_value.desc&limit=50`, { headers: { 'apikey': SUPABASE_ANON_KEY } });
-                                const arr = await r.json();
-                                if (!Array.isArray(arr)) throw new Error('数据异常');
-                                if (!arr.length) { box.innerHTML = '<div class="empty-hint">还没有玩家上榜，快去发帖攒活跃值吧！</div>'; return; }
-                                const admin = isAdmin();
-                                box.innerHTML = arr.map((u, i) => {
-                                    const av = u.avatar_url ? `<img class="hall-avatar" src="${escapeHTML2(u.avatar_url)}" onerror="this.style.display='none'"/>` : `<div class="hall-avatar hall-avatar-empty">${escapeHTML2((u.username||'?').slice(0,1))}</div>`;
-                                    const roleBadge = u.role === 'admin' ? '<span class="role-badge role-admin">管理员</span>' : '';
-                                    const ctrl = admin ? `<div class="hall-ctrl"><button class="hall-btn" data-uid="${u.id}" data-d="5">＋5</button><button class="hall-btn" data-uid="${u.id}" data-d="-5">－5</button></div>` : '';
-                                    return `<div class="hall-item${i<3?' hall-top':''}" data-username="${escapeHTML2(u.username||'')}">
-                                        <span class="hall-rank">${i+1}</span>${av}
-                                        <span class="hall-name">${escapeHTML2(u.username||'匿名')}</span>${roleBadge}
-                                        <span class="hall-score">${u.active_value||0}</span>${ctrl}
-                                    </div>`;
-                                }).join('');
-                                box.querySelectorAll('.hall-item').forEach(el => el.addEventListener('click', e => { if (e.target.closest('.hall-ctrl')) return; const un = el.dataset.username; if (un) openProfile(un); }));
-                                box.querySelectorAll('.hall-btn').forEach(b => b.addEventListener('click', async e => {
-                                    e.stopPropagation();
-                                    const uid = b.dataset.uid, d = parseInt(b.dataset.d, 10);
+                            const list = sortHall(Array.isArray(arr) ? arr : []);
+                            if (!list.length) { box.innerHTML = '<div class="empty-hint">还没有玩家上榜，快去发帖攒活跃值吧！</div>'; return; }
+                            const admin = isAdmin();
+                            box.innerHTML = list.map((u, i) => {
+                                const av = u.avatar_url ? `<img class="hall-avatar" src="${escapeHTML2(u.avatar_url)}" onerror="this.style.display='none'"/>` : `<div class="hall-avatar hall-avatar-empty">${escapeHTML2((u.username||'?').slice(0,1))}</div>`;
+                                const roleBadge = u.role === 'admin' ? '<span class="role-badge role-admin">管理员</span>' : '';
+                                const ctrl = admin ? `<div class="hall-ctrl"><button class="hall-btn" data-uid="${u.id}" data-d="5">＋5</button><button class="hall-btn" data-uid="${u.id}" data-d="-5">－5</button></div>` : '';
+                                return `<div class="hall-item${i<3?' hall-top':''}" data-uid="${u.id}" data-username="${escapeHTML2(u.username||'')}">
+                                    <span class="hall-rank">${i+1}</span>${av}
+                                    <span class="hall-name">${escapeHTML2(u.username||'匿名')}</span>${roleBadge}
+                                    <span class="hall-score">${u.active_value||0}</span>${ctrl}
+                                </div>`;
+                            }).join('');
+                            box.querySelectorAll('.hall-item').forEach(el => el.addEventListener('click', e => { if (e.target.closest('.hall-ctrl')) return; const un = el.dataset.username; if (un) openProfile(un); }));
+                            box.querySelectorAll('.hall-btn').forEach(b => b.addEventListener('click', async e => {
+                                e.stopPropagation();
+                                if (b.dataset.busy === '1') return;
+                                const uid = b.dataset.uid, d = parseInt(b.dataset.d, 10);
+                                const row = b.closest('.hall-item');
+                                b.dataset.busy = '1';
+                                if (row) row.querySelectorAll('.hall-btn').forEach(x => x.disabled = true);
+                                let ok = false;
+                                try {
                                     const r2 = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_adjust_active`, { method:'POST', headers:{ 'apikey':SUPABASE_ANON_KEY, 'Authorization':`Bearer ${getToken()}`, 'Content-Type':'application/json' }, body: JSON.stringify({ p_user: uid, p_delta: d }) });
                                     const j = await r2.json().catch(()=>({ok:false}));
-                                    if (j && j.ok) { const sc = b.closest('.hall-item').querySelector('.hall-score'); sc.textContent = (parseInt(sc.textContent,10)||0) + d; showToast(d>0?'已 +'+d:'已 '+d); }
-                                    else showToast((j && j.msg) || '调整失败', true);
-                                }));
+                                    if (j && j.ok) {
+                                        ok = true;
+                                        // ① 本地即时更新分数 + 重新排名（整榜重排，名次与前三金框一起刷新）
+                                        const it = (_hallData || []).find(x => String(x.id) === String(uid));
+                                        if (it) it.active_value = Math.max(0, (it.active_value || 0) + d);
+                                        paintHall(_hallData);
+                                        showToast((d > 0 ? '已 +' + d : '已 ' + d) + '，排名已刷新');
+                                        // ② 稍后静默重拉服务器校准（多端并发时以库内为准，不显示"加载中"）
+                                        setTimeout(function () { renderHall({ silent: true }); }, 500);
+                                    } else showToast((j && j.msg) || '调整失败', true);
+                                } catch (err) { showToast('网络错误，请重试', true); }
+                                if (!ok && row) row.querySelectorAll('.hall-btn').forEach(x => { x.disabled = false; x.dataset.busy = ''; });
+                            }));
+                        }
+                        async function renderHall(opts) {
+                            const silent = !!(opts && opts.silent);
+                            const box = document.getElementById('hallList');
+                            if (!box) return;
+                            const seq = ++_hallSeq;
+                            if (!silent) box.innerHTML = '<div class="empty-hint">加载中...</div>';
+                            try {
+                                const r = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,username,avatar_url,role,active_value&status=eq.approved&order=active_value.desc,username.asc&limit=50`, { headers: { 'apikey': SUPABASE_ANON_KEY } });
+                                const arr = await r.json();
+                                if (!Array.isArray(arr)) throw new Error('数据异常');
+                                if (seq !== _hallSeq) return;   // 已有更新的渲染，丢弃本次过期结果
+                                _hallData = arr;
+                                paintHall(arr);
                             } catch (e) {
+                                if (seq !== _hallSeq || silent) return;
                                 box.innerHTML = '<div class="empty-hint">加载失败：' + escapeHTML2(String(e.message||e)) + '</div>';
                             }
                         }
