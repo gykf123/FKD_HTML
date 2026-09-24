@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FKD-Web 版本 v1.8.1 · 2026-09-23 23:30 · 改动：修复名人榜管理员±调控后不重新排名(整榜即时重排+名次/前三金框刷新,500ms静默校准,防连点) -->
+<!-- FKD-Web 版本 v1.8.2 · 2026-09-24 18:20 · 改动：右上角登录态只显示头像(点头像进账号详情);账号弹窗改为只读详情+修改资料按钮两视图;退出/审核入口移入详情视图 -->
 <html lang="zh-CN">
         <head>
                 <meta charset="UTF-8" />
@@ -570,7 +570,6 @@
 
                         /* 用户系统 UI（申请注册 + 后台审核） */
                         .auth-area { display: flex; align-items: center; gap: 0.5rem; }
-                        .auth-user { font-size: 0.85rem; color: var(--text-primary); }
                         .auth-btn {
                                 background: var(--bg-card); border: 2px solid var(--border-color);
                                 color: var(--text-secondary); padding: 0.3rem 0.7rem; cursor: pointer;
@@ -670,6 +669,20 @@
                         .trade-author { margin-bottom:.4rem; }
                         .anon-toggle { display:flex; align-items:center; gap:.4rem; font-size:.82rem; color:var(--text-secondary); margin:.4rem 0 .2rem; cursor:pointer; }
                         .auth-mini-avatar { width:20px; height:20px; border-radius:50%; object-fit:cover; vertical-align:middle; border:1px solid var(--accent-gold); }
+                        /* 右上角：登录后只显示可点头像 */
+                        .auth-mini-avatar-btn { background:none; border:none; padding:0; margin:0; cursor:pointer; line-height:0; display:inline-flex; border-radius:50%; }
+                        .auth-mini-avatar-btn:active { transform:translateY(1px); }
+                        .auth-mini-avatar-btn .auth-mini-avatar { width:34px; height:34px; border:2px solid var(--accent-gold); }
+                        .auth-mini-avatar-empty { display:inline-flex; align-items:center; justify-content:center; background:var(--bg-secondary); color:var(--text-primary); font-weight:700; font-size:.95rem; }
+                        /* 账号详情视图 */
+                        .mp-detail-head { display:flex; align-items:center; gap:.8rem; margin-bottom:.8rem; }
+                        .mp-detail-avatar { width:58px; height:58px; border-radius:50%; object-fit:cover; border:3px solid var(--accent-gold); box-shadow:3px 3px 0 rgba(0,0,0,.4); background:var(--bg-secondary); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.5rem; overflow:hidden; flex:0 0 auto; }
+                        .mp-detail-avatar img { width:100%; height:100%; object-fit:cover; }
+                        .mp-detail-username { margin:0; font-size:1.2rem; font-family:var(--mc-title-font); }
+                        .mp-detail-role { margin-top:.2rem; }
+                        .mp-detail-bio { color:var(--text-secondary); margin:.2rem 0 .9rem; white-space:pre-wrap; word-break:break-word; min-height:1.1rem; line-height:1.6; }
+                        .mp-detail-bio.muted { color:var(--text-muted); font-style:italic; }
+                        .mp-detail-actions { display:flex; gap:.6rem; flex-wrap:wrap; margin-top:1rem; }
                         .modal-wide { max-width:680px; }
                         #profileBody .profile-loading, #profileBody .profile-empty { text-align:center; padding:2.5rem 1rem; color:var(--text-muted); }
                         .profile-header { display:flex; gap:1.2rem; align-items:center; padding:1rem 0 1.2rem; border-bottom:2px solid var(--mc-edge); margin-bottom:1rem; }
@@ -806,36 +819,53 @@
                         </div>
                 </div>
 
-                <!-- 我的资料（编辑头像 / 简介） -->
+                <!-- 我的资料：详情视图(只读) + 编辑视图(修改) -->
                 <div class="modal-overlay" id="myProfileModal">
                         <div class="modal">
                                 <button class="modal-close" id="closeMyProfileModal">&times;</button>
-                                <h3>✏️ 我的资料</h3>
-                                <div class="form-group">
-                                        <label>头像（走图床上传，数据库只存链接）</label>
-                                        <div class="avatar-upload-row">
-                                                <img id="mpAvatarPreview" class="mp-avatar-preview" alt="" style="display:none" />
-                                                <input type="file" id="mpAvatarFile" accept="image/*" />
-                                                <button type="button" class="submit-btn small" id="mpAvatarUploadBtn">📷 上传头像</button>
+
+                                <!-- 详情视图：只读展示，点击"修改资料"才进入编辑 -->
+                                <div id="mpDetailView">
+                                        <div class="mp-detail-head">
+                                                <div id="mpDetailAvatar" class="mp-detail-avatar"></div>
+                                                <div>
+                                                        <div class="mp-detail-username" id="mpDetailUsername"></div>
+                                                        <div class="mp-detail-role" id="mpDetailRole"></div>
+                                                </div>
                                         </div>
-                                        <input type="text" id="mpAvatarUrl" placeholder="或在此粘贴头像图片链接（http(s)）" style="margin-top:.5rem;" />
-                                </div>
-                                <div class="form-group">
-                                        <label>个人简介（最多 200 字）</label>
-                                        <textarea id="mpBio" rows="3" placeholder="介绍一下你自己~"></textarea>
-                                </div>
-                                <div class="form-group">
-                                        <div class="mp-active-row">
-                                                <span>我的活跃值</span>
-                                                <strong id="mpActiveValue">0</strong>
-                                        </div>
+                                        <div class="mp-detail-bio" id="mpDetailBio"></div>
+                                        <div class="mp-active-row"><span>我的活跃值</span><strong id="mpActiveValue">0</strong></div>
                                         <div class="mp-signin-row">
                                                 <button type="button" class="submit-btn small" id="mpSignInBtn">📅 每日签到 +3</button>
                                                 <span id="mpSignInHint" class="mp-signin-hint"></span>
                                         </div>
+                                        <div class="mp-detail-actions">
+                                                <button type="button" class="submit-btn" id="mpEditBtn">✏️ 修改资料</button>
+                                                <button type="button" class="auth-btn admin" id="mpAdminBtn" style="display:none">🛡️ 审核</button>
+                                                <button type="button" class="auth-btn" id="mpLogoutBtn">退出登录</button>
+                                        </div>
                                 </div>
-                                <button class="submit-btn" id="mpSaveBtn">保存资料</button>
-                                <div class="form-message" id="mpMessage"></div>
+
+                                <!-- 编辑视图：修改信息 -->
+                                <div id="mpEditView" style="display:none">
+                                        <h3>✏️ 编辑资料</h3>
+                                        <div class="form-group">
+                                                <label>头像（走图床上传，数据库只存链接）</label>
+                                                <div class="avatar-upload-row">
+                                                        <img id="mpAvatarPreview" class="mp-avatar-preview" alt="" style="display:none" />
+                                                        <input type="file" id="mpAvatarFile" accept="image/*" />
+                                                        <button type="button" class="submit-btn small" id="mpAvatarUploadBtn">📷 上传头像</button>
+                                                </div>
+                                                <input type="text" id="mpAvatarUrl" placeholder="或在此粘贴头像图片链接（http(s)）" style="margin-top:.5rem;" />
+                                        </div>
+                                        <div class="form-group">
+                                                <label>个人简介（最多 200 字）</label>
+                                                <textarea id="mpBio" rows="3" placeholder="介绍一下你自己~"></textarea>
+                                        </div>
+                                        <button class="submit-btn" id="mpSaveBtn">保存资料</button>
+                                        <button class="auth-btn" id="mpCancelEdit">取消</button>
+                                        <div class="form-message" id="mpMessage"></div>
+                                </div>
                         </div>
                 </div>
 
@@ -2607,6 +2637,34 @@
                         // 用 _mpTouched 记录用户是否已上传/改过头像；_mpLoadSeq 保证只有本次打开的回填才生效。
                         let _mpLoadSeq = 0;
                         let _mpTouched = false;
+                        // ---------- 账号弹窗：详情视图(只读) / 编辑视图(修改) 切换 ----------
+                        function showMpDetailView() {
+                                const d = document.getElementById('mpDetailView'), e = document.getElementById('mpEditView');
+                                if (d) d.style.display = ''; if (e) e.style.display = 'none';
+                        }
+                        function showMpEditView() {
+                                const d = document.getElementById('mpDetailView'), e = document.getElementById('mpEditView');
+                                if (d) d.style.display = 'none'; if (e) e.style.display = '';
+                        }
+                        function paintMpDetail(avatar, username, role, bio) {
+                                const av = document.getElementById('mpDetailAvatar');
+                                if (av) av.innerHTML = avatar ? `<img src="${escapeHTML(avatar)}" alt="" onerror="this.style.display='none'">` : escapeHTML((username||'?').slice(0,1).toUpperCase());
+                                const un = document.getElementById('mpDetailUsername'); if (un) un.textContent = username || '匿名';
+                                const rl = document.getElementById('mpDetailRole'); if (rl) rl.innerHTML = role === 'admin' ? '<span class="role-badge role-admin">管理员</span>' : '';
+                                const bi = document.getElementById('mpDetailBio');
+                                if (bi) {
+                                        if (bio) { bi.textContent = bio; bi.classList.remove('muted'); }
+                                        else { bi.textContent = '这个人很懒，什么都没写~'; bi.classList.add('muted'); }
+                                }
+                        }
+                        function bindMpActions() {
+                                const eb = document.getElementById('mpEditBtn'); if (eb) eb.onclick = showMpEditView;
+                                const ce = document.getElementById('mpCancelEdit'); if (ce) ce.onclick = showMpDetailView;
+                                const lo = document.getElementById('mpLogoutBtn');
+                                if (lo) lo.onclick = () => { modalClose('myProfileModal'); clearToken(); updateAuthUI(); showError('已退出登录'); };
+                                const ab = document.getElementById('mpAdminBtn');
+                                if (ab) { ab.style.display = isAdmin() ? '' : 'none'; ab.onclick = openAdminModal; }
+                        }
                         async function openMyProfile() {
                                 const claims = parseToken();
                                 if (!claims) { openAuthModal('login'); return; }
@@ -2619,29 +2677,34 @@
                                 const bioEl = document.getElementById('mpBio'); if (bioEl) bioEl.value = '';
                                 const urlEl = document.getElementById('mpAvatarUrl'); if (urlEl) urlEl.value = claims.avatar_url || '';
                                 const msg = document.getElementById('mpMessage'); if (msg) { msg.textContent = ''; msg.className = 'form-message'; }
+                                showMpDetailView();   // 默认只读详情，隐藏编辑表单
                                 modal.classList.add('active');
-                                // 回填数据库里的最新资料：token 里没有 bio，且 avatar_url 可能只是登录时的旧快照
+                                // 先用 token 即时填充详情（避免空白闪烁），再从库回填最新资料
+                                paintMpDetail(claims.avatar_url || '', claims.username || '匿名', claims.role, '');
                                 if (claims.sub) {
                                         try {
-                                                const r = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${claims.sub}&select=avatar_url,bio,active_value`, {
+                                                const r = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${claims.sub}&select=avatar_url,bio,active_value,role`, {
                                                         headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}` }
                                                 });
                                                 const arr = await r.json();
                                                 // 仅当“仍是本次打开(seq 未变)”且“用户尚未上传/改过头像(!_mpTouched)”时，才允许回填覆盖头像；
                                                 // 否则保留用户刚上传的新头像，避免把新值覆盖回旧值。bio / 活跃值 始终回填。
                                                 if (seq === _mpLoadSeq && r.ok && Array.isArray(arr) && arr[0]) {
-                                                        const dbAvatar = arr[0].avatar_url || '';
-                                                        const dbBio = arr[0].bio || '';
-                                                        const dbActive = arr[0].active_value || 0;
+                                                        const u = arr[0];
+                                                        const dbAvatar = u.avatar_url || '';
+                                                        const dbBio = u.bio || '';
+                                                        const dbActive = u.active_value || 0;
                                                         if (!_mpTouched) {
                                                                 if (prev) { prev.src = dbAvatar; prev.style.display = dbAvatar ? 'block' : 'none'; }
                                                                 if (urlEl) urlEl.value = dbAvatar;
                                                         }
                                                         if (bioEl) bioEl.value = dbBio;
+                                                        paintMpDetail(dbAvatar, claims.username || '匿名', u.role, dbBio);
                                                         const avEl = document.getElementById('mpActiveValue'); if (avEl) avEl.textContent = dbActive;
                                                 }
                                         } catch {}
                                 }
+                                bindMpActions();
                                 // 绑定“每日签到”按钮（每次打开重新绑定，避免重复监听）
                                 const signBtn = document.getElementById('mpSignInBtn');
                                 const signHint = document.getElementById('mpSignInHint');
@@ -2698,7 +2761,8 @@
                                         if (_avatarOverride) { try { localStorage.setItem('fkd_avatar_override', _avatarOverride); } catch {} }
                                         else { try { localStorage.removeItem('fkd_avatar_override'); } catch {} }
                                 } catch {}
-                                setTimeout(() => { const m = document.getElementById('myProfileModal'); if (m) m.classList.remove('active'); }, 700);
+                                // 保存成功后回到只读详情视图，并重新拉取最新资料刷新展示（不再自动关闭弹窗）
+                                setTimeout(openMyProfile, 350);
                         }
 
                         function modalClose(id) { const m = document.getElementById(id); if (m) m.classList.remove('active'); }
@@ -2813,17 +2877,11 @@
                                 if (!area) return;
                                 const claims = parseToken();
                                 if (claims) {
-                                        const adminBtn = isAdmin() ? `<button class="auth-btn admin" id="openAdminBtn">🛡️ 审核</button>` : '';
-                                        const av = claims.avatar_url ? `<img class="auth-mini-avatar" src="${escapeHTML(claims.avatar_url)}" alt="" onerror="this.style.display='none'">` : '';
-                                        area.innerHTML = `
-                                                <span class="auth-user">${av}👤 ${escapeHTML(claims.username)}</span>
-                                                <button class="auth-btn" id="openMyProfileBtn">✏️ 资料</button>
-                                                ${adminBtn}
-                                                <button class="auth-btn" id="logoutBtn">退出</button>`;
-                                        const lb = document.getElementById('logoutBtn');
-                                        if (lb) lb.addEventListener('click', () => { clearToken(); updateAuthUI(); showError('已退出登录'); });
-                                        const ab = document.getElementById('openAdminBtn');
-                                        if (ab) ab.addEventListener('click', openAdminModal);
+                                        // 已登录：只显示一个可点击的圆形头像（无头像时用首字母占位），点击进入账号详情
+                                        const av = claims.avatar_url
+                                                ? `<img class="auth-mini-avatar" src="${escapeHTML(claims.avatar_url)}" alt="" onerror="this.style.display='none'">`
+                                                : `<span class="auth-mini-avatar auth-mini-avatar-empty">${escapeHTML((claims.username||'?').slice(0,1).toUpperCase())}</span>`;
+                                        area.innerHTML = `<button class="auth-mini-avatar-btn" id="openMyProfileBtn" title="${escapeHTML(claims.username)} 的账号">${av}</button>`;
                                         const mp = document.getElementById('openMyProfileBtn');
                                         if (mp) mp.addEventListener('click', openMyProfile);
                                 } else {
