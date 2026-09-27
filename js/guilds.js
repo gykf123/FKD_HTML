@@ -53,6 +53,14 @@
           <button class="submit-btn" id="cgSubmitBtn">创建</button>
           <div class="form-message" id="cgMessage"></div>
         </div>
+      </div>
+      <div class="modal-overlay" id="guildManageModal">
+        <div class="modal">
+          <button class="modal-close" id="closeGuildManage">&times;</button>
+          <h3 id="gmTitle">工会管理</h3>
+          <div class="form-message" id="gmManageMsg"></div>
+          <div id="gmManageBody"></div>
+        </div>
       </div>`;
     root.querySelectorAll('.guild-tab').forEach(t => {
       t.onclick = () => {
@@ -66,6 +74,7 @@
     });
     document.getElementById('openCreateGuildBtn').onclick = () => document.getElementById('createGuildModal').classList.add('active');
     document.getElementById('closeCreateGuildModal').onclick = () => document.getElementById('createGuildModal').classList.remove('active');
+    document.getElementById('closeGuildManage').onclick = () => document.getElementById('guildManageModal').classList.remove('active');
     document.getElementById('cgSubmitBtn').onclick = createGuild;
     document.getElementById('guildSearchBtn').onclick = searchGuild;
     loadGuildRank();
@@ -121,6 +130,7 @@
         <div class="gc-main"><div class="gc-name">${escapeHTML(g.guilds ? g.guilds.name : '工会')}${g.guilds && g.guilds.tag ? `<span class="gc-tag">${escapeHTML(g.guilds.tag)}</span>` : ''}</div><div class="gc-meta">${isOwner ? '👑 会长' : '成员'}</div></div>
         <div class="gc-actions">
           <button class="submit-btn small" data-mem="${gid}">成员</button>
+          ${isOwner ? '<button class="submit-btn small" data-manage="' + gid + '">管理</button>' : ''}
           ${isOwner ? '<button class="submit-btn small" data-pend="' + gid + '">待审批</button>' : ''}
           <button class="submit-btn small ghost" data-leave="${gid}">退出</button>
         </div>
@@ -128,6 +138,7 @@
     }).join('');
     box.innerHTML = html;
     box.querySelectorAll('[data-mem]').forEach(b => b.onclick = () => showGuildMembers(b.dataset.mem, false));
+    box.querySelectorAll('[data-manage]').forEach(b => b.onclick = () => openManage(b.dataset.manage));
     box.querySelectorAll('[data-pend]').forEach(b => b.onclick = () => showGuildPending(b.dataset.pend));
     box.querySelectorAll('[data-leave]').forEach(b => b.onclick = () => leaveGuild(b.dataset.leave));
   }
@@ -227,6 +238,38 @@
     const { data } = await rpc('leave_guild', { p_guild: gid });
     if (data && data.ok) { showToast('已退出工会'); loadMyGuilds(); }
     else showToast((data && data.msg) || '退出失败', true);
+  }
+
+  async function openManage(gid) {
+    const overlay = document.getElementById('guildManageModal');
+    const body = document.getElementById('gmManageBody');
+    const msg = document.getElementById('gmManageMsg');
+    msg.textContent = ''; msg.className = 'form-message';
+    body.innerHTML = '<div class="empty-hint">加载成员中...</div>';
+    overlay.classList.add('active');
+    const { data } = await rest('guild_members', `select=user_id,users(id,username)&guild_id=eq.${gid}&status=eq.approved&role=neq.owner`);
+    const members = Array.isArray(data) ? data : [];
+    let html = '<p class="gm-section-title">转让会长（选择一名成员）</p>';
+    if (!members.length) html += '<div class="empty-hint">暂无其他成员可转让</div>';
+    else html += '<div class="gm-transfer-list">' + members.map(m => {
+      const u = m.users || {};
+      return `<div class="gp-item"><span class="gp-name">${escapeHTML(u.username || '匿名')}</span><button class="submit-btn small" data-transfer="${u.id}">转让</button></div>`;
+    }).join('') + '</div>';
+    html += '<hr class="gm-div"/><button class="submit-btn danger" id="gmDissolve">⚠ 解散工会</button>';
+    body.innerHTML = html;
+    body.querySelectorAll('[data-transfer]').forEach(b => b.onclick = async () => {
+      if (!confirm('确定将会长转让给该成员？')) return;
+      const r = await rpc('transfer_guild', { p_guild: gid, p_to_user: b.dataset.transfer });
+      if (r.data && r.data.ok) { showToast('会长已转让'); overlay.classList.remove('active'); loadMyGuilds(); loadGuildRank(); }
+      else { msg.textContent = (r.data && r.data.msg) || '转让失败'; msg.className = 'form-message error'; }
+    });
+    const dis = document.getElementById('gmDissolve');
+    if (dis) dis.onclick = async () => {
+      if (!confirm('解散后工会与所有成员关系将永久删除，确定？')) return;
+      const r = await rpc('dissolve_guild', { p_guild: gid });
+      if (r.data && r.data.ok) { showToast('工会已解散'); overlay.classList.remove('active'); loadMyGuilds(); loadGuildRank(); }
+      else { msg.textContent = (r.data && r.data.msg) || '解散失败'; msg.className = 'form-message error'; }
+    };
   }
 
   const _sw = window.switchView;

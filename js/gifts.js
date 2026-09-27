@@ -46,13 +46,23 @@
     };
   };
 
-  // 在公开个人主页显示他人时注入"赠送活跃值"按钮
+  // 在公开个人主页显示他人时注入"赠送活跃值"按钮 + 赠送记录入口
   const _op = window.openProfile;
   window.openProfile = async function (username) {
     if (typeof _op === 'function') await _op(username);
     const body = document.getElementById('profileBody');
     const modal = document.getElementById('profileModal');
     if (!body || !modal || !modal.classList.contains('active')) return;
+    if (!body.querySelector('#giftRecBtn')) {
+      const rec = document.createElement('button');
+      rec.id = 'giftRecBtn';
+      rec.className = 'submit-btn small ghost';
+      rec.textContent = '📜 赠送记录';
+      rec.style.marginTop = '1rem';
+      rec.style.marginRight = '.5rem';
+      rec.onclick = () => giftRecords(username);
+      body.appendChild(rec);
+    }
     if (username === meName()) return;
     if (body.querySelector('#giftEntryBtn')) return;
     const btn = document.createElement('button');
@@ -67,4 +77,35 @@
     };
     body.appendChild(btn);
   };
+
+  // 赠送记录：展示该用户送出 / 收到的活跃值流水（公开可读，demo 级）
+  async function giftRecords(username) {
+    const u = await rest('users', `select=id,username&username=eq.${encodeURIComponent(username)}`);
+    const arr = Array.isArray(u.data) ? u.data : [];
+    if (!arr.length) { showToast('用户不存在', true); return; }
+    const uidv = arr[0].id;
+    const r = await rest('active_gifts', `select=amount,created_at,from_user(id,username),to_user(id,username)&or=(from_user.eq.${uidv},to_user.eq.${uidv})&order=created_at.desc&limit=80`);
+    const rows = Array.isArray(r.data) ? r.data : [];
+    const sent = rows.filter(x => x.from_user && x.from_user.id === uidv);
+    const recv = rows.filter(x => x.to_user && x.to_user.id === uidv);
+    const fmt = t => { try { return new Date(t).toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }); } catch (e) { return t; } };
+    const item = x => {
+      const out = !!(x.from_user && x.from_user.id === uidv);
+      const other = out ? (x.to_user && x.to_user.username) : (x.from_user && x.from_user.username);
+      return `<div class="gr-item"><span class="gr-dir">${out ? '送出→' : '收到←'}</span><span class="gr-who">${escapeHTML(other || '匿名')}</span><span class="gr-amt">${out ? '-' : '+'}${x.amount}</span><span class="gr-time">${fmt(x.created_at)}</span></div>`;
+    };
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay active';
+    overlay.id = 'giftRecModal';
+    overlay.innerHTML = `<div class="modal">
+      <button class="modal-close" id="giftRecClose">&times;</button>
+      <h3>📜 ${escapeHTML(username)} 的赠送记录</h3>
+      <div class="gr-col"><h4>送出（${sent.length}）</h4>${sent.length ? sent.map(item).join('') : '<div class="empty-hint">暂无</div>'}</div>
+      <div class="gr-col"><h4>收到（${recv.length}）</h4>${recv.length ? recv.map(item).join('') : '<div class="empty-hint">暂无</div>'}</div>
+    </div>`;
+    document.body.appendChild(overlay);
+    const close = () => overlay.remove();
+    document.getElementById('giftRecClose').onclick = close;
+    overlay.onclick = e => { if (e.target === overlay) close(); };
+  }
 })();

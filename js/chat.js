@@ -16,7 +16,29 @@
     return { status: r.status, data: await r.json().catch(() => null) };
   }
 
-  let chatReady = false, chatConv = null;
+  let chatReady = false, chatConv = null, pollTimer = null;
+
+  function renderBubble(m) {
+    return `<div class="chat-bubble ${m.sender_id === meId() ? 'me' : ''}"><div class="cb-name">${escapeHTML(m.sender_name || '')}</div>${escapeHTML(m.content)}</div>`;
+  }
+  function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+  function startPolling() { stopPolling(); pollTimer = setInterval(pollNew, 3000); }
+  async function pollNew() {
+    if (!chatConv) return;
+    const box = document.getElementById('chatMsgs');
+    if (!box) return;
+    const r = chatConv.type === 'dm'
+      ? await rpc('get_dm_history', { p_with: chatConv.peer })
+      : await rpc('get_group_messages', { p_group: chatConv.gid });
+    const list = (r.data && r.data.list) || [];
+    const fresh = list.filter(m => m.created_at > chatConv.lastTs);
+    if (!fresh.length) return;
+    const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+    box.insertAdjacentHTML('beforeend', fresh.map(renderBubble).join(''));
+    chatConv.lastTs = fresh[fresh.length - 1].created_at;
+    if (atBottom) box.scrollTop = box.scrollHeight;
+    if (chatConv.type === 'dm') { rpc('mark_dm_read', { p_with: chatConv.peer }); loadConversations('dm', true); }
+  }
 
   function initChat() {
     const root = document.getElementById('chatRoot');
@@ -57,11 +79,11 @@
     loadConversations('dm');
   }
 
-  async function loadConversations(type) {
+  async function loadConversations(type, silent) {
     const list = document.getElementById('chatConvList');
     const uid = meId();
     if (!uid) { list.innerHTML = '<div class="chat-empty">请先登录</div>'; return; }
-    list.innerHTML = '<div class="chat-empty">加载中...</div>';
+    if (!silent) list.innerHTML = '<div class="chat-empty">加载中...</div>';
     let data = [];
     if (type === 'dm') { const r = await rpc('list_dm_conversations', {}); data = (r.data && r.data.list) || []; }
     else { const r = await rpc('list_my_groups', {}); data = (r.data && r.data.list) || []; }
@@ -83,7 +105,7 @@
   }
 
   async function openDM(peer, name) {
-    chatConv = { type: 'dm', peer, name };
+    chatConv = { type: 'dm', peer, name, lastTs: '' };
     const main = document.getElementById('chatMain');
     main.innerHTML = `<div class="chat-msgs" id="chatMsgs"></div>
       <div class="chat-input-bar"><input id="chatInput" placeholder="发消息给 ${escapeHTML(name)}..."/><button class="submit-btn small" id="chatSend">发送</button></div>`;
@@ -92,27 +114,32 @@
     const r = await rpc('get_dm_history', { p_with: peer });
     const list = (r.data && r.data.list) || [];
     const box = document.getElementById('chatMsgs');
-    box.innerHTML = list.map(m => `<div class="chat-bubble ${m.sender_id === meId() ? 'me' : ''}"><div class="cb-name">${escapeHTML(m.sender_name || '')}</div>${escapeHTML(m.content)}</div>`).join('');
+    box.innerHTML = list.map(renderBubble).join('');
     box.scrollTop = box.scrollHeight;
+    chatConv.lastTs = list.length ? list[list.length - 1].created_at : '';
     rpc('mark_dm_read', { p_with: peer });
+    startPolling();
   }
 
   async function openGroup(gid, name) {
-    chatConv = { type: 'group', gid, name };
+    chatConv = { type: 'group', gid, name, lastTs: '' };
     const main = document.getElementById('chatMain');
     main.innerHTML = `<div class="chat-msgs" id="chatMsgs"></div>
       <div class="chat-input-bar"><input id="chatInput" placeholder="在 ${escapeHTML(name)} 发消息..."/><button class="submit-btn small" id="chatSend">发送</button></div>`;
     document.getElementById('chatSend').onclick = sendCurrent;
     document.getElementById('chatInput').onkeydown = e => { if (e.key === 'Enter') sendCurrent(); };
-    await renderGroupMsgs(gid);
+    const list = await renderGroupMsgs(gid);
+    chatConv.lastTs = list.length ? list[list.length - 1].created_at : '';
+    startPolling();
   }
   async function renderGroupMsgs(gid) {
     const r = await rpc('get_group_messages', { p_group: gid });
     const list = (r.data && r.data.list) || [];
     const box = document.getElementById('chatMsgs');
-    if (!box) return;
-    box.innerHTML = list.map(m => `<div class="chat-bubble ${m.sender_id === meId() ? 'me' : ''}"><div class="cb-name">${escapeHTML(m.sender_name || '')}</div>${escapeHTML(m.content)}</div>`).join('');
+    if (!box) return list;
+    box.innerHTML = list.map(renderBubble).join('');
     box.scrollTop = box.scrollHeight;
+    return list;
   }
 
   async function sendCurrent() {
@@ -169,5 +196,5 @@
   }
 
   const _sw = window.switchView;
-  window.switchView = function (name) { if (typeof _sw === 'function') _sw(name); if (name === 'chat') initChat(); };
+  window.switchView = function (name) { if (typeof _sw === 'function') _sw(name); if (name === 'chat') initChat(); else stopPolling(); };
 })();

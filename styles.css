@@ -743,3 +743,18 @@
 .submit-btn.ghost { background: transparent; color: var(--text-secondary); }
 .submit-btn.ghost:hover { background: var(--bg-main); }
 .form-message.error { color: #e74c3c; }
+
+/* ============ v1.9.1 工会管理 / 赠送记录 ============ */
+.gm-section-title { font-weight:bold; margin:.8rem 0 .4rem; color:var(--mc-gold); }
+.gm-transfer-list { display:flex; flex-direction:column; gap:.5rem; }
+.gm-div { border:none; border-top:2px solid var(--mc-edge); margin:1rem 0; }
+.submit-btn.danger { background:#e74c3c; border-color:#a93226; color:#fff; }
+.submit-btn.danger:hover { background:#c0392b; }
+.gr-col { margin-top:.6rem; }
+.gr-col h4 { margin:.4rem 0; color:var(--text-secondary); }
+.gr-item { display:flex; align-items:center; gap:.5rem; padding:.35rem; border:2px solid var(--mc-edge); background:var(--bg-main); margin-bottom:.35rem; font-size:.85rem; }
+.gr-dir { color:var(--text-muted); }
+.gr-who { flex:1; font-weight:bold; }
+.gr-amt { color:var(--mc-gold); font-weight:bold; }
+.gr-time { color:var(--text-muted); font-size:.75rem; }
+#giftRecModal .modal { max-height:82vh; overflow:auto; }
