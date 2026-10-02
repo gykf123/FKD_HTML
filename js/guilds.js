@@ -7,18 +7,33 @@
   function meId() { const p = parseToken(); return p ? p.sub : null; }
 
   async function rpc(name, body) {
-    const r = await fetch(`${API}/rest/v1/rpc/${name}`, {
-      method: 'POST',
-      headers: { 'apikey': ANON, 'Authorization': `Bearer ${token()}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body || {})
-    });
-    return { status: r.status, data: await r.json().catch(() => ({ ok: false })) };
+    try {
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 12000);
+      const r = await fetch(`${API}/rest/v1/rpc/${name}`, {
+        method: 'POST',
+        headers: { 'apikey': ANON, 'Authorization': `Bearer ${token()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {}),
+        signal: ctrl.signal
+      });
+      clearTimeout(to);
+      return { status: r.status, data: await r.json().catch(() => ({ ok: false })) };
+    } catch (e) {
+      showToast('网络异常，请稍后重试', true);
+      return { status: 0, data: null };
+    }
   }
   async function rest(path, query) {
-    const r = await fetch(`${API}/rest/v1/${path}?${query}`, {
-      headers: { 'apikey': ANON, 'Authorization': `Bearer ${token()}` }
-    });
-    return { status: r.status, data: await r.json().catch(() => null) };
+    try {
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 12000);
+      const r = await fetch(`${API}/rest/v1/${path}?${query}`, { headers: { 'apikey': ANON, 'Authorization': `Bearer ${token()}` }, signal: ctrl.signal });
+      clearTimeout(to);
+      return { status: r.status, data: await r.json().catch(() => null) };
+    } catch (e) {
+      showToast('网络异常，请稍后重试', true);
+      return { status: 0, data: null };
+    }
   }
 
   function initGuilds() {

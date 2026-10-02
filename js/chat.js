@@ -4,16 +4,33 @@
   function token() { return getToken(); }
   function meId() { const p = parseToken(); return p ? p.sub : null; }
   async function rpc(name, body) {
-    const r = await fetch(`${API}/rest/v1/rpc/${name}`, {
-      method: 'POST',
-      headers: { 'apikey': ANON, 'Authorization': `Bearer ${token()}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body || {})
-    });
-    return { status: r.status, data: await r.json().catch(() => ({ ok: false })) };
+    try {
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 12000);
+      const r = await fetch(`${API}/rest/v1/rpc/${name}`, {
+        method: 'POST',
+        headers: { 'apikey': ANON, 'Authorization': `Bearer ${token()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {}),
+        signal: ctrl.signal
+      });
+      clearTimeout(to);
+      return { status: r.status, data: await r.json().catch(() => ({ ok: false })) };
+    } catch (e) {
+      showToast('网络异常，请稍后重试', true);
+      return { status: 0, data: null };
+    }
   }
   async function rest(path, q) {
-    const r = await fetch(`${API}/rest/v1/${path}?${q}`, { headers: { 'apikey': ANON, 'Authorization': `Bearer ${token()}` } });
-    return { status: r.status, data: await r.json().catch(() => null) };
+    try {
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 12000);
+      const r = await fetch(`${API}/rest/v1/${path}?${q}`, { headers: { 'apikey': ANON, 'Authorization': `Bearer ${token()}` }, signal: ctrl.signal });
+      clearTimeout(to);
+      return { status: r.status, data: await r.json().catch(() => null) };
+    } catch (e) {
+      showToast('网络异常，请稍后重试', true);
+      return { status: 0, data: null };
+    }
   }
 
   let chatReady = false, chatConv = null, pollTimer = null;
@@ -37,7 +54,7 @@
     box.insertAdjacentHTML('beforeend', fresh.map(renderBubble).join(''));
     chatConv.lastTs = fresh[fresh.length - 1].created_at;
     if (atBottom) box.scrollTop = box.scrollHeight;
-    if (chatConv.type === 'dm') { rpc('mark_dm_read', { p_with: chatConv.peer }); loadConversations('dm', true); }
+    if (chatConv.type === 'dm') rpc('mark_dm_read', { p_with: chatConv.peer });
   }
 
   function initChat() {
@@ -142,6 +159,19 @@
     return list;
   }
 
+  async function refreshCurrentMsgs() {
+    if (!chatConv) return;
+    const box = document.getElementById('chatMsgs');
+    if (!box) return;
+    const r = chatConv.type === 'dm'
+      ? await rpc('get_dm_history', { p_with: chatConv.peer })
+      : await rpc('get_group_messages', { p_group: chatConv.gid });
+    const list = (r.data && r.data.list) || [];
+    box.innerHTML = list.map(renderBubble).join('');
+    box.scrollTop = box.scrollHeight;
+    chatConv.lastTs = list.length ? list[list.length - 1].created_at : '';
+  }
+
   async function sendCurrent() {
     const uid = meId(); if (!uid) { showToast('请先登录', true); openAuthModal('login'); return; }
     const inp = document.getElementById('chatInput'); if (!inp) return;
@@ -149,8 +179,13 @@
     let r;
     if (chatConv.type === 'dm') r = await rpc('send_dm', { p_to: chatConv.peer, p_content: text });
     else r = await rpc('send_group_msg', { p_group: chatConv.gid, p_content: text });
-    if (r.data && r.data.ok) { inp.value = ''; if (chatConv.type === 'dm') openDM(chatConv.peer, chatConv.name); else renderGroupMsgs(chatConv.gid); }
-    else showToast((r.data && r.data.msg) || '发送失败', true);
+    if (r.status === 0) { return; }
+    if (r.data && r.data.ok) {
+      inp.value = '';
+      await refreshCurrentMsgs();
+      if (chatConv.type === 'dm') rpc('mark_dm_read', { p_with: chatConv.peer });
+    } else showToast((r.data && r.data.msg) || '发送失败', true);
+    if (inp) inp.focus();
   }
 
   function openChatNew() {

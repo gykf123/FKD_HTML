@@ -757,4 +757,29 @@
 .gr-who { flex:1; font-weight:bold; }
 .gr-amt { color:var(--mc-gold); font-weight:bold; }
 .gr-time { color:var(--text-muted); font-size:.75rem; }
+
+/* ============ v1.9.2 移动端响应式增强 ============ */
+@media (max-width: 768px) {
+  /* 聊天：原 260px 侧栏会挤压主区，改上下堆叠 */
+  .chat-layout { grid-template-columns: 1fr; height: auto; min-height: 0; }
+  .chat-sidebar { height: 30vh; min-height: 200px; }
+  .chat-main { height: 56vh; min-height: 340px; }
+  .chat-bubble { max-width: 86%; }
+  .chat-bubble .cb-name { font-size: .72rem; }
+  /* 窄屏弹窗撑满，避免内容被裁切 */
+  .modal { width: 94%; padding: 1.4rem; }
+  /* 工会卡片操作区换行并铺满，按钮更易点 */
+  .guild-card { gap: .6rem; }
+  .guild-card .gc-actions { width: 100%; flex-wrap: wrap; }
+  .guild-card .gc-actions .submit-btn { flex: 1 1 auto; }
+  /* 设置弹层、个人主页头像区微调 */
+  .profile-header { flex-direction: column; text-align: center; }
+}
+@media (max-width: 480px) {
+  .navbar-brand { font-size: 1rem; }
+  .navbar-brand .brand-icon { width: 28px; height: 28px; }
+  .chat-sidebar { height: 26vh; min-height: 170px; }
+  .chat-main { height: 62vh; min-height: 320px; }
+  .chat-subtab, .guild-tab { padding: .45rem .7rem; }
+}
 #giftRecModal .modal { max-height:82vh; overflow:auto; }
