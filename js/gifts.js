@@ -40,6 +40,7 @@
     if (targetId === uid) { showToast('不能送给自己', true); return; }
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay active';
+    overlay.style.zIndex = modalTopZ();
     overlay.id = 'giftModal';
     overlay.innerHTML = `<div class="modal">
       <button class="modal-close" id="giftClose">&times;</button>
@@ -113,6 +114,7 @@
     };
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay active';
+    overlay.style.zIndex = modalTopZ();
     overlay.id = 'giftRecModal';
     overlay.innerHTML = `<div class="modal">
       <button class="modal-close" id="giftRecClose">&times;</button>

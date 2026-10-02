@@ -480,7 +480,7 @@
 
                         // ---------- 4. 矿石查找器 ----------
                         const oreModal = document.getElementById('oreModal');
-                        document.getElementById('oreFinderLink').addEventListener('click', (e) => { e.preventDefault(); oreModal.classList.add('active'); });
+                        document.getElementById('oreFinderLink').addEventListener('click', (e) => { e.preventDefault(); modalOpen('oreModal'); });
                         document.getElementById('closeOreModal').addEventListener('click', () => oreModal.classList.remove('active'));
                         oreModal.addEventListener('click', (e) => { if (e.target === oreModal) oreModal.classList.remove('active'); });
                         document.getElementById('generateOreLink').addEventListener('click', () => {
@@ -1110,7 +1110,7 @@
                         async function openProfile(username) {
                                 const modal = document.getElementById('profileModal');
                                 if (!modal) return;
-                                modal.classList.add('active');
+                                modalOpen('profileModal');
                                 const body = document.getElementById('profileBody');
                                 if (body) body.innerHTML = '<div class="profile-loading"><span class="spinner"></span> 加载主页中...</div>';
                                 const h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` };
@@ -1272,7 +1272,7 @@
                                 const urlEl = document.getElementById('mpAvatarUrl'); if (urlEl) urlEl.value = claims.avatar_url || '';
                                 const msg = document.getElementById('mpMessage'); if (msg) { msg.textContent = ''; msg.className = 'form-message'; }
                                 showMpDetailView();   // 默认只读详情，隐藏编辑表单
-                                modal.classList.add('active');
+                                modalOpen('myProfileModal');
                                 // 先用 token 即时填充详情（避免空白闪烁），再从库回填最新资料
                                 paintMpDetail(claims.avatar_url || '', claims.username || '匿名', claims.role, '');
                                 if (claims.sub) {
@@ -1360,6 +1360,20 @@
                         }
 
                         function modalClose(id) { const m = document.getElementById(id); if (m) m.classList.remove('active'); }
+                        // 弹窗层级栈：最后打开的弹窗始终置顶，避免多个 modal 互相遮挡（如审核面板与个人主页）
+                        window.__modalZ = window.__modalZ || 2000;
+                        window.modalOpen = function (id) {
+                                const m = document.getElementById(id);
+                                if (!m) return null;
+                                window.__modalZ += 10;
+                                m.style.zIndex = window.__modalZ;
+                                m.classList.add('active');
+                                return m;
+                        };
+                        window.modalTopZ = function () {
+                                window.__modalZ += 10;
+                                return window.__modalZ;
+                        };
 
                         // 通用图片上传（图床）
                         async function handleImageUpload(fileInput, urlInput, previewEl, msgEl, mode) {
@@ -1488,7 +1502,7 @@
                         function openAuthModal(tab) {
                                 const modal = document.getElementById('authModal');
                                 if (modal) {
-                                        modal.classList.add('active');
+                                        modalOpen('authModal');
                                         switchAuthTab(tab || 'login');
                                         // file:// 打开时提前告知用户请求会被浏览器拦截
                                         if (location.protocol === 'file:') {
@@ -1513,7 +1527,7 @@
 
                         function openAdminModal() {
                                 const modal = document.getElementById('adminModal');
-                                if (modal) { modal.classList.add('active'); loadAdminList(); }
+                                if (modal) { modalOpen('adminModal'); loadAdminList(); }
                         }
                         function closeAdminModal() {
                                 const modal = document.getElementById('adminModal');

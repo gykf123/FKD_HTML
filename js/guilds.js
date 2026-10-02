@@ -87,7 +87,7 @@
         if (tab === 'rank') loadGuildRank(); else loadMyGuilds();
       };
     });
-    document.getElementById('openCreateGuildBtn').onclick = () => document.getElementById('createGuildModal').classList.add('active');
+    document.getElementById('openCreateGuildBtn').onclick = () => modalOpen('createGuildModal');
     document.getElementById('closeCreateGuildModal').onclick = () => document.getElementById('createGuildModal').classList.remove('active');
     document.getElementById('closeGuildManage').onclick = () => document.getElementById('guildManageModal').classList.remove('active');
     document.getElementById('cgSubmitBtn').onclick = createGuild;
@@ -261,7 +261,7 @@
     const msg = document.getElementById('gmManageMsg');
     msg.textContent = ''; msg.className = 'form-message';
     body.innerHTML = '<div class="empty-hint">加载成员中...</div>';
-    overlay.classList.add('active');
+    modalOpen('guildManageModal');
     const { data } = await rest('guild_members', `select=user_id,users(id,username)&guild_id=eq.${gid}&status=eq.approved&role=neq.owner`);
     const members = Array.isArray(data) ? data : [];
     let html = '<p class="gm-section-title">转让会长（选择一名成员）</p>';
