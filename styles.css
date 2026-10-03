@@ -20,6 +20,7 @@
                                 --radius: 10px;
                                 --radius-sm: 6px;
                                 --badge-bg: #2a2a32;
+                                --bg-main: #16161b;
 
                                 /* ===== Minecraft 调色板 ===== */
                                 --mc-grass: #6ab04c;
@@ -55,6 +56,7 @@
                                 --shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
                                 --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.2);
                                 --badge-bg: #e8e8e0;
+                                --bg-main: #eef1e8;
                         }
                         * { margin: 0; padding: 0; box-sizing: border-box; }
                         html { scroll-behavior: smooth; }
@@ -143,7 +145,7 @@
 
                         /* ===== 视图容器（彻底告别单页长滚动） ===== */
                         #app { min-height: calc(100vh - 60px); }
-                        .view { display: none; padding-top: 60px; }
+                        .view { display: none; padding-top: 60px; padding-bottom: 2.5rem; }
                         .view.active { display: block; animation: viewFade 0.22s ease; }
                         @keyframes viewFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
@@ -782,4 +784,13 @@
   .chat-main { height: 62vh; min-height: 320px; }
   .chat-subtab, .guild-tab { padding: .45rem .7rem; }
 }
+
+/* ============ v1.9.4 排版优化 ============ */
+/* 工会/聊天视图原本直接塞进 #guildRoot/#chatRoot，大屏会拉满整行；约束最大宽度并居中，与首页 container 对齐 */
+#guildRoot, #chatRoot { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+/* 工会卡片 / 赠送记录项 / 成员项 hover 反馈，与首页卡片风格统一 */
+.guild-card { transition: transform .18s, box-shadow .18s, border-color .18s; }
+.guild-card:hover { transform: translate(-2px, -2px); border-color: var(--accent-green); box-shadow: 7px 7px 0 0 rgba(0,0,0,.6); }
+.gr-item:hover { border-color: var(--accent-green); }
+.guild-member:hover, .guild-pending .gp-item:hover { border-color: var(--accent-green); }
 #giftRecModal .modal { max-height:82vh; overflow:auto; }
