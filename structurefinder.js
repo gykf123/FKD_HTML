@@ -145,7 +145,8 @@
         }
 
         // 渲染结果（复用 ore-result 样式体系）
-        function renderStructResult(containerId, data) {
+        function renderStructResult(containerId, data, opts) {
+                opts = opts || {};
                 const el = document.getElementById(containerId);
                 if (!el) return;
                 el.style.display = 'block';
@@ -173,9 +174,9 @@
                                 <div class="ore-list-title">按距离排序的候选区块（共 ${data.total} 个${data.results.length > 80 ? '，仅显示最近 80' : ''}）</div>
                                 ${rows}
                         </div>
-                        <div class="ore-disclaimer">
+                        ${opts.bare ? '' : `<div class="ore-disclaimer">
                                 ⚠️ <b>准确性说明</b>：坐标为<b>候选区块</b>（算法与 Chunkbase 同源，基于世界种子确定性派生）。本工具<b>未内置生物群系校验</b>，少数候选可能因群系条件不满足而不生成，请游戏内确认。要塞/末地/下界结构因机制不同暂不支持。
-                        </div>`;
+                        </div>`}`;
         }
 
         window.FKDStructureFinder = { STRUCTS, findStructures, renderStructResult, parseSeed, mt_n_get };

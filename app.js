@@ -590,6 +590,17 @@
                         document.getElementById('structFinderLink').addEventListener('click', (e) => { e.preventDefault(); modalOpen('structModal'); });
                         document.getElementById('closeStructModal').addEventListener('click', () => structModal.classList.remove('active'));
                         structModal.addEventListener('click', (e) => { if (e.target === structModal) structModal.classList.remove('active'); });
+                        // 候选种子快捷选择（点击芯片填入对应输入框）
+                        document.querySelectorAll('.seed-chip').forEach(ch => {
+                            ch.addEventListener('click', () => {
+                                const t = document.getElementById(ch.dataset.target);
+                                if (t) t.value = ch.dataset.seed;
+                            });
+                        });
+                        // 对比开关：勾选后显示候选种子输入框
+                        document.getElementById('structCompare').addEventListener('change', (e) => {
+                            document.getElementById('seed2Group').style.display = e.target.checked ? 'block' : 'none';
+                        });
                         document.getElementById('generateStruct').addEventListener('click', () => {
                             const seedText = document.getElementById('structSeed').value.trim();
                             const structKey = document.getElementById('structType').value;
@@ -598,15 +609,45 @@
                             const range = document.getElementById('structRange').value.trim();
                             if (!x || !z) { showError('请完整填写中心 X / Z 坐标'); return; }
                             if (typeof window.FKDStructureFinder !== 'object') { showError('结构查找模块未加载'); return; }
-                            const data = window.FKDStructureFinder.findStructures({
+                            const base = {
                                 seedText: seedText || '20260810',
                                 structKey: structKey,
                                 centerX: Number(x) || 0,
                                 centerZ: Number(z) || 0,
                                 radius: range || 4000
-                            });
-                            window.FKDStructureFinder.renderStructResult('structResult', data);
+                            };
+                            const list = [{ label: '主种子', data: window.FKDStructureFinder.findStructures(base) }];
+                            const compareOn = document.getElementById('structCompare').checked;
+                            const seed2 = document.getElementById('structSeed2').value.trim();
+                            if (compareOn) {
+                                if (!seed2) { showError('请填写候选种子，或取消勾选对比'); return; }
+                                list.push({ label: '候选种子', data: window.FKDStructureFinder.findStructures(Object.assign({}, base, { seedText: seed2 })) });
+                            }
+                            renderStructCompare('structResult', list);
                         });
+                        // 对比渲染：主/候选种子各出一组结果（第二块省略重复免责声明）
+                        function renderStructCompare(containerId, list) {
+                            const el = document.getElementById(containerId);
+                            if (!el) return;
+                            el.style.display = 'block';
+                            el.innerHTML = '';
+                            list.forEach((item, i) => {
+                                const block = document.createElement('div');
+                                block.className = 'ore-compare-block';
+                                if (list.length > 1) {
+                                    const tag = document.createElement('div');
+                                    tag.className = 'ore-compare-tag';
+                                    tag.textContent = item.label + '：' + item.data.seed;
+                                    block.appendChild(tag);
+                                }
+                                const sub = document.createElement('div');
+                                const hid = 'sf_cmp_' + i;
+                                sub.id = hid;
+                                block.appendChild(sub);
+                                el.appendChild(block);
+                                window.FKDStructureFinder.renderStructResult(hid, item.data, i > 0 ? { bare: true } : {});
+                            });
+                        }
 
                         // ---------- 5. 种子查询 ----------
                         document.getElementById('seedMapLink').addEventListener('click', (e) => {

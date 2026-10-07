@@ -841,3 +841,18 @@ button .ui-ic, .submit-btn .ui-ic, .cat-badge .ui-ic, .q-icon .ui-ic, .t-icon .u
 .ore-more { padding: .5rem .7rem; color: var(--text-muted); font-size: .72rem; text-align: center; }
 .ore-disclaimer { margin-top: .9rem; background: rgba(230,180,60,.08); border: 2px solid var(--accent-gold); padding: .7rem .9rem; font-size: .76rem; color: var(--text-secondary); line-height: 1.5; }
 .ore-disclaimer a { color: var(--accent-gold); }
+/* 候选种子快捷选择芯片 */
+.seed-chips { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .5rem; }
+.seed-chip {
+        font-size: .74rem; padding: .3rem .55rem; cursor: pointer; user-select: none;
+        border: 2px solid var(--mc-edge); background: var(--bg-main);
+        color: var(--text-secondary); transition: all .15s;
+}
+.seed-chip:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+.seed-compare { display: flex; align-items: center; gap: .4rem; margin-top: .6rem; font-size: .8rem; color: var(--text-secondary); cursor: pointer; }
+.seed-compare input { width: auto; }
+.seed2-group { margin-top: .6rem; }
+/* 对比渲染分组 */
+.ore-compare-block { margin-top: 1.2rem; padding-top: 1rem; border-top: 3px solid var(--mc-edge); }
+.ore-compare-block:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+.ore-compare-tag { font-weight: 700; color: var(--accent-gold); margin-bottom: .5rem; font-size: .9rem; }

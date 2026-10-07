@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FKD-Web 版本 v1.9.10 · 2026-10-07 · 新增：基岩结构查找器(structurefinder.js，算法移植自 MCBEStructureFinder MIT——MT19937 mt_n_get + 候选区块派生 cal_candicate_seed/get_candicate_pos_in_area；支持村庄/埋藏宝藏/神庙/海底神殿/林地府邸/掠夺者哨塔，精确计算候选区块坐标，工具箱新增独立卡片+弹窗)；矿石查找器保留 v1.9.9 自研Y层提示(基岩精确矿石坐标纯前端不可行) -->
+<!-- FKD-Web 版本 v1.9.11 · 2026-10-07 · 优化：矿石/结构查找器加"候选种子快捷选择"芯片(2261001朋友给的 / 20261001疑似正确，一键填入) + 结构查找器加"对比候选种子"开关(主种子与候选种子各出一组结果，按游戏内村庄/宝藏对号入座判断哪个种子是真的)；默认种子改为2261001 -->
 <html lang="zh-CN">
         <head>
                 <meta charset="UTF-8" />
@@ -226,7 +226,11 @@
                                 <h3> 矿石查找器 · 基岩版</h3>
                                 <div class="form-group">
                                         <label>世界种子</label>
-                                        <input type="text" id="oreSeed" value="20260810" placeholder="输入种子（数字或文本）" />
+                                        <input type="text" id="oreSeed" value="2261001" placeholder="输入种子（数字或文本）" />
+                                        <div class="seed-chips">
+                                                <span class="seed-chip" data-target="oreSeed" data-seed="2261001">2261001（朋友给的）</span>
+                                                <span class="seed-chip" data-target="oreSeed" data-seed="20261001">20261001（疑似正确）</span>
+                                        </div>
                                 </div>
                                 <div class="form-group">
                                         <label>矿石种类</label>
@@ -269,8 +273,17 @@
                                 <button class="modal-close" id="closeStructModal">&times;</button>
                                 <h3> 结构查找器 · 基岩版</h3>
                                 <div class="form-group">
-                                        <label>世界种子</label>
-                                        <input type="text" id="structSeed" value="20260810" placeholder="输入种子（数字或文本）" />
+                                        <label>主种子（你的世界）</label>
+                                        <input type="text" id="structSeed" value="2261001" placeholder="输入种子（数字或文本）" />
+                                        <div class="seed-chips">
+                                                <span class="seed-chip" data-target="structSeed" data-seed="2261001">2261001（朋友给的）</span>
+                                                <span class="seed-chip" data-target="structSeed" data-seed="20261001">20261001（疑似正确）</span>
+                                        </div>
+                                        <label class="seed-compare"><input type="checkbox" id="structCompare" /> 同时对比候选种子</label>
+                                        <div class="form-group seed2-group" id="seed2Group" style="display:none">
+                                                <label>候选种子（对比用）</label>
+                                                <input type="text" id="structSeed2" placeholder="例如 20261001" />
+                                        </div>
                                 </div>
                                 <div class="form-group">
                                         <label>结构类型</label>
