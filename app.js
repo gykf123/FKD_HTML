@@ -568,22 +568,21 @@
                         document.getElementById('closeOreModal').addEventListener('click', () => oreModal.classList.remove('active'));
                         oreModal.addEventListener('click', (e) => { if (e.target === oreModal) oreModal.classList.remove('active'); });
                         document.getElementById('generateOreLink').addEventListener('click', () => {
+                            const seedText = document.getElementById('oreSeed').value.trim();
                             const oreType = document.getElementById('oreType').value;
-                            const oreSize = document.getElementById('oreSize').value;
                             const coordX = document.getElementById('coordX').value.trim();
-                            const coordY = document.getElementById('coordY').value.trim();
                             const coordZ = document.getElementById('coordZ').value.trim();
-                            if (!coordX || !coordY || !coordZ) { showError('请完整填写三个坐标'); return; }
-                            const finalUrl = `https://www.orefinder.gg/ores?filter=${encodeURIComponent(oreSize)}&ores[]=${encodeURIComponent(oreType)}&platform=bedrock_1_21&position[]=${encodeURIComponent(coordX)}&position[]=${encodeURIComponent(coordY)}&position[]=${encodeURIComponent(coordZ)}&seed=20260810`;
-                            const a = document.createElement('a');
-                            a.href = finalUrl;
-                            a.target = '_blank';
-                            a.rel = 'noopener noreferrer';
-                            a.style.display = 'none';
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                            oreModal.classList.remove('active');
+                            const radius = document.getElementById('oreRadius').value.trim();
+                            if (!coordX || !coordZ) { showError('请完整填写中心 X / Z 坐标'); return; }
+                            if (typeof window.FKDOreFinder !== 'object') { showError('矿石查找模块未加载'); return; }
+                            const data = window.FKDOreFinder.findOre({
+                                seedText: seedText || '20260810',
+                                oreKey: oreType,
+                                centerX: Number(coordX) || 0,
+                                centerZ: Number(coordZ) || 0,
+                                radius: radius || 4
+                            });
+                            window.FKDOreFinder.renderOreResult('oreResult', data);
                         });
 
                         // ---------- 5. 种子查询 ----------

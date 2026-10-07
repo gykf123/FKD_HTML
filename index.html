@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FKD-Web 版本 v1.9.8 · 2026-10-07 · 优化：①首屏"选择你的方块"快捷入口固定3列(桌面3+3均匀/平板2列/手机1列)；②社区故事卡片改瀑布流(masonry)错落布局；③故事列表分页+无限滚动(每页9条·IntersectionObserver触底加载更多)；④详情页点赞乐观更新(先本地切换·失败回滚)；⑤登录成功后刷新点赞态缓存使列表即时显示实心/空心心 -->
+<!-- FKD-Web 版本 v1.9.9 · 2026-10-07 · 新增：基岩版(含网易)矿石查找器(自研替代原外链 orefinder.gg)——orefinder.js 模块：输入种子+坐标+半径→区块级确定性规划+官方精确Y层三角分布可视化；分层诚实策略(不伪造基岩精确坐标·附 Chunkbase 核对入口)；移除种子地图外链依赖，工具箱改为自研 -->
 <html lang="zh-CN">
         <head>
                 <meta charset="UTF-8" />
@@ -219,11 +219,15 @@
                         </button>
                 </nav>
 
-                <!-- 矿石查找参数模态框 -->
+                <!-- 矿石查找参数模态框（基岩版自研） -->
                 <div class="modal-overlay" id="oreModal">
                         <div class="modal">
                                 <button class="modal-close" id="closeOreModal">&times;</button>
-                                <h3> 矿石查找器(可能出错)</h3>
+                                <h3> 矿石查找器 · 基岩版</h3>
+                                <div class="form-group">
+                                        <label>世界种子</label>
+                                        <input type="text" id="oreSeed" value="20260810" placeholder="输入种子（数字或文本）" />
+                                </div>
                                 <div class="form-group">
                                         <label>矿石种类</label>
                                         <select id="oreType">
@@ -235,31 +239,27 @@
                                                 <option value="redstone">红石</option>
                                                 <option value="lapis_lazuli">青金石</option>
                                                 <option value="coal">煤炭</option>
+                                                <option value="emerald">绿宝石</option>
                                         </select>
                                 </div>
-                                <div class="form-group">
-                                        <label>查找大小</label>
-                                        <select id="oreSize">
-                                                <option value="all">最小 (all)</option>
-                                                <option value="medium">中等 (medium)</option>
-                                                <option value="big">最大 (big)</option>
-                                        </select>
-                                </div>
-                                <div class="form-group">
-                                        <label>坐标 X</label>
-                                        <input type="number" id="coordX" placeholder="例如 100" />
-                                </div>
-                                <div class="form-group">
-                                        <label>坐标 Y</label>
-                                        <input type="number" id="coordY" placeholder="例如 64" />
-                                </div>
-                                <div class="form-group">
-                                        <label>坐标 Z</label>
-                                        <input type="number" id="coordZ" placeholder="例如 -200" />
+                                <div class="form-group ore-coord-row">
+                                        <div>
+                                                <label>中心 X</label>
+                                                <input type="number" id="coordX" value="0" placeholder="例如 100" />
+                                        </div>
+                                        <div>
+                                                <label>中心 Z</label>
+                                                <input type="number" id="coordZ" value="0" placeholder="例如 -200" />
+                                        </div>
+                                        <div>
+                                                <label>半径(区块)</label>
+                                                <input type="number" id="oreRadius" value="4" min="1" max="20" />
+                                        </div>
                                 </div>
                                 <button class="submit-btn" id="generateOreLink">
-                                        生成并跳转
+                                        开始查找
                                 </button>
+                                <div id="oreResult" class="ore-result"></div>
                         </div>
                 </div>
 
@@ -740,6 +740,7 @@
                         </div>
                 </footer>
 
+                <script src="orefinder.js"></script>
                 <script src="app.js"></script>
                 <script src="js/guilds.js"></script>
                 <script src="js/chat.js"></script>

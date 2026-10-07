@@ -812,3 +812,32 @@ button .ui-ic, .submit-btn .ui-ic, .cat-badge .ui-ic, .q-icon .ui-ic, .t-icon .u
 .gr-dir.in { color: var(--accent-green); }
 /* 页脚品牌去掉镐头表情，文字即 logo */
 .footer-brand { display: flex; align-items: center; gap: .5rem; }
+
+/* ============ v1.9.9 矿石查找器（基岩版） ============ */
+.ore-coord-row { display: flex; gap: .6rem; }
+.ore-coord-row > div { flex: 1; min-width: 0; }
+.ore-coord-row label { font-size: .72rem; }
+.ore-coord-row input { width: 100%; }
+.ore-result { margin-top: 1.2rem; display: none; }
+.ore-result:not(:empty) { display: block; }
+.ore-result-head { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; font-size: 1.05rem; border-bottom: 2px dashed var(--mc-edge); padding-bottom: .5rem; margin-bottom: .6rem; }
+.ore-badge { width: 14px; height: 14px; border-radius: 2px; display: inline-block; box-shadow: 0 0 0 2px rgba(0,0,0,.3); }
+.ore-dim { color: var(--text-secondary); font-size: .85rem; }
+.ore-seed { margin-left: auto; color: var(--text-muted); font-size: .7rem; font-family: var(--mc-pixel-font); }
+.ore-ylevel { background: var(--bg-main); border: 2px solid var(--mc-edge); padding: .7rem .9rem; }
+.oy-row { display: flex; align-items: baseline; gap: .6rem; }
+.oy-label { color: var(--text-secondary); font-size: .8rem; }
+.oy-val { font-family: var(--mc-title-font); font-size: 1.8rem; color: var(--mc-diamond); line-height: 1; }
+.oy-sub { color: var(--text-muted); font-size: .72rem; margin-top: .2rem; }
+.ore-dist-wrap { margin-top: .8rem; background: var(--bg-main); border: 2px solid var(--mc-edge); padding: .4rem; }
+.ore-desc { color: var(--text-secondary); font-size: .8rem; margin: .6rem 0; }
+.ore-list { margin-top: .8rem; max-height: 260px; overflow: auto; border: 2px solid var(--mc-edge); }
+.ore-list-title { position: sticky; top: 0; background: var(--bg-card); padding: .5rem .7rem; font-size: .75rem; color: var(--text-muted); border-bottom: 2px solid var(--mc-edge); }
+.ore-row { display: flex; justify-content: space-between; gap: .5rem; padding: .35rem .7rem; font-size: .82rem; border-bottom: 1px solid rgba(255,255,255,.05); }
+.ore-row:nth-child(even) { background: rgba(255,255,255,.02); }
+.ore-chunk { font-family: var(--mc-pixel-font); color: var(--text-secondary); }
+.ore-dist { color: var(--accent-gold); }
+.ore-finger { color: var(--text-muted); font-size: .72rem; }
+.ore-more { padding: .5rem .7rem; color: var(--text-muted); font-size: .72rem; text-align: center; }
+.ore-disclaimer { margin-top: .9rem; background: rgba(230,180,60,.08); border: 2px solid var(--accent-gold); padding: .7rem .9rem; font-size: .76rem; color: var(--text-secondary); line-height: 1.5; }
+.ore-disclaimer a { color: var(--accent-gold); }
