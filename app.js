@@ -585,6 +585,29 @@
                             window.FKDOreFinder.renderOreResult('oreResult', data);
                         });
 
+                        // ---------- 4.5 基岩结构查找器 ----------
+                        const structModal = document.getElementById('structModal');
+                        document.getElementById('structFinderLink').addEventListener('click', (e) => { e.preventDefault(); modalOpen('structModal'); });
+                        document.getElementById('closeStructModal').addEventListener('click', () => structModal.classList.remove('active'));
+                        structModal.addEventListener('click', (e) => { if (e.target === structModal) structModal.classList.remove('active'); });
+                        document.getElementById('generateStruct').addEventListener('click', () => {
+                            const seedText = document.getElementById('structSeed').value.trim();
+                            const structKey = document.getElementById('structType').value;
+                            const x = document.getElementById('structX').value.trim();
+                            const z = document.getElementById('structZ').value.trim();
+                            const range = document.getElementById('structRange').value.trim();
+                            if (!x || !z) { showError('请完整填写中心 X / Z 坐标'); return; }
+                            if (typeof window.FKDStructureFinder !== 'object') { showError('结构查找模块未加载'); return; }
+                            const data = window.FKDStructureFinder.findStructures({
+                                seedText: seedText || '20260810',
+                                structKey: structKey,
+                                centerX: Number(x) || 0,
+                                centerZ: Number(z) || 0,
+                                radius: range || 4000
+                            });
+                            window.FKDStructureFinder.renderStructResult('structResult', data);
+                        });
+
                         // ---------- 5. 种子查询 ----------
                         document.getElementById('seedMapLink').addEventListener('click', (e) => {
                             e.preventDefault();

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FKD-Web 版本 v1.9.9 · 2026-10-07 · 新增：基岩版(含网易)矿石查找器(自研替代原外链 orefinder.gg)——orefinder.js 模块：输入种子+坐标+半径→区块级确定性规划+官方精确Y层三角分布可视化；分层诚实策略(不伪造基岩精确坐标·附 Chunkbase 核对入口)；移除种子地图外链依赖，工具箱改为自研 -->
+<!-- FKD-Web 版本 v1.9.10 · 2026-10-07 · 新增：基岩结构查找器(structurefinder.js，算法移植自 MCBEStructureFinder MIT——MT19937 mt_n_get + 候选区块派生 cal_candicate_seed/get_candicate_pos_in_area；支持村庄/埋藏宝藏/神庙/海底神殿/林地府邸/掠夺者哨塔，精确计算候选区块坐标，工具箱新增独立卡片+弹窗)；矿石查找器保留 v1.9.9 自研Y层提示(基岩精确矿石坐标纯前端不可行) -->
 <html lang="zh-CN">
         <head>
                 <meta charset="UTF-8" />
@@ -260,6 +260,47 @@
                                         开始查找
                                 </button>
                                 <div id="oreResult" class="ore-result"></div>
+                        </div>
+                </div>
+
+                <!-- 基岩结构查找器模态框（自研，算法来自 MCBEStructureFinder MIT） -->
+                <div class="modal-overlay" id="structModal">
+                        <div class="modal">
+                                <button class="modal-close" id="closeStructModal">&times;</button>
+                                <h3> 结构查找器 · 基岩版</h3>
+                                <div class="form-group">
+                                        <label>世界种子</label>
+                                        <input type="text" id="structSeed" value="20260810" placeholder="输入种子（数字或文本）" />
+                                </div>
+                                <div class="form-group">
+                                        <label>结构类型</label>
+                                        <select id="structType">
+                                                <option value="buried_treasure">埋藏宝藏</option>
+                                                <option value="village" selected>村庄</option>
+                                                <option value="temple">神庙(沙漠/丛林)</option>
+                                                <option value="ocean_monument">海底神殿</option>
+                                                <option value="mansion">林地府邸</option>
+                                                <option value="pillager">掠夺者哨塔</option>
+                                        </select>
+                                </div>
+                                <div class="form-group ore-coord-row">
+                                        <div>
+                                                <label>中心 X</label>
+                                                <input type="number" id="structX" value="0" placeholder="例如 100" />
+                                        </div>
+                                        <div>
+                                                <label>中心 Z</label>
+                                                <input type="number" id="structZ" value="0" placeholder="例如 -200" />
+                                        </div>
+                                        <div>
+                                                <label>搜索半径(方块)</label>
+                                                <input type="number" id="structRange" value="4000" min="16" />
+                                        </div>
+                                </div>
+                                <button class="submit-btn" id="generateStruct">
+                                        开始查找
+                                </button>
+                                <div id="structResult" class="ore-result"></div>
                         </div>
                 </div>
 
@@ -648,6 +689,12 @@
                                                         <div class="t-desc">查看整个世界的地形与结构生成</div>
                                                         <div class="t-go">打开地图 <svg class="ui-ic" aria-hidden="true"><use href="#ic-arrow-right"></use></svg></div>
                                                 </div>
+                                                <div class="tool-card struct" id="structFinderLink" role="button" tabindex="0">
+                                                        <div class="t-icon"><svg class="ui-ic" aria-hidden="true"><use href="#ic-compass"></use></svg></div>
+                                                        <div class="t-title">结构查找器</div>
+                                                        <div class="t-desc">精确定位村庄·埋藏宝藏·神殿（基岩版）</div>
+                                                        <div class="t-go">打开查找器 <svg class="ui-ic" aria-hidden="true"><use href="#ic-arrow-right"></use></svg></div>
+                                                </div>
                                         </div>
                                 </div>
                         </section>
@@ -741,6 +788,7 @@
                 </footer>
 
                 <script src="orefinder.js"></script>
+                <script src="structurefinder.js"></script>
                 <script src="app.js"></script>
                 <script src="js/guilds.js"></script>
                 <script src="js/chat.js"></script>
