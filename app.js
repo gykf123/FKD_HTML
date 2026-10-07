@@ -32,7 +32,7 @@
 
                         const SITE_CONFIG = {
                             serverName: 'FKD方块殿',
-                            season: 'S8.0',
+                            season: 'S9.0',
                             owner: 'FKD乄老果',
                             githubNote: '基于 GitHub + Supabase 托管',
                             contactQQ: '3658683821',
@@ -171,14 +171,14 @@
                                         _storyStats.likes = likes; _storyStats.comments = comments;
                                         document.querySelectorAll('.story-stats[data-story-id]').forEach(el => {
                                                 const id = el.dataset.storyId;
-                                                el.textContent = `<svg class="ui-ic" aria-hidden="true"><use href="#ic-heart-filled"></use></svg> ${likes[id] || 0} · <svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg> ${comments[id] || 0}`;
+                                                el.innerHTML = `<svg class="ui-ic" aria-hidden="true"><use href="#ic-heart-filled"></use></svg> ${likes[id] || 0} · <svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg> ${comments[id] || 0}`;
                                         });
                                 } catch (e) { /* 静默兜底 */ }
                         }
 
                         function refreshStoryBadge(id) {
                                 const el = document.querySelector(`.story-stats[data-story-id="${id}"]`);
-                                if (el) el.textContent = `<svg class="ui-ic" aria-hidden="true"><use href="#ic-heart-filled"></use></svg> ${_storyStats.likes[id] || 0} · <svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg> ${_storyStats.comments[id] || 0}`;
+                                if (el) el.innerHTML = `<svg class="ui-ic" aria-hidden="true"><use href="#ic-heart-filled"></use></svg> ${_storyStats.likes[id] || 0} · <svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg> ${_storyStats.comments[id] || 0}`;
                         }
 
                         function openStoryDetail(id) {

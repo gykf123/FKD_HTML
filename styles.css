@@ -716,12 +716,12 @@
 .chat-sidebar-head { padding:.6rem; border-bottom:3px solid var(--mc-edge); display:flex; justify-content:space-between; align-items:center; }
 .chat-sidebar-head h3 { margin:0; font-family:var(--mc-title-font); color:var(--mc-gold); font-size:1rem; }
 .chat-conv-list { flex:1; overflow:auto; }
-.conv-item { display:flex; align-items:center; gap:.5rem; padding:.6rem; cursor:pointer; border-bottom:2px solid var(--mc-edge); }
+.conv-item { display:flex; flex-wrap:wrap; align-items:center; gap:.2rem .5rem; padding:.6rem; cursor:pointer; border-bottom:2px solid var(--mc-edge); }
 .conv-item:hover { background:var(--bg-main); }
 .conv-item.active { background:var(--mc-gold); color:#1b1b1b; }
-.conv-item .ci-name { flex:1; font-weight:bold; }
-.conv-item .ci-unread { background:#e74c3c; color:#fff; border-radius:10px; padding:0 .4rem; font-size:.75rem; }
-.conv-item .ci-last { color:var(--text-muted); font-size:.78rem; width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.conv-item .ci-name { flex:1 1 auto; min-width:0; font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.conv-item .ci-unread { background:#e74c3c; color:#fff; border-radius:10px; padding:0 .4rem; font-size:.75rem; flex:0 0 auto; }
+.conv-item .ci-last { flex:1 0 100%; color:var(--text-muted); font-size:.78rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .chat-main { background:var(--bg-card); border:3px solid var(--mc-edge); display:flex; flex-direction:column; overflow:hidden; }
 .chat-msgs { flex:1; overflow:auto; padding:1rem; display:flex; flex-direction:column; gap:.6rem; }
 .chat-bubble { max-width:72%; padding:.5rem .8rem; border:2px solid var(--mc-edge); background:var(--bg-main); }

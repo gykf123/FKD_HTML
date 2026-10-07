@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FKD-Web 版本 v1.9.5 · 2026-10-07 · 改动：全面去除表情符号 UI，改用内联 SVG 图标系统(svg-sprite + .ui-ic + 30+ symbol);导航/按钮/卡片/弹窗/点赞/删除/返回等全部替换为专业线性图标;主题切换/赠送记录方向箭头同步改为图标与文字;页脚镐头与像素分隔符改为 CSS;域名 fkd.xn--0iv.gay(FKD.是.gay) 已绑定 -->
+<!-- FKD-Web 版本 v1.9.6 · 2026-10-07 · 修复：①重点-社区帖子卡片底部 SVG 源码泄漏(app.js story-stats 由 textContent 改 innerHTML)；②观感-矿石查找器卡片缺图标(补 ic-gem 宝石图标)；③观感-聊天会话列表用户名被挤成逐字竖排(.conv-item 改 flex-wrap 两行布局)；④赛季 S8.0→S9.0 更新 -->
 <html lang="zh-CN">
         <head>
                 <meta charset="UTF-8" />
@@ -274,7 +274,7 @@
                                                 />
                                         </div>
                                         <div class="season-badge">
-                                                <span class="dot"></span> 赛季 S8.0 火热进行中
+                                                <span class="dot"></span> 赛季 S9.0 火热进行中
                                                 <span class="dot"></span>
                                         </div>
                                         <h1 class="hero-title">FKD 方块殿</h1>
@@ -295,7 +295,7 @@
                                                 <div class="info-card">
                                                         <div class="icon"><svg class="ui-ic" aria-hidden="true"><use href="#ic-tag"></use></svg></div>
                                                         <div class="label">当前赛季</div>
-                                                        <div class="value gold">S8.0</div>
+                                                        <div class="value gold">S9.0</div>
                                                 </div>
                                                 <div class="info-card">
                                                         <div class="icon"><svg class="ui-ic" aria-hidden="true"><use href="#ic-dot"></use></svg></div>
@@ -637,7 +637,7 @@
                                         </div>
                                         <div class="tool-grid">
                                                 <div class="tool-card ore" id="oreFinderLink" role="button" tabindex="0">
-                                                        <div class="t-icon"></div>
+                                                        <div class="t-icon"><svg class="ui-ic" aria-hidden="true"><use href="#ic-gem"></use></svg></div>
                                                         <div class="t-title">矿石查找器</div>
                                                         <div class="t-desc">按坐标定位钻石、远古残骸等矿脉</div>
                                                         <div class="t-go">打开查找器 <svg class="ui-ic" aria-hidden="true"><use href="#ic-arrow-right"></use></svg></div>
@@ -787,6 +787,7 @@
   <symbol id="ic-users" viewBox="0 0 24 24"><path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75'/></symbol>
   <symbol id="ic-sun" viewBox="0 0 24 24"><path d='M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42 M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z'/></symbol>
   <symbol id="ic-monitor" viewBox="0 0 24 24"><path d='M2 3h20v14H2z M8 21h8 M12 17v4'/></symbol>
+  <symbol id="ic-gem" viewBox="0 0 24 24"><path d='M6 3h12l4 6-10 12L2 9z M2 9h20 M6 3l6 6 M18 3l-6 6'/></symbol>
 </svg>
 </body>
 </html>
