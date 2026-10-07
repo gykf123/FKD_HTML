@@ -51,48 +51,97 @@
                         `;
 
                         // ---------- 1. 加载故事（使用 REST API） ----------
-                        async function loadStories() {
-                            const loadingEl = document.getElementById('storiesLoading');
-                            const container = document.getElementById('storiesContainer');
-                            const emptyEl = document.getElementById('storiesEmpty');
+                        // 故事列表分页状态（无限滚动加载更多）
+                        let storiesPage = 0, storiesLoading = false, storiesDone = false;
+                        const STORIES_PAGE_SIZE = 9;
+                        let storiesObserver = null;
 
-                            loadingEl.style.display = 'block';
-                            container.style.display = 'none';
-                            emptyEl.style.display = 'none';
-
-                            try {
-                                const url = `${SUPABASE_URL}/rest/v1/stories?select=*&order=created_at.desc`;
-                                const response = await fetch(url, {
-                                    headers: {
-                                        'apikey': SUPABASE_ANON_KEY,
-                                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                                    }
-                                });
-                                if (!response.ok) {
-                                    const errText = await response.text();
-                                    throw new Error(`HTTP ${response.status}: ${errText}`);
+                        // 动态创建"加载更多"哨兵与"到底"提示，并初始化无限滚动观察器（仅一次）
+                        function ensureStoriesSentinel() {
+                                const container = document.getElementById('storiesContainer');
+                                let sentinel = document.getElementById('storiesSentinel');
+                                if (sentinel) return sentinel;
+                                if (!container) return null;
+                                const parent = container.parentNode;
+                                sentinel = document.createElement('div');
+                                sentinel.id = 'storiesSentinel';
+                                sentinel.style.cssText = 'text-align:center; padding:1.5rem; color:var(--text-muted);';
+                                sentinel.innerHTML = '<span class="spinner"></span> 加载更多…';
+                                const end = document.createElement('div');
+                                end.id = 'storiesEnd';
+                                end.style.cssText = 'text-align:center; padding:1.5rem; color:var(--text-muted); display:none;';
+                                end.textContent = '— 已经到底啦 —';
+                                parent.appendChild(sentinel);
+                                parent.appendChild(end);
+                                if (!storiesObserver && 'IntersectionObserver' in window) {
+                                        storiesObserver = new IntersectionObserver((entries) => {
+                                                entries.forEach(en => {
+                                                        if (en.isIntersecting && !storiesLoading && !storiesDone) loadStories(false);
+                                                });
+                                        }, { rootMargin: '300px 0px' });
+                                        storiesObserver.observe(sentinel);
                                 }
-                                const data = await response.json();
-                                renderStories(data);
-                                loadStoryStats();
-                                loadingEl.style.display = 'none';
-                            } catch (err) {
-                                loadingEl.innerHTML = '' + escapeHTML(err.message);
-                                showError('加载故事失败: ' + err.message);
-                            }
+                                return sentinel;
                         }
 
-                        function renderStories(stories) {
+                        async function loadStories(reset = true) {
+                                if (storiesLoading) return;
+                                storiesLoading = true;
+                                const loadingEl = document.getElementById('storiesLoading');
                                 const container = document.getElementById('storiesContainer');
                                 const emptyEl = document.getElementById('storiesEmpty');
-                                container.innerHTML = '';
-                                if (!stories || stories.length === 0) {
-                                        emptyEl.style.display = 'block';
+                                const sentinel = ensureStoriesSentinel();
+                                const endEl = document.getElementById('storiesEnd');
+                                const offset = reset ? 0 : storiesPage * STORIES_PAGE_SIZE;
+                                if (reset) {
+                                        loadingEl.style.display = 'block';
                                         container.style.display = 'none';
+                                        emptyEl.style.display = 'none';
+                                        if (sentinel) sentinel.style.display = 'none';
+                                        if (endEl) endEl.style.display = 'none';
+                                }
+                                try {
+                                        const url = `${SUPABASE_URL}/rest/v1/stories?select=*&order=created_at.desc&limit=${STORIES_PAGE_SIZE}&offset=${offset}`;
+                                        const response = await fetch(url, {
+                                                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+                                        });
+                                        if (!response.ok) {
+                                                const errText = await response.text();
+                                                throw new Error(`HTTP ${response.status}: ${errText}`);
+                                        }
+                                        const data = await response.json();
+                                        renderStories(data, !reset);
+                                        if (reset) storiesPage = 1; else storiesPage += 1;
+                                        if (!data || data.length < STORIES_PAGE_SIZE) {
+                                                storiesDone = true;
+                                                if (sentinel) sentinel.style.display = 'none';
+                                                if (endEl) endEl.style.display = 'block';
+                                        } else {
+                                                storiesDone = false;
+                                                if (sentinel) sentinel.style.display = 'block';
+                                                if (endEl) endEl.style.display = 'none';
+                                        }
+                                        if (reset) loadStoryStats();
+                                        else (data || []).forEach(s => refreshStoryBadge(s.id));
+                                        loadingEl.style.display = 'none';
+                                } catch (err) {
+                                        loadingEl.innerHTML = '' + escapeHTML(err.message);
+                                        showError('加载故事失败: ' + err.message);
+                                } finally {
+                                        storiesLoading = false;
+                                }
+                        }
+
+                        function renderStories(stories, append = false) {
+                                const container = document.getElementById('storiesContainer');
+                                const emptyEl = document.getElementById('storiesEmpty');
+                                if (!append) container.innerHTML = '';
+                                if (!stories || stories.length === 0) {
+                                        if (!append) { emptyEl.style.display = 'block'; container.style.display = 'none'; }
                                         return;
                                 }
-                                emptyEl.style.display = 'none';
-                                container.style.display = 'grid';
+                                if (!append) { emptyEl.style.display = 'none'; container.style.display = 'block'; }
+                                else if (container.style.display === 'none') container.style.display = 'block';
                                 const claims = parseToken();
                                 const admin = isAdmin();
 
@@ -266,6 +315,23 @@
                                 const btn = document.getElementById('storyLikeBtn');
                                 if (btn && btn.disabled) return;
                                 const liked = btn && btn.dataset.liked === '1';
+                                const newLiked = !liked;
+                                const heartFilled = '<svg class="ui-ic" aria-hidden="true"><use href="#ic-heart-filled"></use></svg>';
+                                const heartEmpty = '<svg class="ui-ic" aria-hidden="true"><use href="#ic-heart"></use></svg>';
+                                // 根据开关状态刷新按钮与计数（用于乐观更新与回滚）
+                                const setBtn = (on) => {
+                                        if (!btn) return;
+                                        const cur = Number(btn.querySelector('.like-count-num')?.textContent) || 0;
+                                        const count = Math.max(0, cur + (on ? 1 : -1));
+                                        btn.dataset.liked = on ? '1' : '0';
+                                        btn.classList.toggle('liked', on);
+                                        btn.innerHTML = `${on ? heartFilled : heartEmpty} 点赞 <span class="like-count-num">${count}</span>`;
+                                };
+                                // 乐观更新：先本地切换状态，请求失败再回滚
+                                setBtn(newLiked);
+                                if (_storyStats.likes) _storyStats.likes[id] = Math.max(0, (Number(_storyStats.likes[id]) || 0) + (newLiked ? 1 : -1));
+                                if (_storyStats.myLikes) _storyStats.myLikes[id] = newLiked;
+                                refreshStoryBadge(id);
                                 if (btn) btn.disabled = true;
                                 try {
                                         if (liked) {
@@ -282,8 +348,12 @@
                                                 });
                                                 if (!r.ok) throw new Error('HTTP ' + r.status);
                                         }
-                                        await loadStoryLike(id);
                                 } catch (e) {
+                                        // 回滚到操作前的状态
+                                        setBtn(liked);
+                                        if (_storyStats.likes) _storyStats.likes[id] = Math.max(0, (Number(_storyStats.likes[id]) || 0) + (newLiked ? -1 : 1));
+                                        if (_storyStats.myLikes) _storyStats.myLikes[id] = liked;
+                                        refreshStoryBadge(id);
                                         showError('点赞失败：' + e.message);
                                 } finally {
                                         if (btn) btn.disabled = false;
@@ -1591,6 +1661,8 @@
                                         setToken(data.token);
                                         msg.textContent = '登录成功'; msg.className = 'form-message success';
                                         updateAuthUI();
+                                        // 登录后刷新"我点赞过哪些帖"缓存，让社区列表卡片立即显示实心/空心心
+                                        loadStoryStats();
                                         // 每日登录奖励（每天一次，重复不叠加）
                                         try {
                                             const dl = await fetch(`${SUPABASE_URL}/rest/v1/rpc/grant_daily_login`, { method:'POST', headers:{ 'apikey':SUPABASE_ANON_KEY, 'Authorization':`Bearer ${getToken()}`, 'Content-Type':'application/json' } });
