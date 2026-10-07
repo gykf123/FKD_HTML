@@ -1,5 +1,5 @@
 
-                        console.log('🚀 页面启动（无Supabase SDK）');
+                        console.log('页面启动（无Supabase SDK）');
 
                         // ---------- 工具函数 ----------
                         function escapeHTML(str) {
@@ -9,9 +9,9 @@
                         }
 
                         function showError(message) {
-                            console.error('❌ 错误弹窗:', message);
+                            console.error('错误弹窗:', message);
                             const toast = document.getElementById('errorToast');
-                            toast.textContent = '❌ ' + message;
+                            toast.textContent = '' + message;
                             toast.classList.add('show');
                             clearTimeout(toast._timeout);
                             toast._timeout = setTimeout(() => toast.classList.remove('show'), 8000);
@@ -77,7 +77,7 @@
                                 loadStoryStats();
                                 loadingEl.style.display = 'none';
                             } catch (err) {
-                                loadingEl.innerHTML = '❌ ' + escapeHTML(err.message);
+                                loadingEl.innerHTML = '' + escapeHTML(err.message);
                                 showError('加载故事失败: ' + err.message);
                             }
                         }
@@ -112,10 +112,10 @@
                                         const signedName = story.author_name || null; // 有署名快照才是账号帖
                                         const authorHTML = signedName
                                                 ? authorChip(signedName, story.author_avatar)
-                                                : `<span class="author">✎ ${escapeHTML(story.author)}</span>`;
+                                                : `<span class="author"><svg class="ui-ic" aria-hidden="true"><use href="#ic-pencil"></use></svg> ${escapeHTML(story.author)}</span>`;
                                         const isOwner = claims && story.user_id && String(story.user_id) === String(claims.sub);
                                         const canDelete = admin || isOwner;
-                                        const delBtn = canDelete ? `<button class="post-del" data-type="story" data-id="${story.id}">🗑</button>` : '';
+                                        const delBtn = canDelete ? `<button class="post-del" data-type="story" data-id="${story.id}"><svg class="ui-ic" aria-hidden="true"><use href="#ic-trash"></use></svg></button>` : '';
                                         const card = document.createElement('article');
                                         card.className = 'story-card';
                                         card.dataset.storyId = story.id;
@@ -123,10 +123,10 @@
                                                 <span class="story-tag">${escapeHTML(story.tag || '其他')}</span>
                                                 ${delBtn}
                                                 <h3 class="story-title">${escapeHTML(story.title)}</h3>
-                                                <div class="story-meta">${authorHTML} · 📅 ${escapeHTML(dateStr)}</div>
+                                                <div class="story-meta">${authorHTML} · <svg class="ui-ic"><use href="#ic-calendar"></use></svg> ${escapeHTML(dateStr)}</div>
                                                 <div class="story-content">${contentHTML}</div>
                                                 ${imagesHTML}
-                                                <div class="story-stats" data-story-id="${story.id}">❤️ 0 · 💬 0</div>
+                                                <div class="story-stats" data-story-id="${story.id}"><svg class="ui-ic" aria-hidden="true"><use href="#ic-heart-filled"></use></svg> 0 · <svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg> 0</div>
                                         `;
                                         storyCache[String(story.id)] = story;
                                         card.addEventListener('click', (e) => {
@@ -171,14 +171,14 @@
                                         _storyStats.likes = likes; _storyStats.comments = comments;
                                         document.querySelectorAll('.story-stats[data-story-id]').forEach(el => {
                                                 const id = el.dataset.storyId;
-                                                el.textContent = `❤️ ${likes[id] || 0} · 💬 ${comments[id] || 0}`;
+                                                el.textContent = `<svg class="ui-ic" aria-hidden="true"><use href="#ic-heart-filled"></use></svg> ${likes[id] || 0} · <svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg> ${comments[id] || 0}`;
                                         });
                                 } catch (e) { /* 静默兜底 */ }
                         }
 
                         function refreshStoryBadge(id) {
                                 const el = document.querySelector(`.story-stats[data-story-id="${id}"]`);
-                                if (el) el.textContent = `❤️ ${_storyStats.likes[id] || 0} · 💬 ${_storyStats.comments[id] || 0}`;
+                                if (el) el.textContent = `<svg class="ui-ic" aria-hidden="true"><use href="#ic-heart-filled"></use></svg> ${_storyStats.likes[id] || 0} · <svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg> ${_storyStats.comments[id] || 0}`;
                         }
 
                         function openStoryDetail(id) {
@@ -196,11 +196,11 @@
                                 const signedName = story.author_name || null;
                                 const authorHTML = signedName
                                         ? authorChip(signedName, story.author_avatar)
-                                        : `<span class="author">✎ ${escapeHTML(story.author || '匿名')}</span>`;
+                                        : `<span class="author"><svg class="ui-ic" aria-hidden="true"><use href="#ic-pencil"></use></svg> ${escapeHTML(story.author || '匿名')}</span>`;
                                 main.innerHTML = `
                                         <span class="story-detail-tag">${escapeHTML(story.tag || '其他')}</span>
                                         <h1 class="story-detail-title">${escapeHTML(story.title || '')}</h1>
-                                        <div class="story-detail-meta">${authorHTML}<span>·</span><span>📅 ${escapeHTML(story.date || '')}</span></div>
+                                        <div class="story-detail-meta">${authorHTML}<span>·</span><span><svg class="ui-ic"><use href="#ic-calendar"></use></svg> ${escapeHTML(story.date || '')}</span></div>
                                         <div class="story-detail-content">${contentHTML}</div>
                                         ${imagesHTML}
                                 `;
@@ -239,7 +239,7 @@
                                 if (btn) {
                                         btn.dataset.liked = liked ? '1' : '0';
                                         btn.classList.toggle('liked', liked);
-                                        btn.innerHTML = `${liked ? '❤️' : '🤍'} 点赞 <span class="like-count-num">${userIds.length}</span>`;
+                                        btn.innerHTML = `${liked ? '<svg class="ui-ic" aria-hidden="true"><use href="#ic-heart-filled"></use></svg>' : '<svg class="ui-ic" aria-hidden="true"><use href="#ic-heart"></use></svg>'} 点赞 <span class="like-count-num">${userIds.length}</span>`;
                                 }
                                 refreshStoryBadge(id);
                         }
@@ -305,10 +305,10 @@
                                         const name = c.author_name || '匿名';
                                         const avHTML = c.author_name
                                                 ? authorChip(c.author_name, c.author_avatar)
-                                                : `<span class="author">✎ ${escapeHTML(name)}</span>`;
+                                                : `<span class="author"><svg class="ui-ic" aria-hidden="true"><use href="#ic-pencil"></use></svg> ${escapeHTML(name)}</span>`;
                                         const isOwner = claims && c.user_id && String(c.user_id) === String(claims.sub);
                                         const canDel = admin || isOwner;
-                                        const delBtn = canDel ? `<button class="comment-del" data-id="${c.id}" title="删除评论">🗑</button>` : '';
+                                        const delBtn = canDel ? `<button class="comment-del" data-id="${c.id}" title="删除评论"><svg class="ui-ic" aria-hidden="true"><use href="#ic-trash"></use></svg></button>` : '';
                                         const t = c.created_at ? new Date(c.created_at).toLocaleString('zh-CN') : '';
                                         return `<div class="comment-item"><div class="comment-head">${avHTML}<span>· ${escapeHTML(t)}</span><span style="flex:1"></span>${delBtn}</div><div class="comment-body">${escapeHTML(c.content || '').replace(/\n/g, '<br>')}</div></div>`;
                                 }).join('');
@@ -326,7 +326,7 @@
                                 const msg = document.getElementById('storyCommentMessage');
                                 const content = ((input && input.value) || '').trim();
                                 if (msg) { msg.textContent = ''; msg.className = 'form-message'; }
-                                if (!content) { if (msg) msg.textContent = '❌ 评论内容不能为空'; return; }
+                                if (!content) { if (msg) msg.textContent = '评论内容不能为空'; return; }
                                 const btn = document.getElementById('storyCommentSubmit');
                                 if (btn) btn.disabled = true;
                                 try {
@@ -345,7 +345,7 @@
                                         if (input) input.value = '';
                                         await loadStoryComments(id);
                                 } catch (e) {
-                                        if (msg) msg.textContent = '❌ 发表失败：' + e.message;
+                                        if (msg) msg.textContent = '发表失败：' + e.message;
                                 } finally {
                                         if (btn) btn.disabled = false;
                                 }
@@ -465,12 +465,12 @@
                                     const t = await response.text().catch(() => '');
                                     throw new Error(`HTTP ${response.status} ${t.slice(0, 120)}`);
                                 }
-                                msg.textContent = '✅ 故事提交成功！';
+                                msg.textContent = '故事提交成功！';
                                 msg.className = 'form-message success';
                                 document.getElementById('storyForm').reset();
                                 await loadStories();
                             } catch (err) {
-                                msg.textContent = '❌ ' + err.message;
+                                msg.textContent = '' + err.message;
                                 msg.className = 'form-message error';
                             } finally {
                                 btn.disabled = false;
@@ -518,7 +518,7 @@
                                 const messages = await response.json();
                                 renderMessages(messages);
                             } catch (err) {
-                                listEl.innerHTML = '❌ 加载留言失败';
+                                listEl.innerHTML = '加载留言失败';
                             }
                         }
 
@@ -538,7 +538,7 @@
                                         : `<span class="message-nickname">${escapeHTML(msg.nickname||'匿名')}</span>`;
                                 const isOwner = claims && msg.user_id && String(msg.user_id) === String(claims.sub);
                                 const canDelete = admin || isOwner;
-                                const delBtn = canDelete ? `<button class="post-del" data-type="message" data-id="${msg.id}">🗑</button>` : '';
+                                const delBtn = canDelete ? `<button class="post-del" data-type="message" data-id="${msg.id}"><svg class="ui-ic" aria-hidden="true"><use href="#ic-trash"></use></svg></button>` : '';
                                 card.innerHTML = `<div class="message-header"><span class="message-author-wrap">${authorHTML}</span><span class="message-time">${escapeHTML(timeStr)}</span>${delBtn}</div><div class="message-content">${escapeHTML(msg.content)}</div>`;
                                 listEl.appendChild(card);
                             });
@@ -572,12 +572,12 @@
                                 });
                                 const response = await fetch(url, { method: 'POST', headers, body });
                                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                                msgEl.textContent = '✅ 留言成功！';
+                                msgEl.textContent = '留言成功！';
                                 msgEl.className = 'form-message success';
                                 document.getElementById('messageForm').reset();
                                 await loadMessages();
                             } catch (err) {
-                                msgEl.textContent = '❌ ' + err.message;
+                                msgEl.textContent = '' + err.message;
                                 msgEl.className = 'form-message error';
                             } finally {
                                 btn.disabled = false;
@@ -605,7 +605,7 @@
                                 renderTrades(trades);
                                 loadingEl.style.display = 'none';
                             } catch (err) {
-                                loadingEl.innerHTML = '❌ 加载交易失败';
+                                loadingEl.innerHTML = '加载交易失败';
                                 showError('加载交易失败: ' + err.message);
                             }
                         }
@@ -631,22 +631,22 @@
                                 const authorHTML = signedName ? authorChip(signedName, trade.author_avatar) : '';
                                 const isOwner = claims && trade.user_id && String(trade.user_id) === String(claims.sub);
                                 const canDelete = admin || isOwner;
-                                const delBtn = canDelete ? `<button class="post-del" data-type="trade" data-id="${trade.id}">🗑</button>` : '';
+                                const delBtn = canDelete ? `<button class="post-del" data-type="trade" data-id="${trade.id}"><svg class="ui-ic" aria-hidden="true"><use href="#ic-trash"></use></svg></button>` : '';
                                 const isSold = trade.status === 'sold';
                                 const statusBadge = isSold
                                         ? `<span class="trade-status sold">已售出</span>`
                                         : `<span class="trade-status active">在售</span>`;
-                                const soldBtn = (isOwner && !isSold) ? `<button class="trade-sold-btn" data-id="${trade.id}">✅ 标记已售出</button>` : '';
+                                const soldBtn = (isOwner && !isSold) ? `<button class="trade-sold-btn" data-id="${trade.id}">标记已售出</button>` : '';
                                 card.innerHTML = `
                                     ${statusBadge}
                                     ${delBtn}
                                     ${authorHTML ? `<div class="trade-author">${authorHTML}</div>` : ''}
                                     <div class="trade-item-name">${escapeHTML(trade.item_name)}</div>
-                                    <div class="trade-price">💰 ${escapeHTML(trade.price)}</div>
+                                    <div class="trade-price"><svg class="ui-ic" aria-hidden="true"><use href="#ic-coin"></use></svg> ${escapeHTML(trade.price)}</div>
                                     <div class="trade-desc">${escapeHTML(trade.description)}</div>
-                                    <div class="trade-seller">👤 卖家：${escapeHTML(trade.seller_name)}</div>
-                                    <div class="trade-contact">📞 联系：${escapeHTML(trade.contact)}</div>
-                                    <div class="trade-time">🕐 ${escapeHTML(timeStr)}</div>
+                                    <div class="trade-seller"><svg class="ui-ic" aria-hidden="true"><use href="#ic-user"></use></svg> 卖家：${escapeHTML(trade.seller_name)}</div>
+                                    <div class="trade-contact"><svg class="ui-ic" aria-hidden="true"><use href="#ic-phone"></use></svg> 联系：${escapeHTML(trade.contact)}</div>
+                                    <div class="trade-time"><svg class="ui-ic" aria-hidden="true"><use href="#ic-clock"></use></svg> ${escapeHTML(timeStr)}</div>
                                     ${soldBtn}
                                 `;
                                 container.appendChild(card);
@@ -709,12 +709,12 @@
                                     throw new Error(`HTTP ${response.status}: ${errText}`);
                                 }
 
-                                msg.textContent = '✅ 交易发布成功！';
+                                msg.textContent = '交易发布成功！';
                                 msg.className = 'form-message success';
                                 document.getElementById('tradeForm').reset();
                                 await loadTrades();
                             } catch (err) {
-                                msg.textContent = '❌ ' + err.message;
+                                msg.textContent = '' + err.message;
                                 msg.className = 'form-message error';
                                 showError('发布交易失败: ' + err.message);
                             } finally {
@@ -726,7 +726,7 @@
                         // 标记已售出：账号鉴权（仅交易发布者本人可标记）
                         async function markSold(id, btnEl) {
                             const claims = parseToken();
-                            if (!claims || !claims.sub) { showError('❌ 请先登录后再标记'); openAuthModal('login'); return; }
+                            if (!claims || !claims.sub) { showError('请先登录后再标记'); openAuthModal('login'); return; }
                             if (btnEl) { btnEl.disabled = true; btnEl.textContent = '标记中...'; }
                             try {
                                 const response = await fetch(`${SUPABASE_URL}/rest/v1/trades?id=eq.${id}`, {
@@ -748,11 +748,11 @@
                                     }
                                     throw new Error(`HTTP ${response.status} ${String(detail).slice(0, 120)}`);
                                 }
-                                showError('✅ 已标记为售出');
+                                showError('已标记为售出');
                                 await loadTrades();
                             } catch (err) {
-                                showError('❌ 标记失败：' + err.message);
-                                if (btnEl) { btnEl.disabled = false; btnEl.textContent = '✅ 标记已售出'; }
+                                showError('标记失败：' + err.message);
+                                if (btnEl) { btnEl.disabled = false; btnEl.textContent = '标记已售出'; }
                             }
                         }
 
@@ -773,7 +773,7 @@
                             }
                         }
                         function updateThemeIcon(theme) {
-                            toggleBtn.textContent = theme === 'light' ? '☀️' : theme === 'system' ? '🖥️' : '🌙';
+                            toggleBtn.innerHTML = theme === 'light' ? '<svg class="ui-ic"><use href="#ic-sun"></use></svg>' : theme === 'system' ? '<svg class="ui-ic"><use href="#ic-monitor"></use></svg>' : '<svg class="ui-ic"><use href="#ic-moon"></use></svg>';
                             toggleBtn.title = theme === 'light' ? '浅色模式（点击切换）' : theme === 'system' ? '跟随系统（点击切换）' : '深色模式（点击切换）';
                         }
                         const savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
@@ -853,7 +853,7 @@
                             box.innerHTML = list.map((u, i) => {
                                 const av = u.avatar_url ? `<img class="hall-avatar" src="${escapeHTML2(u.avatar_url)}" onerror="this.style.display='none'"/>` : `<div class="hall-avatar hall-avatar-empty">${escapeHTML2((u.username||'?').slice(0,1))}</div>`;
                                 const roleBadge = u.role === 'admin' ? '<span class="role-badge role-admin">管理员</span>' : '';
-                                const ctrl = admin ? `<div class="hall-ctrl"><button class="hall-btn" data-uid="${u.id}" data-d="5">＋5</button><button class="hall-btn" data-uid="${u.id}" data-d="-5">－5</button></div>` : '';
+                                const ctrl = admin ? `<div class="hall-ctrl"><button class="hall-btn" data-uid="${u.id}" data-d="5"><svg class="ui-ic" aria-hidden="true"><use href="#ic-plus"></use></svg>5</button><button class="hall-btn" data-uid="${u.id}" data-d="-5">－5</button></div>` : '';
                                 return `<div class="hall-item${i<3?' hall-top':''}" data-uid="${u.id}" data-username="${escapeHTML2(u.username||'')}">
                                     <span class="hall-rank">${i+1}</span>${av}
                                     <span class="hall-name">${escapeHTML2(u.username||'匿名')}</span>${roleBadge}
@@ -938,9 +938,9 @@
                                         try {
                                                 await loadMessages();
                                                 const t = new Date().toLocaleTimeString('zh-CN');
-                                                setInfo('✅ 已刷新 · 上次更新 ' + t);
+                                                setInfo('已刷新 · 上次更新 ' + t);
                                         } catch (e) {
-                                                setInfo('❌ 刷新失败，将稍后重试');
+                                                setInfo('刷新失败，将稍后重试');
                                         }
                                 }
 
@@ -1152,11 +1152,11 @@
                                                 ${av}
                                                 <div class="profile-meta">
                                                         <div class="profile-name">${escapeHTML(name)} ${roleBadge}</div>
-                                                        <div class="profile-sub">📅 加入于 ${escapeHTML(joined)}</div>
+                                                        <div class="profile-sub"><svg class="ui-ic"><use href="#ic-calendar"></use></svg> 加入于 ${escapeHTML(joined)}</div>
                                                         <div class="profile-stats">
-                                                                <span>💬 留言 ${c.messages || 0}</span>
-                                                                <span>📖 故事 ${c.stories || 0}</span>
-                                                                <span>📦 交易 ${c.trades || 0}</span>
+                                                                <span><svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg> 留言 ${c.messages || 0}</span>
+                                                                <span><svg class="ui-ic" aria-hidden="true"><use href="#ic-book"></use></svg> 故事 ${c.stories || 0}</span>
+                                                                <span><svg class="ui-ic" aria-hidden="true"><use href="#ic-package"></use></svg> 交易 ${c.trades || 0}</span>
                                                         </div>
                                                 </div>
                                         </div>
@@ -1195,7 +1195,7 @@
                                 // 登录态校验：token 缺失/失效时不发无效请求，避免 401 困扰
                                 const claims = parseToken();
                                 if (!claims || !claims.sub) {
-                                        showError('❌ 请先登录后再删除');
+                                        showError('请先登录后再删除');
                                         openAuthModal('login');
                                         return;
                                 }
@@ -1219,9 +1219,9 @@
                                                 throw new Error(`HTTP ${response.status} ${detail}`);
                                         }
                                         if (cardEl && cardEl.parentNode) cardEl.parentNode.removeChild(cardEl);
-                                        showError('✅ 已删除');
+                                        showError('已删除');
                                 } catch (err) {
-                                        showError('❌ 删除失败：' + err.message);
+                                        showError('删除失败：' + err.message);
                                 }
                         }
 
@@ -1311,7 +1311,7 @@
                                                         const sr = await fetch(`${SUPABASE_URL}/rest/v1/rpc/do_sign_in`, { method:'POST', headers:{ 'apikey':SUPABASE_ANON_KEY, 'Authorization':`Bearer ${getToken()}`, 'Content-Type':'application/json' } });
                                                         const sj = await sr.json().catch(()=>({ok:false}));
                                                         if (sj && sj.ok) {
-                                                                if (sj.signed) { const avEl = document.getElementById('mpActiveValue'); if (avEl) avEl.textContent = (parseInt(avEl.textContent,10)||0) + (sj.delta||0); if (signHint) signHint.textContent = '今日已签到 +' + (sj.delta||0); showToast('📅 签到成功 +' + (sj.delta||0) + ' 活跃值'); }
+                                                                if (sj.signed) { const avEl = document.getElementById('mpActiveValue'); if (avEl) avEl.textContent = (parseInt(avEl.textContent,10)||0) + (sj.delta||0); if (signHint) signHint.textContent = '今日已签到 +' + (sj.delta||0); showToast('签到成功 +' + (sj.delta||0) + ' 活跃值'); }
                                                                 else { if (signHint) signHint.textContent = '今天已经签到过啦'; showToast('今天已签到'); }
                                                         } else { if (signHint) signHint.textContent = (sj && sj.msg) || '签到失败'; signBtn.disabled = false; }
                                                 } catch { if (signBtn) signBtn.disabled = false; }
@@ -1324,7 +1324,7 @@
                                 const bio = (document.getElementById('mpBio').value || '').trim();
                                 const avatar = (document.getElementById('mpAvatarUrl').value || '').trim();
                                 const claims = parseToken();
-                                if (!claims || !claims.sub) { if (msg) { msg.textContent = '❌ 请先登录'; msg.className = 'form-message error'; } return; }
+                                if (!claims || !claims.sub) { if (msg) { msg.textContent = '请先登录'; msg.className = 'form-message error'; } return; }
                                 try {
                                         const response = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${claims.sub}`, {
                                                 method: 'PATCH',
@@ -1341,10 +1341,10 @@
                                                 throw new Error('保存未生效：未匹配到你的账号，登录可能已过期，请重新登录后再试');
                                         }
                                 } catch (err) {
-                                        if (msg) { msg.textContent = '❌ ' + err.message; msg.className = 'form-message error'; }
+                                        if (msg) { msg.textContent = '' + err.message; msg.className = 'form-message error'; }
                                         return;
                                 }
-                                if (msg) { msg.textContent = '✅ 资料已保存'; msg.className = 'form-message success'; }
+                                if (msg) { msg.textContent = '资料已保存'; msg.className = 'form-message success'; }
                                 updateAuthUI();
                                 // 头像已成功写入数据库。只需更新本地"头像覆盖值"让 UI/发帖署名立即生效，
                                 // 绝不能再像以前那样改写 JWT 的 payload 却不重算签名——
@@ -1392,13 +1392,13 @@
                                                 }
                                         }
                                         if (previewEl) { previewEl.src = url; previewEl.style.display = 'block'; }
-                                        if (msgEl) { msgEl.textContent = '✅ 图片已上传（图床）'; msgEl.className = 'form-message success'; }
+                                        if (msgEl) { msgEl.textContent = '图片已上传（图床）'; msgEl.className = 'form-message success'; }
                                 } catch (e) {
                                         if (msgEl) {
                                                 const isFile = (typeof location !== 'undefined') && location.protocol === 'file:';
                                                 const hint = isFile
                                                         ? '图床上传失败：当前是用 file:// 方式打开页面，浏览器会拦截对图床的跨域请求。请用 http 访问（在文件所在目录运行 python3 -m http.server 8000，再打开 http://localhost:8000），或部署到网站域名后访问。也可以直接“手动粘贴图片链接”。'
-                                                        : '❌ 图床上传失败，可手动粘贴图片链接：' + e.message;
+                                                        : '图床上传失败，可手动粘贴图片链接：' + e.message;
                                                 msgEl.textContent = hint; msgEl.className = 'form-message error';
                                         }
                                 }
@@ -1476,7 +1476,7 @@
                         }
                         function showAuthRequired(msgId) {
                                 const el = document.getElementById(msgId);
-                                if (el) { el.textContent = '⚠️ 请先登录后再操作'; el.className = 'form-message error'; }
+                                if (el) { el.textContent = '请先登录后再操作'; el.className = 'form-message error'; }
                                 openAuthModal('login');
                         }
 
@@ -1493,7 +1493,7 @@
                                         const mp = document.getElementById('openMyProfileBtn');
                                         if (mp) mp.addEventListener('click', openMyProfile);
                                 } else {
-                                        area.innerHTML = `<button class="auth-btn primary" id="openAuthBtn">🔑 登录 / 注册</button>`;
+                                        area.innerHTML = `<button class="auth-btn primary" id="openAuthBtn"><svg class="ui-ic" aria-hidden="true"><use href="#ic-key"></use></svg> 登录 / 注册</button>`;
                                         const ob = document.getElementById('openAuthBtn');
                                         if (ob) ob.addEventListener('click', () => openAuthModal('login'));
                                 }
@@ -1507,7 +1507,7 @@
                                         // file:// 打开时提前告知用户请求会被浏览器拦截
                                         if (location.protocol === 'file:') {
                                                 const msg = document.getElementById('authMessage');
-                                                if (msg) { msg.textContent = '⚠️ 当前是 file:// 打开的本地文件，登录/申请请求会被浏览器拦截。请通过 http(s) 访问本页面（本地可用 python3 -m http.server 8000）'; msg.className = 'form-message error'; }
+                                                if (msg) { msg.textContent = '当前是 file:// 打开的本地文件，登录/申请请求会被浏览器拦截。请通过 http(s) 访问本页面（本地可用 python3 -m http.server 8000）'; msg.className = 'form-message error'; }
                                         }
                                 }
                         }
@@ -1538,16 +1538,16 @@
                                 if (!list) return;
                                 list.innerHTML = '加载中...';
                                 const { ok, data } = await callFunction('admin-list', 'GET');
-                                if (!ok) { list.innerHTML = '❌ ' + (data.error || '加载失败'); return; }
+                                if (!ok) { list.innerHTML = '' + (data.error || '加载失败'); return; }
                                 const users = (data.users || []).filter(u => u.status === 'pending');
-                                if (users.length === 0) { list.innerHTML = '✅ 暂无待审核申请'; return; }
+                                if (users.length === 0) { list.innerHTML = '暂无待审核申请'; return; }
                                 list.innerHTML = '';
                                 users.forEach(u => {
                                         const div = document.createElement('div');
                                         div.className = 'admin-item';
                                         div.innerHTML = `
                                                 <div class="admin-item-main">
-                                                        <div class="admin-item-name">👤 ${escapeHTML(u.username)}</div>
+                                                        <div class="admin-item-name"><svg class="ui-ic" aria-hidden="true"><use href="#ic-user"></use></svg> ${escapeHTML(u.username)}</div>
                                                         <div class="admin-item-meta">联系方式：${escapeHTML(u.contact || '未填')} · 理由：${escapeHTML(u.reason || '无')}</div>
                                                 </div>
                                                 <div class="admin-item-actions">
@@ -1573,14 +1573,14 @@
                                         const u = document.getElementById('loginUsername').value.trim();
                                         const p = document.getElementById('loginPassword').value;
                                         const { ok, data } = await callFunction('login', 'POST', { username: u, password: p });
-                                        if (!ok) { msg.textContent = '❌ ' + (data.error || '登录失败'); msg.className = 'form-message error'; return; }
+                                        if (!ok) { msg.textContent = '' + (data.error || '登录失败'); msg.className = 'form-message error'; return; }
                                         setToken(data.token);
-                                        msg.textContent = '✅ 登录成功'; msg.className = 'form-message success';
+                                        msg.textContent = '登录成功'; msg.className = 'form-message success';
                                         updateAuthUI();
                                         // 每日登录奖励（每天一次，重复不叠加）
                                         try {
                                             const dl = await fetch(`${SUPABASE_URL}/rest/v1/rpc/grant_daily_login`, { method:'POST', headers:{ 'apikey':SUPABASE_ANON_KEY, 'Authorization':`Bearer ${getToken()}`, 'Content-Type':'application/json' } });
-                                            if (dl.ok) { const add = await dl.json().catch(()=>0); if (add === 2) showToast('📅 每日登录 +2 活跃值'); }
+                                            if (dl.ok) { const add = await dl.json().catch(()=>0); if (add === 2) showToast('每日登录 +2 活跃值'); }
                                         } catch {}
                                         setTimeout(closeAuthModal, 600);
                                 });
@@ -1594,8 +1594,8 @@
                                         const contact = document.getElementById('applyContact').value.trim();
                                         const reason = document.getElementById('applyReason').value.trim();
                                         const { ok, data } = await callFunction('apply', 'POST', { username, password, contact, reason });
-                                        if (!ok) { msg.textContent = '❌ ' + (data.error || '申请失败'); msg.className = 'form-message error'; return; }
-                                        msg.textContent = '✅ ' + (data.message || '申请已提交'); msg.className = 'form-message success';
+                                        if (!ok) { msg.textContent = '' + (data.error || '申请失败'); msg.className = 'form-message error'; return; }
+                                        msg.textContent = '' + (data.message || '申请已提交'); msg.className = 'form-message success';
                                         applyForm.reset();
                                 });
 

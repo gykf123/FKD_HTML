@@ -44,7 +44,7 @@
     overlay.id = 'giftModal';
     overlay.innerHTML = `<div class="modal">
       <button class="modal-close" id="giftClose">&times;</button>
-      <h3>🎁 赠送活跃值</h3>
+      <h3><svg class="ui-ic" aria-hidden="true"><use href="#ic-gift"></use></svg> 赠送活跃值</h3>
       <p>赠送给：<strong>${escapeHTML(targetName || '该用户')}</strong></p>
       <div class="gift-row"><input id="giftAmount" type="number" min="1" placeholder="数量"/><button class="submit-btn" id="giftConfirm">赠送</button></div>
       <div class="gift-balance" id="giftBal"></div>
@@ -75,7 +75,7 @@
       const rec = document.createElement('button');
       rec.id = 'giftRecBtn';
       rec.className = 'submit-btn small ghost';
-      rec.textContent = '📜 赠送记录';
+      rec.textContent = '<svg class="ui-ic" aria-hidden="true"><use href="#ic-scroll"></use></svg> 赠送记录';
       rec.style.marginTop = '1rem';
       rec.style.marginRight = '.5rem';
       rec.onclick = () => giftRecords(username);
@@ -86,7 +86,7 @@
     const btn = document.createElement('button');
     btn.id = 'giftEntryBtn';
     btn.className = 'submit-btn small';
-    btn.textContent = '🎁 赠送活跃值';
+    btn.textContent = '<svg class="ui-ic" aria-hidden="true"><use href="#ic-gift"></use></svg> 赠送活跃值';
     btn.style.marginTop = '1rem';
     btn.onclick = async () => {
       const u = await rest('users', `select=id,username&username=eq.${encodeURIComponent(username)}`);
@@ -110,7 +110,7 @@
     const item = x => {
       const out = !!(x.from_user && x.from_user.id === uidv);
       const other = out ? (x.to_user && x.to_user.username) : (x.from_user && x.from_user.username);
-      return `<div class="gr-item"><span class="gr-dir">${out ? '送出→' : '收到←'}</span><span class="gr-who">${escapeHTML(other || '匿名')}</span><span class="gr-amt">${out ? '-' : '+'}${x.amount}</span><span class="gr-time">${fmt(x.created_at)}</span></div>`;
+      return `<div class="gr-item"><span class="gr-dir ${out ? 'out' : 'in'}">${out ? '送出' : '收到'}</span><span class="gr-who">${escapeHTML(other || '匿名')}</span><span class="gr-amt">${out ? '-' : '+'}${x.amount}</span><span class="gr-time">${fmt(x.created_at)}</span></div>`;
     };
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay active';
@@ -118,7 +118,7 @@
     overlay.id = 'giftRecModal';
     overlay.innerHTML = `<div class="modal">
       <button class="modal-close" id="giftRecClose">&times;</button>
-      <h3>📜 ${escapeHTML(username)} 的赠送记录</h3>
+      <h3><svg class="ui-ic" aria-hidden="true"><use href="#ic-scroll"></use></svg> ${escapeHTML(username)} 的赠送记录</h3>
       <div class="gr-col"><h4>送出（${sent.length}）</h4>${sent.length ? sent.map(item).join('') : '<div class="empty-hint">暂无</div>'}</div>
       <div class="gr-col"><h4>收到（${recv.length}）</h4>${recv.length ? recv.map(item).join('') : '<div class="empty-hint">暂无</div>'}</div>
     </div>`;

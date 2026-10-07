@@ -42,12 +42,12 @@
     if (root.dataset.ready === '1') { loadGuildRank(); return; }
     root.dataset.ready = '1';
     root.innerHTML = `
-      <div class="guild-head"><h2>⚔️ 工会</h2>
-        <button class="submit-btn small" id="openCreateGuildBtn">➕ 创建工会</button>
+      <div class="guild-head"><h2><svg class="ui-ic" aria-hidden="true"><use href="#ic-flag"></use></svg> 工会</h2>
+        <button class="submit-btn small" id="openCreateGuildBtn"><svg class="ui-ic" aria-hidden="true"><use href="#ic-plus"></use></svg> 创建工会</button>
       </div>
       <div class="guild-tabs">
-        <button class="guild-tab active" data-gtab="rank">🏆 工会排名</button>
-        <button class="guild-tab" data-gtab="mine">👥 我的工会</button>
+        <button class="guild-tab active" data-gtab="rank"><svg class="ui-ic" aria-hidden="true"><use href="#ic-trophy"></use></svg> 工会排名</button>
+        <button class="guild-tab" data-gtab="mine"><svg class="ui-ic" aria-hidden="true"><use href="#ic-users"></use></svg> 我的工会</button>
       </div>
       <div class="subpanel active" id="guildRankPanel"><div class="guild-list" id="guildRankList"><div class="empty-hint">加载中...</div></div></div>
       <div class="subpanel" id="guildMinePanel">
@@ -61,7 +61,7 @@
       <div class="modal-overlay" id="createGuildModal">
         <div class="modal">
           <button class="modal-close" id="closeCreateGuildModal">&times;</button>
-          <h3>➕ 创建工会</h3>
+          <h3><svg class="ui-ic" aria-hidden="true"><use href="#ic-plus"></use></svg> 创建工会</h3>
           <div class="form-group"><label>工会名称</label><input id="cgName" placeholder="最多 20 字" maxlength="20"/></div>
           <div class="form-group"><label>简称/标签（可选）</label><input id="cgTag" placeholder="如 FKD" maxlength="10"/></div>
           <div class="form-group"><label>简介（可选）</label><textarea id="cgDesc" rows="3" maxlength="200"></textarea></div>
@@ -142,7 +142,7 @@
       const gid = g.guilds ? g.guilds.id : g.guild_id;
       const isOwner = (g.role === 'owner');
       return `<div class="guild-card">
-        <div class="gc-main"><div class="gc-name">${escapeHTML(g.guilds ? g.guilds.name : '工会')}${g.guilds && g.guilds.tag ? `<span class="gc-tag">${escapeHTML(g.guilds.tag)}</span>` : ''}</div><div class="gc-meta">${isOwner ? '👑 会长' : '成员'}</div></div>
+        <div class="gc-main"><div class="gc-name">${escapeHTML(g.guilds ? g.guilds.name : '工会')}${g.guilds && g.guilds.tag ? `<span class="gc-tag">${escapeHTML(g.guilds.tag)}</span>` : ''}</div><div class="gc-meta">${isOwner ? '<svg class="ui-ic" aria-hidden="true"><use href="#ic-crown"></use></svg> 会长' : '成员'}</div></div>
         <div class="gc-actions">
           <button class="submit-btn small" data-mem="${gid}">成员</button>
           ${isOwner ? '<button class="submit-btn small" data-manage="' + gid + '">管理</button>' : ''}
@@ -203,7 +203,7 @@
     box.innerHTML = '<div class="empty-hint">加载中...</div>';
     const { data } = await rest('guild_members', `select=user_id,role,users(id,username,avatar_url,active_value)&guild_id=eq.${gid}&status=eq.approved`);
     const list = Array.isArray(data) ? data : [];
-    let html = `<button class="submit-btn small ghost" id="gmBack">← 返回</button><div class="guild-members">`;
+    let html = `<button class="submit-btn small ghost" id="gmBack"><svg class="ui-ic" aria-hidden="true"><use href="#ic-arrow-left"></use></svg> 返回</button><div class="guild-members">`;
     if (!list.length) html += '<div class="empty-hint">暂无成员</div>';
     html += list.map(m => {
       const u = m.users || {};
@@ -211,9 +211,9 @@
       const isMe = (u.id === meId());
       return `<div class="guild-member">
         ${av}
-        <span class="gm-name">${escapeHTML(u.username || '匿名')}${m.role === 'owner' ? ' 👑' : ''}</span>
+        <span class="gm-name">${escapeHTML(u.username || '匿名')}${m.role === 'owner' ? ' <svg class="ui-ic" aria-hidden="true"><use href="#ic-crown"></use></svg>' : ''}</span>
         <span class="gm-av">活跃 ${u.active_value || 0}</span>
-        ${isMe ? '' : `<button class="submit-btn small" data-gift="${u.id}" data-gname="${escapeHTML(u.username || '')}">🎁 赠送</button>`}
+        ${isMe ? '' : `<button class="submit-btn small" data-gift="${u.id}" data-gname="${escapeHTML(u.username || '')}"><svg class="ui-ic" aria-hidden="true"><use href="#ic-gift"></use></svg> 赠送</button>`}
       </div>`;
     }).join('');
     html += '</div>';
@@ -228,7 +228,7 @@
     box.innerHTML = '<div class="empty-hint">加载中...</div>';
     const { data } = await rest('guild_members', `select=user_id,users(id,username)&guild_id=eq.${gid}&status=eq.pending`);
     const list = Array.isArray(data) ? data : [];
-    let html = `<button class="submit-btn small ghost" id="gpBack">← 返回</button><div class="guild-pending">`;
+    let html = `<button class="submit-btn small ghost" id="gpBack"><svg class="ui-ic" aria-hidden="true"><use href="#ic-arrow-left"></use></svg> 返回</button><div class="guild-pending">`;
     if (!list.length) html += '<div class="empty-hint">没有待审核的申请</div>';
     html += list.map(m => {
       const u = m.users || {};
@@ -270,7 +270,7 @@
       const u = m.users || {};
       return `<div class="gp-item"><span class="gp-name">${escapeHTML(u.username || '匿名')}</span><button class="submit-btn small" data-transfer="${u.id}">转让</button></div>`;
     }).join('') + '</div>';
-    html += '<hr class="gm-div"/><button class="submit-btn danger" id="gmDissolve">⚠ 解散工会</button>';
+    html += '<hr class="gm-div"/><button class="submit-btn danger" id="gmDissolve">解散工会</button>';
     body.innerHTML = html;
     body.querySelectorAll('[data-transfer]').forEach(b => b.onclick = async () => {
       if (!confirm('确定将会长转让给该成员？')) return;

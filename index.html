@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FKD-Web 版本 v1.9.4 · 2026-10-03 · 排版优化：补 --bg-main 变量(修复工会成员/待审批/聊天气泡/赠送记录背景失效);工会/聊天视图加 max-width:1100 居中约束;视图底部留白;卡片 hover 一致性 -->
+<!-- FKD-Web 版本 v1.9.5 · 2026-10-07 · 改动：全面去除表情符号 UI，改用内联 SVG 图标系统(svg-sprite + .ui-ic + 30+ symbol);导航/按钮/卡片/弹窗/点赞/删除/返回等全部替换为专业线性图标;主题切换/赠送记录方向箭头同步改为图标与文字;页脚镐头与像素分隔符改为 CSS;域名 fkd.xn--0iv.gay(FKD.是.gay) 已绑定 -->
 <html lang="zh-CN">
         <head>
                 <meta charset="UTF-8" />
@@ -33,7 +33,7 @@
                         aria-label="打开设置"
                         title="设置"
                 >
-                        ⚙️
+                        <svg class="ui-ic" aria-hidden="true"><use href="#ic-settings"></use></svg>
                 </button>
                 <aside class="settings-sidebar" id="settingsSidebar" aria-hidden="true">
                         <button
@@ -43,7 +43,7 @@
                         >
                                 &times;
                         </button>
-                        <h3>⚙️ 设置</h3>
+                        <h3><svg class="ui-ic" aria-hidden="true"><use href="#ic-settings"></use></svg> 设置</h3>
                         <div class="settings-item">
                                 <div>
                                         <div class="label">留言墙自动刷新</div>
@@ -66,7 +66,7 @@
                                 </select>
                         </div>
                         <button class="settings-refresh-btn" id="manualRefreshBtn">
-                                🔄 立即刷新留言
+                                <svg class="ui-ic" aria-hidden="true"><use href="#ic-refresh"></use></svg> 立即刷新留言
                         </button>
                         <div class="settings-refresh-info" id="refreshInfo"></div>
                 </aside>
@@ -75,7 +75,7 @@
                 <div class="modal-overlay" id="authModal">
                         <div class="modal">
                                 <button class="modal-close" id="closeAuthModal">&times;</button>
-                                <h3>🔑 账号</h3>
+                                <h3><svg class="ui-ic" aria-hidden="true"><use href="#ic-key"></use></svg> 账号</h3>
                                 <div class="auth-tabs">
                                         <button class="auth-tab active" data-tab="login">登录</button>
                                         <button class="auth-tab" data-tab="apply">申请注册</button>
@@ -122,7 +122,7 @@
                 <div class="modal-overlay" id="adminModal">
                         <div class="modal">
                                 <button class="modal-close" id="closeAdminModal">&times;</button>
-                                <h3>🛡️ 待审核申请</h3>
+                                <h3><svg class="ui-ic" aria-hidden="true"><use href="#ic-shield"></use></svg> 待审核申请</h3>
                                 <div class="admin-list" id="adminList"></div>
                         </div>
                 </div>
@@ -152,25 +152,25 @@
                                         <div class="mp-detail-bio" id="mpDetailBio"></div>
                                         <div class="mp-active-row"><span>我的活跃值</span><strong id="mpActiveValue">0</strong></div>
                                         <div class="mp-signin-row">
-                                                <button type="button" class="submit-btn small" id="mpSignInBtn">📅 每日签到 +3</button>
+                                                <button type="button" class="submit-btn small" id="mpSignInBtn"><svg class="ui-ic"><use href="#ic-calendar"></use></svg> 每日签到 +3</button>
                                                 <span id="mpSignInHint" class="mp-signin-hint"></span>
                                         </div>
                                         <div class="mp-detail-actions">
-                                                <button type="button" class="submit-btn" id="mpEditBtn">✏️ 修改资料</button>
-                                                <button type="button" class="auth-btn admin" id="mpAdminBtn" style="display:none">🛡️ 审核</button>
+                                                <button type="button" class="submit-btn" id="mpEditBtn"><svg class="ui-ic" aria-hidden="true"><use href="#ic-pencil"></use></svg> 修改资料</button>
+                                                <button type="button" class="auth-btn admin" id="mpAdminBtn" style="display:none"><svg class="ui-ic" aria-hidden="true"><use href="#ic-shield"></use></svg> 审核</button>
                                                 <button type="button" class="auth-btn" id="mpLogoutBtn">退出登录</button>
                                         </div>
                                 </div>
 
                                 <!-- 编辑视图：修改信息 -->
                                 <div id="mpEditView" style="display:none">
-                                        <h3>✏️ 编辑资料</h3>
+                                        <h3><svg class="ui-ic" aria-hidden="true"><use href="#ic-pencil"></use></svg> 编辑资料</h3>
                                         <div class="form-group">
                                                 <label>头像（走图床上传，数据库只存链接）</label>
                                                 <div class="avatar-upload-row">
                                                         <img id="mpAvatarPreview" class="mp-avatar-preview" alt="" style="display:none" />
                                                         <input type="file" id="mpAvatarFile" accept="image/*" />
-                                                        <button type="button" class="submit-btn small" id="mpAvatarUploadBtn">📷 上传头像</button>
+                                                        <button type="button" class="submit-btn small" id="mpAvatarUploadBtn"><svg class="ui-ic" aria-hidden="true"><use href="#ic-camera"></use></svg> 上传头像</button>
                                                 </div>
                                                 <input type="text" id="mpAvatarUrl" placeholder="或在此粘贴头像图片链接（http(s)）" style="margin-top:.5rem;" />
                                         </div>
@@ -199,15 +199,15 @@
                                 </div>
                         </div>
                         <ul class="navbar-links">
-                                <li><a data-view="home" class="active">🏠 首页</a></li>
+                                <li><a data-view="home" class="active"><svg class="ui-ic" aria-hidden="true"><use href="#ic-home"></use></svg> 首页</a></li>
                                 <li class="nav-sep"></li>
-                                <li><a data-view="community">🏘️ 社区</a></li>
-                                <li><a data-view="trades">📦 交易</a></li>
-                                <li><a data-view="tools">🧭 工具</a></li>
+                                <li><a data-view="community"><svg class="ui-ic" aria-hidden="true"><use href="#ic-community"></use></svg> 社区</a></li>
+                                <li><a data-view="trades"><svg class="ui-ic" aria-hidden="true"><use href="#ic-package"></use></svg> 交易</a></li>
+                                <li><a data-view="tools"><svg class="ui-ic" aria-hidden="true"><use href="#ic-compass"></use></svg> 工具</a></li>
                                 <li class="nav-sep"></li>
-                                <li><a data-view="submit">✍️ 投稿</a></li>
-                                <li><a data-view="guilds">⚔️ 工会</a></li>
-                                <li><a data-view="chat">💬 聊天</a></li>
+                                <li><a data-view="submit"><svg class="ui-ic" aria-hidden="true"><use href="#ic-edit"></use></svg> 投稿</a></li>
+                                <li><a data-view="guilds"><svg class="ui-ic" aria-hidden="true"><use href="#ic-flag"></use></svg> 工会</a></li>
+                                <li><a data-view="chat"><svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg> 聊天</a></li>
                         </ul>
                         <div class="auth-area" id="authArea"></div>
                         <button
@@ -215,7 +215,7 @@
                                 id="themeToggle"
                                 aria-label="切换明暗模式"
                         >
-                                🌓
+                                <svg class="ui-ic" aria-hidden="true"><use href="#ic-moon"></use></svg>
                         </button>
                 </nav>
 
@@ -223,7 +223,7 @@
                 <div class="modal-overlay" id="oreModal">
                         <div class="modal">
                                 <button class="modal-close" id="closeOreModal">&times;</button>
-                                <h3>⛏️ 矿石查找器(可能出错)</h3>
+                                <h3> 矿石查找器(可能出错)</h3>
                                 <div class="form-group">
                                         <label>矿石种类</label>
                                         <select id="oreType">
@@ -282,66 +282,66 @@
                                         <p class="hero-desc">
                                                 一个由玩家社区驱动的 Minecraft 社区，<br />在这里，每一个方块都承载着故事，每一位玩家都值得被铭记。
                                         </p>
-                                        <p class="hero-owner">🏆 服主：<strong>FKD乄老果</strong></p>
+                                        <p class="hero-owner"><svg class="ui-ic" aria-hidden="true"><use href="#ic-trophy"></use></svg> 服主：<strong>FKD乄老果</strong></p>
                                 </div>
 
                                 <div class="container">
                                         <div class="info-grid">
                                                 <div class="info-card">
-                                                        <div class="icon">👑</div>
+                                                        <div class="icon"><svg class="ui-ic" aria-hidden="true"><use href="#ic-crown"></use></svg></div>
                                                         <div class="label">服主</div>
                                                         <div class="value">FKD乄老果</div>
                                                 </div>
                                                 <div class="info-card">
-                                                        <div class="icon">🏷️</div>
+                                                        <div class="icon"><svg class="ui-ic" aria-hidden="true"><use href="#ic-tag"></use></svg></div>
                                                         <div class="label">当前赛季</div>
                                                         <div class="value gold">S8.0</div>
                                                 </div>
                                                 <div class="info-card">
-                                                        <div class="icon">🟢</div>
+                                                        <div class="icon"><svg class="ui-ic" aria-hidden="true"><use href="#ic-dot"></use></svg></div>
                                                         <div class="label">服务器状态</div>
                                                         <div class="value">运行中</div>
                                                 </div>
                                                 <div class="info-card">
-                                                        <div class="icon">📡</div>
+                                                        <div class="icon"><svg class="ui-ic" aria-hidden="true"><use href="#ic-signal"></use></svg></div>
                                                         <div class="label">托管平台</div>
                                                         <div class="value">Supabase</div>
                                                 </div>
                                         </div>
 
                                         <div class="section-header">
-                                                <div class="cat-badge home">🧭 快速进入</div>
+                                                <div class="cat-badge home"><svg class="ui-ic" aria-hidden="true"><use href="#ic-compass"></use></svg> 快速进入</div>
                                                 <h2 class="section-title">选择你的<span class="highlight">方块</span></h2>
                                                 <div class="section-divider"></div>
                                         </div>
                                         <div class="quick-grid">
                                                 <div class="quick-card c-community" data-view="community">
-                                                        <div class="q-icon">🏘️</div>
+                                                        <div class="q-icon"><svg class="ui-ic" aria-hidden="true"><use href="#ic-community"></use></svg></div>
                                                         <div class="q-title">社区广场</div>
                                                         <div class="q-desc">故事 · 留言墙 · 名人榜</div>
                                                 </div>
                                                 <div class="quick-card c-trade" data-view="trades">
-                                                        <div class="q-icon">📦</div>
+                                                        <div class="q-icon"><svg class="ui-ic" aria-hidden="true"><use href="#ic-package"></use></svg></div>
                                                         <div class="q-title">交易集市</div>
                                                         <div class="q-desc">发布 / 浏览玩家交易</div>
                                                 </div>
                                                 <div class="quick-card c-tool" data-view="tools">
-                                                        <div class="q-icon">🧭</div>
+                                                        <div class="q-icon"><svg class="ui-ic" aria-hidden="true"><use href="#ic-compass"></use></svg></div>
                                                         <div class="q-title">冒险工具</div>
                                                         <div class="q-desc">矿石查找 · 种子查询</div>
                                                 </div>
                                                 <div class="quick-card c-submit" data-view="submit">
-                                                        <div class="q-icon">✍️</div>
+                                                        <div class="q-icon"><svg class="ui-ic" aria-hidden="true"><use href="#ic-edit"></use></svg></div>
                                                         <div class="q-title">投稿故事</div>
                                                         <div class="q-desc">分享你的社区故事</div>
                                                 </div>
                                                 <div class="quick-card c-guild" data-view="guilds">
-                                                        <div class="q-icon">⚔️</div>
+                                                        <div class="q-icon"><svg class="ui-ic" aria-hidden="true"><use href="#ic-flag"></use></svg></div>
                                                         <div class="q-title">工会</div>
                                                         <div class="q-desc">组建 · 加入 · 排名</div>
                                                 </div>
                                                 <div class="quick-card c-chat" data-view="chat">
-                                                        <div class="q-icon">💬</div>
+                                                        <div class="q-icon"><svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg></div>
                                                         <div class="q-title">聊天</div>
                                                         <div class="q-desc">私聊 · 群聊</div>
                                                 </div>
@@ -353,21 +353,21 @@
                         <section class="view" id="view-community">
                                 <div class="container">
                                         <div class="section-header">
-                                                <div class="cat-badge community">🏘️ 社区广场</div>
+                                                <div class="cat-badge community"><svg class="ui-ic" aria-hidden="true"><use href="#ic-community"></use></svg> 社区广场</div>
                                                 <h2 class="section-title">玩家<span class="highlight">社区</span></h2>
                                                 <div class="section-divider"></div>
                                         </div>
 
                                         <div class="subtabs">
-                                                <button class="subtab active" data-sub="stories">📖 故事</button>
-                                                <button class="subtab" data-sub="messages">💬 留言墙</button>
-                                                <button class="subtab" data-sub="hall">🏅 名人榜</button>
+                                                <button class="subtab active" data-sub="stories"><svg class="ui-ic" aria-hidden="true"><use href="#ic-book"></use></svg> 故事</button>
+                                                <button class="subtab" data-sub="messages"><svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg> 留言墙</button>
+                                                <button class="subtab" data-sub="hall"><svg class="ui-ic" aria-hidden="true"><use href="#ic-medal"></use></svg> 名人榜</button>
                                         </div>
 
                                         <!-- 子面板：故事 -->
                                         <div class="subpanel active" id="sub-stories">
                                                 <div class="notice-box">
-                                                        <span>📣</span>
+                                                        <span><svg class="ui-ic" aria-hidden="true"><use href="#ic-megaphone"></use></svg></span>
                                                         <div>
                                                                 <strong>故事投稿已升级！</strong
                                                                 >通过投稿页提交（需密码），立即公开显示。<br />
@@ -375,7 +375,7 @@
                                                                 <span class="deepseek-badge">由权威deep seek生成</span>
                                                                 <br />
                                                                 <span class="qq-group"
-                                                                        >🎮 QQ群：231950162 欢迎加入</span
+                                                                        ><svg class="ui-ic" aria-hidden="true"><use href="#ic-gamepad"></use></svg> QQ群：231950162 欢迎加入</span
                                                                 >
                                                         </div>
                                                 </div>
@@ -414,7 +414,7 @@
                                                         </div>
                                                 </div>
                                                 <div class="message-form-card">
-                                                        <h3 style="margin-bottom:1rem; font-family:var(--mc-title-font);">📝 写留言</h3>
+                                                        <h3 style="margin-bottom:1rem; font-family:var(--mc-title-font);"><svg class="ui-ic" aria-hidden="true"><use href="#ic-edit"></use></svg> 写留言</h3>
                                                         <form id="messageForm">
                                                                 <div class="form-group">
                                                                         <label>昵称（可选）</label>
@@ -434,7 +434,7 @@
                                                                                 rows="4"
                                                                         ></textarea>
                                                                 </div>
-                                                                <label class="anon-toggle"><input type="checkbox" id="messageAnonymous" /> 🕶️ 匿名发布（不署名账号）</label>
+                                                                <label class="anon-toggle"><input type="checkbox" id="messageAnonymous" /> <svg class="ui-ic" aria-hidden="true"><use href="#ic-eye-off"></use></svg> 匿名发布（不署名账号）</label>
                                                                 <button
                                                                         type="submit"
                                                                         class="submit-btn"
@@ -453,7 +453,7 @@
                                         <!-- 子面板：名人榜 -->
                                         <div class="subpanel" id="sub-hall">
                                                 <div class="section-header">
-                                                        <h2 class="section-title">🏅 名人榜 · 活跃值排名</h2>
+                                                        <h2 class="section-title"><svg class="ui-ic" aria-hidden="true"><use href="#ic-medal"></use></svg> 名人榜 · 活跃值排名</h2>
                                                         <div class="section-divider"></div>
                                                 </div>
                                                 <div id="hallList" class="hall-list"><div class="empty-hint">加载中...</div></div>
@@ -464,7 +464,7 @@
                         <!-- ===================== 视图：故事详情（新） ===================== -->
                         <section class="view" id="view-story-detail">
                                 <div class="container">
-                                        <button class="back-btn" id="storyDetailBack">← 返回故事列表</button>
+                                        <button class="back-btn" id="storyDetailBack"><svg class="ui-ic" aria-hidden="true"><use href="#ic-arrow-left"></use></svg> 返回故事列表</button>
                                         <article class="story-detail">
                                                 <div id="storyDetailMain">
                                                         <div
@@ -475,13 +475,13 @@
                                                 </div>
                                                 <div class="story-like-bar" id="storyLikeBar" style="display:none">
                                                         <button class="like-btn" id="storyLikeBtn" data-liked="0">
-                                                                🤍 点赞 <span class="like-count-num">0</span>
+                                                                <svg class="ui-ic" aria-hidden="true"><use href="#ic-heart"></use></svg> 点赞 <span class="like-count-num">0</span>
                                                         </button>
                                                         <span class="story-stats-inline" id="storyCommentCountInline"></span>
                                                 </div>
                                                 <div class="comment-section" id="storyCommentSection" style="display:none">
                                                         <h3>
-                                                                💬 评论
+                                                                <svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg> 评论
                                                                 <span
                                                                         id="storyCommentCount"
                                                                         style="color:var(--text-muted); font-size:.9rem;"
@@ -512,8 +512,8 @@
                         <section class="view" id="view-trades">
                                 <div class="container">
                                         <div class="section-header">
-                                                <div class="cat-badge trade">📦 交易集市</div>
-                                                <h2 class="section-title">📦 玩家<span class="highlight">交易</span></h2>
+                                                <div class="cat-badge trade"><svg class="ui-ic" aria-hidden="true"><use href="#ic-package"></use></svg> 交易集市</div>
+                                                <h2 class="section-title"><svg class="ui-ic" aria-hidden="true"><use href="#ic-package"></use></svg> 玩家<span class="highlight">交易</span></h2>
                                                 <div class="section-divider"></div>
                                                 <p
                                                         class="section-subtitle"
@@ -525,7 +525,7 @@
                                         <div class="trades-grid" style="display:none;"></div>
                                         <!-- 发布交易表单 -->
                                         <div class="trade-form-card">
-                                                <h3 style="margin-bottom:1rem; font-family:var(--mc-title-font);">📝 发布新交易</h3>
+                                                <h3 style="margin-bottom:1rem; font-family:var(--mc-title-font);"><svg class="ui-ic" aria-hidden="true"><use href="#ic-edit"></use></svg> 发布新交易</h3>
                                                 <form id="tradeForm">
                                                         <div class="form-group">
                                                                 <label>物品名称 *</label>
@@ -592,11 +592,11 @@
 
                                         <!-- 管理已发布的交易：改用账号鉴权 -->
                                         <div class="manage-code-box" style="margin-bottom:2rem;">
-                                                <h3 style="margin-bottom:0.5rem; font-family:var(--mc-title-font);">🔑 管理我的交易</h3>
+                                                <h3 style="margin-bottom:0.5rem; font-family:var(--mc-title-font);"><svg class="ui-ic" aria-hidden="true"><use href="#ic-key"></use></svg> 管理我的交易</h3>
                                                 <p
                                                         style="color:var(--text-secondary); font-size:0.85rem; margin:0;"
                                                 >
-                                                        已改用账号管理：登录后，你发布的交易会在下方列表中显示「✅ 标记已售出」按钮，点击即可标记为已售出，无需再保存管理码。
+                                                        已改用账号管理：登录后，你发布的交易会在下方列表中显示「标记已售出」按钮，点击即可标记为已售出，无需再保存管理码。
                                                 </p>
                                         </div>
 
@@ -625,7 +625,7 @@
                         <section class="view" id="view-tools">
                                 <div class="container">
                                         <div class="section-header">
-                                                <div class="cat-badge tool">🧭 冒险工具</div>
+                                                <div class="cat-badge tool"><svg class="ui-ic" aria-hidden="true"><use href="#ic-compass"></use></svg> 冒险工具</div>
                                                 <h2 class="section-title">实用<span class="highlight">工具箱</span></h2>
                                                 <div class="section-divider"></div>
                                                 <p
@@ -637,16 +637,16 @@
                                         </div>
                                         <div class="tool-grid">
                                                 <div class="tool-card ore" id="oreFinderLink" role="button" tabindex="0">
-                                                        <div class="t-icon">⛏️</div>
+                                                        <div class="t-icon"></div>
                                                         <div class="t-title">矿石查找器</div>
                                                         <div class="t-desc">按坐标定位钻石、远古残骸等矿脉</div>
-                                                        <div class="t-go">打开查找器 ▸</div>
+                                                        <div class="t-go">打开查找器 <svg class="ui-ic" aria-hidden="true"><use href="#ic-arrow-right"></use></svg></div>
                                                 </div>
                                                 <div class="tool-card seed" id="seedMapLink" role="button" tabindex="0">
-                                                        <div class="t-icon">🗺️</div>
+                                                        <div class="t-icon"><svg class="ui-ic" aria-hidden="true"><use href="#ic-map"></use></svg></div>
                                                         <div class="t-title">种子地图</div>
                                                         <div class="t-desc">查看整个世界的地形与结构生成</div>
-                                                        <div class="t-go">打开地图 ▸</div>
+                                                        <div class="t-go">打开地图 <svg class="ui-ic" aria-hidden="true"><use href="#ic-arrow-right"></use></svg></div>
                                                 </div>
                                         </div>
                                 </div>
@@ -656,12 +656,12 @@
                         <section class="view" id="view-submit">
                                 <div class="container">
                                         <div class="section-header">
-                                                <div class="cat-badge community">✍️ 内容创作</div>
-                                                <h2 class="section-title">📝 投稿<span class="highlight">故事</span></h2>
+                                                <div class="cat-badge community"><svg class="ui-ic" aria-hidden="true"><use href="#ic-edit"></use></svg> 内容创作</div>
+                                                <h2 class="section-title"><svg class="ui-ic" aria-hidden="true"><use href="#ic-edit"></use></svg> 投稿<span class="highlight">故事</span></h2>
                                                 <div class="section-divider"></div>
                                         </div>
                                         <div class="submit-form-card">
-                                                <h3 style="margin-bottom:0.5rem; font-family:var(--mc-title-font);">📝 投稿故事</h3>
+                                                <h3 style="margin-bottom:0.5rem; font-family:var(--mc-title-font);"><svg class="ui-ic" aria-hidden="true"><use href="#ic-edit"></use></svg> 投稿故事</h3>
                                                 <p
                                                         style="color:var(--text-secondary); margin-bottom:1.5rem;"
                                                 >
@@ -707,7 +707,7 @@
                                                                 />
                                                                 <div class="img-upload-row">
                                                                         <input type="file" id="storyImageFile" accept="image/*" />
-                                                                        <button type="button" class="submit-btn small" id="storyImageUploadBtn">📷 图床上传</button>
+                                                                        <button type="button" class="submit-btn small" id="storyImageUploadBtn"><svg class="ui-ic" aria-hidden="true"><use href="#ic-camera"></use></svg> 图床上传</button>
                                                                         <img id="storyImagePreview" class="img-preview" alt="" style="display:none" />
                                                                 </div>
                                                         </div>
@@ -730,11 +730,11 @@
 </main>
 
                 <footer class="footer">
-                        <div class="footer-brand">⛏️ FKD方块殿</div>
-                        <div class="pixel-divider">▪ ▪ ▪ ▪ ▪</div>
+                        <div class="footer-brand"> FKD方块殿</div>
+                        <div class="pixel-divider">    </div>
                         <div class="footer-text" id="footerText"></div>
                         <div class="visit-counter">
-                                📊 今日被访问数：<span class="count-num" id="todayVisitCount"
+                                <svg class="ui-ic" aria-hidden="true"><use href="#ic-chart"></use></svg> 今日被访问数：<span class="count-num" id="todayVisitCount"
                                         >加载中...</span
                                 >
                         </div>
@@ -744,5 +744,49 @@
                 <script src="js/guilds.js"></script>
                 <script src="js/chat.js"></script>
                 <script src="js/gifts.js"></script>
-        </body>
+        <svg class="svg-sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="ic-home" viewBox="0 0 24 24"><path d='M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z M9 21V12h6v9'/></symbol>
+  <symbol id="ic-community" viewBox="0 0 24 24"><path d='M3 21h18 M5 21V10l7-5 7 5v11 M9 21v-6h6v6'/></symbol>
+  <symbol id="ic-package" viewBox="0 0 24 24"><path d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.27 6.96L12 12l8.73-5.04 M12 22V12'/></symbol>
+  <symbol id="ic-compass" viewBox="0 0 24 24"><path d='M3 11l19-9-9 19-2-8-8-2z'/></symbol>
+  <symbol id="ic-edit" viewBox="0 0 24 24"><path d='M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z'/></symbol>
+  <symbol id="ic-flag" viewBox="0 0 24 24"><path d='M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z M4 22v-7'/></symbol>
+  <symbol id="ic-message" viewBox="0 0 24 24"><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></symbol>
+  <symbol id="ic-shield" viewBox="0 0 24 24"><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></symbol>
+  <symbol id="ic-key" viewBox="0 0 24 24"><path d='M14 10a4 4 0 1 0-8 0 4 4 0 0 0 8 0z M10 14l-6 6 M7 17l-2-2 M11 13l2 2'/></symbol>
+  <symbol id="ic-gift" viewBox="0 0 24 24"><path d='M20 12v9H4v-9 M2 7h20v5H2z M12 22V7 M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z'/></symbol>
+  <symbol id="ic-scroll" viewBox="0 0 24 24"><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8'/></symbol>
+  <symbol id="ic-pencil" viewBox="0 0 24 24"><path d='M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z'/></symbol>
+  <symbol id="ic-camera" viewBox="0 0 24 24"><path d='M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'/></symbol>
+  <symbol id="ic-settings" viewBox="0 0 24 24"><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/></symbol>
+  <symbol id="ic-refresh" viewBox="0 0 24 24"><path d='M23 4v6h-6 M1 20v-6h6 M3.51 9a9 9 0 0 1 14.85-3.36L23 10 M1 14l4.64 4.36A9 9 0 0 0 20.49 15'/></symbol>
+  <symbol id="ic-trophy" viewBox="0 0 24 24"><path d='M6 9H4.5a2.5 2.5 0 0 1 0-5H6 M18 9h1.5a2.5 2.5 0 0 0 0-5H18 M4 22h16 M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22 M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22 M18 2H6v7a6 6 0 0 0 12 0V2z'/></symbol>
+  <symbol id="ic-moon" viewBox="0 0 24 24"><path d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'/></symbol>
+  <symbol id="ic-crown" viewBox="0 0 24 24"><path d='M3 6l4 5 5-7 5 7 4-5-2 12H5z'/></symbol>
+  <symbol id="ic-tag" viewBox="0 0 24 24"><path d='M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z M7 7h.01'/></symbol>
+  <symbol id="ic-dot" viewBox="0 0 24 24"><circle cx='12' cy='12' r='6' fill='#3ad07a' stroke='none'/></symbol>
+  <symbol id="ic-signal" viewBox="0 0 24 24"><path d='M2 20h.01 M7 20v-4 M12 20v-8 M17 20V4'/></symbol>
+  <symbol id="ic-book" viewBox="0 0 24 24"><path d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'/></symbol>
+  <symbol id="ic-medal" viewBox="0 0 24 24"><path d='M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12z M8.21 13.89L7 23l5-3 5 3-1.21-9.12'/></symbol>
+  <symbol id="ic-gamepad" viewBox="0 0 24 24"><path d='M6 11h4M8 9v4 M15 12h.01M18 10h.01 M17.32 5H6.68a4 4 0 0 0-3.98 3.59C2.6 9.42 2 14.46 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.41-1.41A2 2 0 0 1 9.83 16h4.34a2 2 0 0 1 1.41.59L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.54-.6-6.58-.69-7.26A4 4 0 0 0 17.32 5z'/></symbol>
+  <symbol id="ic-eye-off" viewBox="0 0 24 24"><path d='M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24 M1 1l22 22'/></symbol>
+  <symbol id="ic-chart" viewBox="0 0 24 24"><path d='M3 3v18h18 M18 17V9 M13 17V5 M8 17v-3'/></symbol>
+  <symbol id="ic-plus" viewBox="0 0 24 24"><path d='M12 5v14M5 12h14'/></symbol>
+  <symbol id="ic-arrow-left" viewBox="0 0 24 24"><path d='M19 12H5M12 19l-7-7 7-7'/></symbol>
+  <symbol id="ic-arrow-right" viewBox="0 0 24 24"><path d='M5 12h14M12 5l7 7-7 7'/></symbol>
+  <symbol id="ic-heart" viewBox="0 0 24 24"><path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/></symbol>
+  <symbol id="ic-heart-filled" viewBox="0 0 24 24"><path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z' fill='currentColor' stroke='none'/></symbol>
+  <symbol id="ic-trash" viewBox="0 0 24 24"><path d='M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2 M10 11v6 M14 11v6'/></symbol>
+  <symbol id="ic-coin" viewBox="0 0 24 24"><path d='M12 2v20 M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/></symbol>
+  <symbol id="ic-user" viewBox="0 0 24 24"><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8z'/></symbol>
+  <symbol id="ic-phone" viewBox="0 0 24 24"><path d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z'/></symbol>
+  <symbol id="ic-clock" viewBox="0 0 24 24"><path d='M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 6v6l4 2'/></symbol>
+  <symbol id="ic-calendar" viewBox="0 0 24 24"><path d='M3 4h18v18H3z M16 2v4 M8 2v4 M3 10h18'/></symbol>
+  <symbol id="ic-megaphone" viewBox="0 0 24 24"><path d='M3 11l18-5v12L3 14z M11.6 16.8a3 3 0 1 1-5.8-1.6'/></symbol>
+  <symbol id="ic-map" viewBox="0 0 24 24"><path d='M9 3L3 6v15l6-3 6 3 6-3V3l-6 3-6-3z M9 3v15 M15 6v15'/></symbol>
+  <symbol id="ic-users" viewBox="0 0 24 24"><path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75'/></symbol>
+  <symbol id="ic-sun" viewBox="0 0 24 24"><path d='M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42 M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z'/></symbol>
+  <symbol id="ic-monitor" viewBox="0 0 24 24"><path d='M2 3h20v14H2z M8 21h8 M12 17v4'/></symbol>
+</svg>
+</body>
 </html>

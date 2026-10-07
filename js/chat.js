@@ -65,7 +65,7 @@
       root.innerHTML = `
         <div class="chat-layout">
           <div class="chat-sidebar">
-            <div class="chat-sidebar-head"><h3>💬 聊天</h3><button class="submit-btn small" id="chatNewBtn">＋</button></div>
+            <div class="chat-sidebar-head"><h3><svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg> 聊天</h3><button class="submit-btn small" id="chatNewBtn"><svg class="ui-ic" aria-hidden="true"><use href="#ic-plus"></use></svg></button></div>
             <div class="chat-subtabs">
               <div class="chat-subtab active" data-ctab="dm">私聊</div>
               <div class="chat-subtab" data-ctab="group">群聊</div>
@@ -104,7 +104,7 @@
     let data = [];
     if (type === 'dm') { const r = await rpc('list_dm_conversations', {}); data = (r.data && r.data.list) || []; }
     else { const r = await rpc('list_my_groups', {}); data = (r.data && r.data.list) || []; }
-    if (!data.length) { list.innerHTML = `<div class="chat-empty">还没有${type === 'dm' ? '私聊' : '群组'}，点右上角 ＋ 开始</div>`; return; }
+    if (!data.length) { list.innerHTML = `<div class="chat-empty">还没有${type === 'dm' ? '私聊' : '群组'}，点右上角 <svg class="ui-ic" aria-hidden="true"><use href="#ic-plus"></use></svg> 开始</div>`; return; }
     if (type === 'dm') {
       list.innerHTML = data.map(c => `<div class="conv-item" data-peer="${c.peer}">
         <span class="ci-name">${escapeHTML(c.uname || '用户')}</span>

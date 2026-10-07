@@ -794,3 +794,19 @@
 .gr-item:hover { border-color: var(--accent-green); }
 .guild-member:hover, .guild-pending .gp-item:hover { border-color: var(--accent-green); }
 #giftRecModal .modal { max-height:82vh; overflow:auto; }
+
+/* ============ v1.9.5 图标系统：去除表情符号，改用内联 SVG 图标 ============ */
+.svg-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.ui-ic { width: 1.1em; height: 1.1em; display: inline-block; vertical-align: -0.18em; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; flex-shrink: 0; }
+/* 导航 / 按钮 / 卡片内图标尺寸微调 */
+.navbar-links a .ui-ic { width: 1em; height: 1em; }
+button .ui-ic, .submit-btn .ui-ic, .cat-badge .ui-ic, .q-icon .ui-ic, .t-icon .ui-ic, .icon .ui-ic, .gr-item .ui-ic, .conv-item .ui-ic { width: 1.15em; height: 1.15em; }
+.brand-icon .ui-ic { width: 100%; height: 100%; }
+/* 像素分隔符：原 ▪ ▪ ▪ 改为 CSS 菱形点，去除表情符号 */
+.pixel-divider { display: flex; gap: .55rem; justify-content: center; align-items: center; margin: .7rem 0; }
+.pixel-divider i { width: 7px; height: 7px; background: var(--mc-edge); display: block; transform: rotate(45deg); }
+/* 赠送记录方向：送出(红)/收到(绿) 取代箭头表情 */
+.gr-dir.out { color: #e74c3c; }
+.gr-dir.in { color: var(--accent-green); }
+/* 页脚品牌去掉镐头表情，文字即 logo */
+.footer-brand { display: flex; align-items: center; gap: .5rem; }
