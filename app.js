@@ -126,7 +126,7 @@
                                                 <div class="story-meta">${authorHTML} · <svg class="ui-ic"><use href="#ic-calendar"></use></svg> ${escapeHTML(dateStr)}</div>
                                                 <div class="story-content">${contentHTML}</div>
                                                 ${imagesHTML}
-                                                <div class="story-stats" data-story-id="${story.id}"><svg class="ui-ic" aria-hidden="true"><use href="#ic-heart-filled"></use></svg> 0 · <svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg> 0</div>
+                                                <div class="story-stats" data-story-id="${story.id}"><svg class="ui-ic" aria-hidden="true"><use href="#ic-heart"></use></svg> 0 · <svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg> 0</div>
                                         `;
                                         storyCache[String(story.id)] = story;
                                         card.addEventListener('click', (e) => {
@@ -145,7 +145,7 @@
                         // 数据表：story_likes(复合主键一人一赞) / story_comments(署名快照)，RLS 见迁移 0003。
                         // 读走 anon key（公开），写走 getToken()（登录用户 JWT，auth.uid() 生效）。
                         const storyCache = {};                          // id -> story 对象（列表渲染时缓存，供详情页复用）
-                        const _storyStats = { likes: {}, comments: {} }; // 会话内计数缓存
+                        const _storyStats = { likes: {}, comments: {}, myLikes: {} }; // 会话内计数缓存（myLikes: 当前用户是否已赞该帖）
                         let _curStoryId = null;                          // 当前详情页的故事 id
 
                         function parseStoryImages(story) {
@@ -157,28 +157,41 @@
                                 return images.filter(isValidImageUrl);
                         }
 
-                        // 批量拉取点赞/评论计数，回填列表卡片徽标（anon 公开读；失败静默，不影响主流程）
+                        // 列表卡片徽标 HTML：已赞（当前用户）用实心心，未赞用空心心，旁边是总赞数与评论数
+                        function storyStatsHTML(id) {
+                                const liked = !!(_storyStats.myLikes && _storyStats.myLikes[id]);
+                                const heart = liked
+                                        ? '<svg class="ui-ic" aria-hidden="true"><use href="#ic-heart-filled"></use></svg>'
+                                        : '<svg class="ui-ic" aria-hidden="true"><use href="#ic-heart"></use></svg>';
+                                return `${heart} ${_storyStats.likes[id] || 0} · <svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg> ${_storyStats.comments[id] || 0}`;
+                        }
+
+                        // 批量拉取点赞/评论计数 + 当前用户点赞集合，回填列表卡片徽标（anon 公开读；失败静默，不影响主流程）
                         async function loadStoryStats() {
                                 try {
                                         const h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` };
-                                        const [lr, cr] = await Promise.all([
+                                        const claims = (typeof parseToken === 'function') ? parseToken() : null;
+                                        const mySub = claims && claims.sub;
+                                        const [lr, cr, myR] = await Promise.all([
                                                 fetch(`${SUPABASE_URL}/rest/v1/story_likes?select=story_id`, { headers: h }).then(r => r.json()),
-                                                fetch(`${SUPABASE_URL}/rest/v1/story_comments?select=story_id`, { headers: h }).then(r => r.json())
+                                                fetch(`${SUPABASE_URL}/rest/v1/story_comments?select=story_id`, { headers: h }).then(r => r.json()),
+                                                mySub ? fetch(`${SUPABASE_URL}/rest/v1/story_likes?user_id=eq.${encodeURIComponent(mySub)}&select=story_id`, { headers: h }).then(r => r.json()) : Promise.resolve([])
                                         ]);
-                                        const likes = {}, comments = {};
+                                        const likes = {}, comments = {}, myLikes = {};
                                         (Array.isArray(lr) ? lr : []).forEach(x => { likes[x.story_id] = (likes[x.story_id] || 0) + 1; });
                                         (Array.isArray(cr) ? cr : []).forEach(x => { comments[x.story_id] = (comments[x.story_id] || 0) + 1; });
-                                        _storyStats.likes = likes; _storyStats.comments = comments;
+                                        (Array.isArray(myR) ? myR : []).forEach(x => { myLikes[x.story_id] = true; });
+                                        _storyStats.likes = likes; _storyStats.comments = comments; _storyStats.myLikes = myLikes;
                                         document.querySelectorAll('.story-stats[data-story-id]').forEach(el => {
                                                 const id = el.dataset.storyId;
-                                                el.innerHTML = `<svg class="ui-ic" aria-hidden="true"><use href="#ic-heart-filled"></use></svg> ${likes[id] || 0} · <svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg> ${comments[id] || 0}`;
+                                                el.innerHTML = storyStatsHTML(id);
                                         });
                                 } catch (e) { /* 静默兜底 */ }
                         }
 
                         function refreshStoryBadge(id) {
                                 const el = document.querySelector(`.story-stats[data-story-id="${id}"]`);
-                                if (el) el.innerHTML = `<svg class="ui-ic" aria-hidden="true"><use href="#ic-heart-filled"></use></svg> ${_storyStats.likes[id] || 0} · <svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg> ${_storyStats.comments[id] || 0}`;
+                                if (el) el.innerHTML = storyStatsHTML(id);
                         }
 
                         function openStoryDetail(id) {
@@ -235,6 +248,7 @@
                                 _storyStats.likes[id] = userIds.length;
                                 const claims = parseToken();
                                 const liked = !!(claims && claims.sub && userIds.some(u => String(u) === String(claims.sub)));
+                                if (_storyStats.myLikes) _storyStats.myLikes[id] = liked;
                                 const btn = document.getElementById('storyLikeBtn');
                                 if (btn) {
                                         btn.dataset.liked = liked ? '1' : '0';
