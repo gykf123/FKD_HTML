@@ -841,6 +841,27 @@ button .ui-ic, .submit-btn .ui-ic, .cat-badge .ui-ic, .q-icon .ui-ic, .t-icon .u
 .ore-more { padding: .5rem .7rem; color: var(--text-muted); font-size: .72rem; text-align: center; }
 .ore-disclaimer { margin-top: .9rem; background: rgba(230,180,60,.08); border: 2px solid var(--accent-gold); padding: .7rem .9rem; font-size: .76rem; color: var(--text-secondary); line-height: 1.5; }
 .ore-disclaimer a { color: var(--accent-gold); }
+
+/* v1.9.12 基岩版精确坐标内核：Y层柱状分布 + 矿点坐标列表 */
+.oy-hist-title { font-size: .74rem; color: var(--text-muted); margin-bottom: .5rem; }
+.oy-bar-row { display: flex; align-items: center; gap: .4rem; font-size: .7rem; line-height: 1.15; }
+.oy-bar-y { width: 3.2rem; text-align: right; color: var(--text-secondary); font-family: var(--mc-pixel-font); flex: none; }
+.oy-bar-track { flex: 1; min-width: 0; height: 8px; background: rgba(128,128,128,.16); border-radius: 2px; overflow: hidden; }
+.oy-bar-fill { display: block; height: 100%; background: rgba(140,140,140,.5); border-radius: 2px; }
+.oy-bar-n { width: 2.4rem; text-align: right; color: var(--text-muted); flex: none; }
+.oy-empty { color: var(--text-muted); font-size: .75rem; padding: .5rem; }
+.ore-dist-wrap { max-height: 260px; overflow: auto; }
+.ore-list { max-height: 340px; }
+
+/* v1.9.12 矿点坐标行（点击复制） */
+.ore-pt { display: flex; align-items: center; gap: .5rem; padding: .38rem .7rem; font-size: .82rem; border-bottom: 1px solid rgba(255,255,255,.05); cursor: pointer; transition: background .12s; }
+.ore-pt:nth-child(even) { background: rgba(255,255,255,.02); }
+.ore-pt:hover { background: rgba(255,207,92,.08); }
+.ore-pt.copied { background: rgba(90,214,230,.2); }
+.ore-idx { width: 1.8rem; color: var(--text-muted); font-size: .7rem; flex: none; }
+.ore-xyz { font-family: var(--mc-pixel-font); color: var(--text-primary); flex: 1; min-width: 0; }
+.ore-pt .ore-chunk { flex: none; }
+.ore-pt .ore-dist { flex: none; }
 /* 候选种子快捷选择芯片 */
 .seed-chips { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .5rem; }
 .seed-chip {

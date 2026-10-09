@@ -562,27 +562,42 @@
                             }
                         });
 
-                        // ---------- 4. 矿石查找器 ----------
+                        // ---------- 4. 矿石查找器（基岩版精确坐标内核 bedrockore.js） ----------
                         const oreModal = document.getElementById('oreModal');
-                        document.getElementById('oreFinderLink').addEventListener('click', (e) => { e.preventDefault(); modalOpen('oreModal'); });
+                        const oreEngine = () => window.FKDBedrockOre;
+                        function fillOreTypes() {
+                            if (typeof oreEngine() !== 'object') return;
+                            const sel = document.getElementById('oreType');
+                            const ver = document.getElementById('oreVersion').value;
+                            const dim = Number(document.getElementById('oreDim').value);
+                            sel.innerHTML = oreEngine().矿石列表(ver, dim).map(o => `<option value="${o.key}">${o.disp}（精度 ${o.av}% · 推荐 Y=${o.best}）</option>`).join('');
+                        }
+                        function initOreModal() {
+                            if (typeof oreEngine() !== 'object') return;
+                            const vsel = document.getElementById('oreVersion');
+                            if (!vsel.options.length) vsel.innerHTML = oreEngine().版本顺序.map(v => `<option value="${v}">${v}</option>`).join('');
+                            fillOreTypes();
+                        }
+                        document.getElementById('oreFinderLink').addEventListener('click', (e) => { e.preventDefault(); modalOpen('oreModal'); initOreModal(); });
                         document.getElementById('closeOreModal').addEventListener('click', () => oreModal.classList.remove('active'));
                         oreModal.addEventListener('click', (e) => { if (e.target === oreModal) oreModal.classList.remove('active'); });
+                        document.getElementById('oreVersion').addEventListener('change', fillOreTypes);
+                        document.getElementById('oreDim').addEventListener('change', fillOreTypes);
                         document.getElementById('generateOreLink').addEventListener('click', () => {
+                            if (typeof oreEngine() !== 'object') { showError('矿石查找模块未加载'); return; }
                             const seedText = document.getElementById('oreSeed').value.trim();
-                            const oreType = document.getElementById('oreType').value;
-                            const coordX = document.getElementById('coordX').value.trim();
-                            const coordZ = document.getElementById('coordZ').value.trim();
-                            const radius = document.getElementById('oreRadius').value.trim();
-                            if (!coordX || !coordZ) { showError('请完整填写中心 X / Z 坐标'); return; }
-                            if (typeof window.FKDOreFinder !== 'object') { showError('矿石查找模块未加载'); return; }
-                            const data = window.FKDOreFinder.findOre({
-                                seedText: seedText || '20260810',
-                                oreKey: oreType,
-                                centerX: Number(coordX) || 0,
-                                centerZ: Number(coordZ) || 0,
-                                radius: radius || 4
+                            const data = oreEngine().findOres({
+                                seedText: seedText || '2261001',
+                                version: document.getElementById('oreVersion').value,
+                                dim: Number(document.getElementById('oreDim').value),
+                                oreKey: document.getElementById('oreType').value,
+                                centerX: Number(document.getElementById('coordX').value) || 0,
+                                centerZ: Number(document.getElementById('coordZ').value) || 0,
+                                radius: document.getElementById('oreRadius').value || 10,
+                                surface: document.getElementById('oreSurface').value || 64
                             });
-                            window.FKDOreFinder.renderOreResult('oreResult', data);
+                            if (!data) { showError('查找失败，请检查参数'); return; }
+                            oreEngine().renderResult('oreResult', data);
                         });
 
                         // ---------- 4.5 基岩结构查找器 ----------
