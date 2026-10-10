@@ -521,8 +521,8 @@
                             const content = document.getElementById('storyContent').value.trim();
                             const imagesInput = document.getElementById('storyImages').value.trim();
                             // 故事必须关联账户：作者与署名快照均取自登录账号，不支持匿名
-                            const author = claims.username;
-                            const author_name = claims.username;
+                            const author = displayName(claims);
+                            const author_name = displayName(claims);
                             const author_avatar = claims.avatar_url || null;
 
                             if (!title || !content) {
@@ -725,10 +725,10 @@
                             try {
                                 const url = `${SUPABASE_URL}/rest/v1/messages`;
                                 const headers = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
-                                const nickname = anon ? ((document.getElementById('messageNickname').value || '').trim() || '匿名') : claims.username;
+                                const nickname = anon ? ((document.getElementById('messageNickname').value || '').trim() || '匿名') : displayName(claims);
                                 const body = JSON.stringify({
                                     user_id: anon ? null : claims.sub,
-                                    author_name: anon ? null : claims.username,
+                                    author_name: anon ? null : displayName(claims),
                                     author_avatar: anon ? null : (claims.avatar_url || null),
                                     nickname, content, created_at: new Date().toISOString()
                                 });
@@ -1013,12 +1013,12 @@
                             if (!list.length) { box.innerHTML = '<div class="empty-hint">还没有玩家上榜，快去发帖攒活跃值吧！</div>'; return; }
                             const admin = isAdmin();
                             box.innerHTML = list.map((u, i) => {
-                                const av = u.avatar_url ? `<img class="hall-avatar" src="${escapeHTML2(u.avatar_url)}" onerror="this.style.display='none'"/>` : `<div class="hall-avatar hall-avatar-empty">${escapeHTML2((u.username||'?').slice(0,1))}</div>`;
+                                const av = u.avatar_url ? `<img class="hall-avatar" src="${escapeHTML2(u.avatar_url)}" onerror="this.style.display='none'"/>` : `<div class="hall-avatar hall-avatar-empty">${escapeHTML2((u.nickname||u.username||'?').slice(0,1))}</div>`;
                                 const roleBadge = u.role === 'admin' ? '<span class="role-badge role-admin">管理员</span>' : '';
                                 const ctrl = admin ? `<div class="hall-ctrl"><button class="hall-btn" data-uid="${u.id}" data-d="5"><svg class="ui-ic" aria-hidden="true"><use href="#ic-plus"></use></svg>5</button><button class="hall-btn" data-uid="${u.id}" data-d="-5">－5</button></div>` : '';
                                 return `<div class="hall-item${i<3?' hall-top':''}" data-uid="${u.id}" data-username="${escapeHTML2(u.username||'')}">
                                     <span class="hall-rank">${i+1}</span>${av}
-                                    <span class="hall-name">${escapeHTML2(u.username||'匿名')}</span>${roleBadge}
+                                    <span class="hall-name">${escapeHTML2(u.nickname || u.username || '匿名')}</span>${roleBadge}
                                     <span class="hall-score">${u.active_value||0}</span>${ctrl}
                                 </div>`;
                             }).join('');
@@ -1055,7 +1055,7 @@
                             const seq = ++_hallSeq;
                             if (!silent) box.innerHTML = '<div class="empty-hint">加载中...</div>';
                             try {
-                                const r = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,username,avatar_url,role,active_value&status=eq.approved&order=active_value.desc,username.asc&limit=50`, { headers: { 'apikey': SUPABASE_ANON_KEY } });
+                                const r = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,username,avatar_url,role,active_value,nickname&status=eq.approved&order=active_value.desc,username.asc&limit=50`, { headers: { 'apikey': SUPABASE_ANON_KEY } });
                                 const arr = await r.json();
                                 if (!Array.isArray(arr)) throw new Error('数据异常');
                                 if (seq !== _hallSeq) return;   // 已有更新的渲染，丢弃本次过期结果
@@ -1278,7 +1278,7 @@
                                 const h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` };
                                 const enc = encodeURIComponent(username);
                                 try {
-                                        const pr = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${enc}&select=id,username,avatar_url,bio,role,created_at&status=eq.approved&limit=1`, { headers: h });
+                                        const pr = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${enc}&select=id,username,avatar_url,bio,role,created_at,nickname&status=eq.approved&limit=1`, { headers: h });
                                         const arr = await pr.json();
                                         if (!pr.ok || !arr || !arr.length) {
                                                 if (body) body.innerHTML = '<div class="profile-empty">该用户不存在或未通过审核</div>';
@@ -1301,7 +1301,7 @@
                                 if (!body) return;
                                 if (!j || !j.success) { body.innerHTML = '<div class="profile-empty">' + escapeHTML((j && j.error) || '加载失败') + '</div>'; return; }
                                 const p = j.profile;
-                                const name = p.username || fallbackName;
+                                const name = p.nickname || p.username || fallbackName;
                                 const av = p.avatar_url
                                         ? `<img class="profile-avatar" src="${escapeHTML(p.avatar_url)}" alt="" onerror="this.style.display='none'">`
                                         : `<div class="profile-avatar profile-avatar--default">${escapeHTML((name[0] || '?'))}</div>`;
@@ -1432,14 +1432,15 @@
                                 if (prev) { prev.src = claims.avatar_url || ''; prev.style.display = claims.avatar_url ? 'block' : 'none'; }
                                 const bioEl = document.getElementById('mpBio'); if (bioEl) bioEl.value = '';
                                 const urlEl = document.getElementById('mpAvatarUrl'); if (urlEl) urlEl.value = claims.avatar_url || '';
+                                const nickEl = document.getElementById('mpNickname'); if (nickEl) nickEl.value = '';
                                 const msg = document.getElementById('mpMessage'); if (msg) { msg.textContent = ''; msg.className = 'form-message'; }
                                 showMpDetailView();   // 默认只读详情，隐藏编辑表单
                                 modalOpen('myProfileModal');
                                 // 先用 token 即时填充详情（避免空白闪烁），再从库回填最新资料
-                                paintMpDetail(claims.avatar_url || '', claims.username || '匿名', claims.role, '');
+                                paintMpDetail(claims.avatar_url || '', displayName(claims), claims.role, '');
                                 if (claims.sub) {
                                         try {
-                                                const r = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${claims.sub}&select=avatar_url,bio,active_value,role`, {
+                                                const r = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${claims.sub}&select=avatar_url,bio,active_value,role,nickname`, {
                                                         headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}` }
                                                 });
                                                 const arr = await r.json();
@@ -1455,7 +1456,9 @@
                                                                 if (urlEl) urlEl.value = dbAvatar;
                                                         }
                                                         if (bioEl) bioEl.value = dbBio;
-                                                        paintMpDetail(dbAvatar, claims.username || '匿名', u.role, dbBio);
+                                                        if (nickEl) nickEl.value = u.nickname || '';
+                                                        if (u.nickname !== undefined) { _myNickname = u.nickname || null; try { if (_myNickname) localStorage.setItem('fkd_nickname', _myNickname); else localStorage.removeItem('fkd_nickname'); } catch {} }
+                                                        paintMpDetail(dbAvatar, displayName(claims), u.role, dbBio);
                                                         const avEl = document.getElementById('mpActiveValue'); if (avEl) avEl.textContent = dbActive;
                                                 }
                                         } catch {}
@@ -1485,13 +1488,15 @@
                                 if (msg) { msg.textContent = ''; msg.className = 'form-message'; }
                                 const bio = (document.getElementById('mpBio').value || '').trim();
                                 const avatar = (document.getElementById('mpAvatarUrl').value || '').trim();
+                                const nick = (document.getElementById('mpNickname').value || '').trim();
+                                if (nick && nick.length > 20) { if (msg) { msg.textContent = '昵称不能超过 20 个字符'; msg.className = 'form-message error'; } return; }
                                 const claims = parseToken();
                                 if (!claims || !claims.sub) { if (msg) { msg.textContent = '请先登录'; msg.className = 'form-message error'; } return; }
                                 try {
                                         const response = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${claims.sub}`, {
                                                 method: 'PATCH',
                                                 headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
-                                                body: JSON.stringify({ avatar_url: avatar || null, bio })
+                                                body: JSON.stringify({ avatar_url: avatar || null, bio, nickname: nick || null })
                                         });
                                         if (!response.ok) {
                                                 const t = await response.text().catch(() => '');
@@ -1516,6 +1521,8 @@
                                         _avatarOverride = avatar || null;
                                         if (_avatarOverride) { try { localStorage.setItem('fkd_avatar_override', _avatarOverride); } catch {} }
                                         else { try { localStorage.removeItem('fkd_avatar_override'); } catch {} }
+                                        _myNickname = nick || null;
+                                        try { if (_myNickname) localStorage.setItem('fkd_nickname', _myNickname); else localStorage.removeItem('fkd_nickname'); } catch {}
                                 } catch {}
                                 // 保存成功后回到只读详情视图，并重新拉取最新资料刷新展示（不再自动关闭弹窗）
                                 setTimeout(openMyProfile, 350);
@@ -1608,6 +1615,30 @@
                                 } catch { return null; }
                         }
                         function isAdmin() { const p = parseToken(); return !!(p && p.app_role === 'admin'); }
+
+                        // 当前用户展示昵称缓存：优先 nickname，回退 username（身份始终以 UID 锚定，不随昵称改变）
+                        let _myNickname = null;
+                        try { _myNickname = localStorage.getItem('fkd_nickname') || null; } catch {}
+                        let _nickLoading = false;
+                        function displayName(claims) {
+                                const c = claims || parseToken();
+                                return (_myNickname || (c && c.nickname) || (c && c.username) || '匿名');
+                        }
+                        async function loadMyNickname() {
+                                const claims = parseToken();
+                                if (!claims || !claims.sub || _nickLoading) return;
+                                _nickLoading = true;
+                                try {
+                                        const r = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${claims.sub}&select=nickname`, {
+                                                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}` }
+                                        });
+                                        const arr = await r.json();
+                                        if (Array.isArray(arr) && arr[0]) {
+                                                _myNickname = arr[0].nickname || null;
+                                                try { if (_myNickname) localStorage.setItem('fkd_nickname', _myNickname); else localStorage.removeItem('fkd_nickname'); } catch {}
+                                        }
+                                } catch {} finally { _nickLoading = false; }
+                        }
 
                         function authHeaders(extra) {
                                 const h = Object.assign({ 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY }, extra || {});
@@ -1739,6 +1770,7 @@
                                         setToken(data.token);
                                         msg.textContent = '登录成功'; msg.className = 'form-message success';
                                         updateAuthUI();
+                                        loadMyNickname();
                                         // 登录后刷新"我点赞过哪些帖"缓存，让社区列表卡片立即显示实心/空心心
                                         loadStoryStats();
                                         // 每日登录奖励（每天一次，重复不叠加）
@@ -1774,6 +1806,7 @@
                                 if (amm) amm.addEventListener('click', (e) => { if (e.target === amm) closeAdminModal(); });
 
                                 updateAuthUI();
+                                loadMyNickname();
                         })();
 
                         // ---------- 14. 新版 UI 事件绑定 ----------

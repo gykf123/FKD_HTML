@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FKD-Web 版本 v1.9.12 · 2026-10-09 · 重磅：矿石查找器升级为「基岩版精确坐标内核」(bedrockore.js)——算法/参数逆向自 minecraftsearch.com(基岩版 MT19937，非 Java 的 Xoroshiro)；支持 13 个基岩版本 × 主世界/下界 × 8+3 种矿石，输出方块级精确坐标(X Y Z，点击复制) + Y 层分布柱状图；已实跑校验(基岩层 -64~-60 零矿点、钻石峰值 Y=-59)；取代原 orefinder.js 仅 Y 层提示方案 -->
+<!-- FKD-Web 版本 v1.9.14 · 2026-10-10 · 用户昵称：users.nickname 作为可编辑展示名(1~20字、不唯一，空则回退登录名)，身份始终以 UID 锚定；我的主页支持改昵称、聊天/名人榜/投稿/他人主页展示优先昵称；可选 IP 限流：单IP每秒>50次请求封禁1天(ip_bans/request_log + fkd_is_banned/fkd_record_request，login.ts 已接入，待 supabase functions deploy 激活) -->
 <html lang="zh-CN">
         <head>
                 <meta charset="UTF-8" />
@@ -173,6 +173,10 @@
                                                         <button type="button" class="submit-btn small" id="mpAvatarUploadBtn"><svg class="ui-ic" aria-hidden="true"><use href="#ic-camera"></use></svg> 上传头像</button>
                                                 </div>
                                                 <input type="text" id="mpAvatarUrl" placeholder="或在此粘贴头像图片链接（http(s)）" style="margin-top:.5rem;" />
+                                        </div>
+                                        <div class="form-group">
+                                                <label>昵称（展示名，可随时修改，1~20 字；留空则显示登录名）</label>
+                                                <input type="text" id="mpNickname" maxlength="20" placeholder="不填则显示登录名" style="width:100%;box-sizing:border-box;" />
                                         </div>
                                         <div class="form-group">
                                                 <label>个人简介（最多 200 字）</label>
