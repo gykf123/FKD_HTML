@@ -311,7 +311,7 @@
                                 const id = _curStoryId;
                                 if (id == null) return;
                                 const claims = parseToken();
-                                if (!claims || !claims.sub) { openAuthModal('login'); return; }
+                                if (!claims || !claims.sub) { goLogin(); return; }
                                 const btn = document.getElementById('storyLikeBtn');
                                 if (btn && btn.disabled) return;
                                 const liked = btn && btn.dataset.liked === '1';
@@ -405,7 +405,7 @@
                                 const id = _curStoryId;
                                 if (id == null) return;
                                 const claims = parseToken();
-                                if (!claims || !claims.sub) { openAuthModal('login'); return; }
+                                if (!claims || !claims.sub) { goLogin(); return; }
                                 const input = document.getElementById('storyCommentInput');
                                 const msg = document.getElementById('storyCommentMessage');
                                 const content = ((input && input.value) || '').trim();
@@ -458,7 +458,7 @@
                                 const sub = document.getElementById('storyCommentSubmit');
                                 if (sub) sub.addEventListener('click', submitStoryComment);
                                 const lg = document.getElementById('storyCommentLoginLink');
-                                if (lg) lg.addEventListener('click', (e) => { e.preventDefault(); openAuthModal('login'); });
+                                if (lg) lg.addEventListener('click', (e) => { e.preventDefault(); goLogin(); });
                         })();
 
                         // ---------- 2. 访问计数（独立模块，REST API） ----------
@@ -888,7 +888,7 @@
                         // 标记已售出：账号鉴权（仅交易发布者本人可标记）
                         async function markSold(id, btnEl) {
                             const claims = parseToken();
-                            if (!claims || !claims.sub) { showError('请先登录后再标记'); openAuthModal('login'); return; }
+                            if (!claims || !claims.sub) { showError('请先登录后再标记'); goLogin(); return; }
                             if (btnEl) { btnEl.disabled = true; btnEl.textContent = '标记中...'; }
                             try {
                                 const response = await fetch(`${SUPABASE_URL}/rest/v1/trades?id=eq.${id}`, {
@@ -1358,7 +1358,7 @@
                                 const claims = parseToken();
                                 if (!claims || !claims.sub) {
                                         showError('请先登录后再删除');
-                                        openAuthModal('login');
+                                        goLogin();
                                         return;
                                 }
                                 if (!confirm('确定删除这条内容吗？不可撤销。')) return;
@@ -1423,7 +1423,7 @@
                         }
                         async function openMyProfile() {
                                 const claims = parseToken();
-                                if (!claims) { openAuthModal('login'); return; }
+                                if (!claims) { goLogin(); return; }
                                 const modal = document.getElementById('myProfileModal');
                                 if (!modal) return;
                                 const seq = ++_mpLoadSeq;
@@ -1576,6 +1576,27 @@
                         // ---------- 13. 用户系统（方案A：申请注册 + 后台审核） ----------
                         const FUNCTIONS_BASE = `${SUPABASE_URL}/functions/v1`;
                         const AUTH_TOKEN_KEY = 'fkd_auth_token';
+                        // 方案B：独立登录站(fesui.是.gay/login)登录成功后带 ?token= 跳回本页，
+                        // 此处捕获并落地到 localStorage，再用 history.replaceState 清除 URL 参数（不留痕）
+                        (function captureLoginToken() {
+                                try {
+                                        const params = new URLSearchParams(location.search);
+                                        const t = params.get('token');
+                                        if (t) {
+                                                localStorage.setItem(AUTH_TOKEN_KEY, t);
+                                                params.delete('token');
+                                                const newUrl = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+                                                history.replaceState(null, '', newUrl);
+                                        }
+                                } catch (e) {}
+                        })();
+                        // 登录/注册已拆分到独立登录站（方案B）：主站不再内嵌登录弹窗，所有“登录”入口统一跳转，
+                        // 并带上当前页绝对 URL 作为登录后回跳地址（登录站会校验 host 白名单防开放重定向）
+                        const LOGIN_SITE = 'https://fesui.xn--0iv.gay/login';
+                        function goLogin() {
+                                const back = location.href;
+                                location.href = LOGIN_SITE + '?redirect=' + encodeURIComponent(back);
+                        }
                         // 内存兜底：部分环境（file:// 或隐私模式）会禁用 localStorage，
                         // 此时用变量保存，至少保证当前页面会话内登录态可用
                         // 头像覆盖值：改头像成功后仅用于 UI 显示/发帖署名，绝不改写 JWT 本身
@@ -1670,7 +1691,7 @@
                         function showAuthRequired(msgId) {
                                 const el = document.getElementById(msgId);
                                 if (el) { el.textContent = '请先登录后再操作'; el.className = 'form-message error'; }
-                                openAuthModal('login');
+                                goLogin();
                         }
 
                         function updateAuthUI() {
@@ -1688,7 +1709,7 @@
                                 } else {
                                         area.innerHTML = `<button class="auth-btn primary" id="openAuthBtn"><svg class="ui-ic" aria-hidden="true"><use href="#ic-key"></use></svg> 登录 / 注册</button>`;
                                         const ob = document.getElementById('openAuthBtn');
-                                        if (ob) ob.addEventListener('click', () => openAuthModal('login'));
+                                        if (ob) ob.addEventListener('click', () => goLogin());
                                 }
                         }
 
