@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FKD-Web 版本 v1.9.14 · 2026-10-10 · 用户昵称：users.nickname 作为可编辑展示名(1~20字、不唯一，空则回退登录名)，身份始终以 UID 锚定；我的主页支持改昵称、聊天/名人榜/投稿/他人主页展示优先昵称；可选 IP 限流：单IP每秒>50次请求封禁1天(ip_bans/request_log + fkd_is_banned/fkd_record_request)，login.ts 已接入并部署激活；users 列级 UPDATE 仅 avatar_url/bio/nickname 三列(策略放行≠列权限放行) -->
+<!-- FKD-Web 版本 v1.9.16 · 2026-10-11 · 登录/注册已拆分到独立登录站(方案B: fesui.是.gay/login)；本版下线注册审核：apply 写入 status=approved(注册即生效，无需后台审核)，login 页按钮/文案改为“注册”；登录页通用化：myself-sHTML/login/index.html 不再写死品牌与域名，由 brand/home/redirect 参数驱动、允许同父域回跳，可供多个项目复用；主站 goLogin 带 brand=FKD/home/redirect 跳转登录站；昵称/IP限流/列级权限同前 -->
 <html lang="zh-CN">
         <head>
                 <meta charset="UTF-8" />

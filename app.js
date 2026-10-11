@@ -1573,7 +1573,7 @@
                                 }
                         }
 
-                        // ---------- 13. 用户系统（方案A：申请注册 + 后台审核） ----------
+                        // ---------- 13. 用户系统（注册即生效，无需后台审核） ----------
                         const FUNCTIONS_BASE = `${SUPABASE_URL}/functions/v1`;
                         const AUTH_TOKEN_KEY = 'fkd_auth_token';
                         // 方案B：独立登录站(fesui.是.gay/login)登录成功后带 ?token= 跳回本页，
@@ -1593,10 +1593,16 @@
                         // 登录/注册已拆分到独立登录站（方案B）：主站不再内嵌登录弹窗，所有“登录”入口统一跳转，
                         // 并带上当前页绝对 URL 作为登录后回跳地址（登录站会校验 host 白名单防开放重定向）
                         const LOGIN_SITE = 'https://fesui.xn--0iv.gay/login';
+                        const SITE_BRAND = 'FKD';
                         function goLogin() {
-                                const back = location.href;
-                                location.href = LOGIN_SITE + '?redirect=' + encodeURIComponent(back);
+                        	const back = location.href;
+                        	const u = new URL(LOGIN_SITE);
+                        	u.searchParams.set('brand', SITE_BRAND);
+                        	u.searchParams.set('home', location.origin + '/');
+                        	u.searchParams.set('redirect', back);
+                        	location.href = u.toString();
                         }
+
                         // 内存兜底：部分环境（file:// 或隐私模式）会禁用 localStorage，
                         // 此时用变量保存，至少保证当前页面会话内登录态可用
                         // 头像覆盖值：改头像成功后仅用于 UI 显示/发帖署名，绝不改写 JWT 本身
