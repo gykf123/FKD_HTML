@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FKD · lab 迭代试验台</title>
+<link rel="icon" href="data:," />
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;color:#e8eaed;
+    background:radial-gradient(700px 480px at 18% 20%,#5b8cff55,transparent 60%),radial-gradient(620px 420px at 84% 26%,#b15bff48,transparent 60%),linear-gradient(135deg,#0b0f2a,#161a3a);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  .card{width:100%;max-width:560px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:30px 30px 24px;box-shadow:0 18px 60px rgba(0,0,0,.45)}
+  .tag{display:inline-block;font-size:12px;color:#7ff0a8;border:1px solid rgba(127,240,168,.4);border-radius:999px;padding:3px 12px;margin-bottom:14px}
+  h1{font-size:21px;margin-bottom:8px;letter-spacing:.5px}
+  p{color:#9aa0aa;font-size:13px;line-height:1.75;margin:8px 0}
+  code{background:rgba(255,255,255,.08);border-radius:6px;padding:1px 7px;color:#cfe0ff;font-size:12px}
+  .kv{font-size:12px;color:#8a909c;margin-top:6px;word-break:break-all}
+  .kv b{color:#cfe0ff;font-weight:600}
+  #lab{margin-top:16px;border:1px dashed rgba(255,255,255,.22);border-radius:12px;padding:16px;min-height:40px;background:rgba(255,255,255,.03)}
+  #lab .lab-tip{color:#8a909c;font-size:12px}
+  .status-ok{color:#7ff0a8}
+  .status-bad{color:#ff8a8a}
+  a.back{display:inline-block;margin-top:16px;color:#6f9bff;text-decoration:none;font-size:13px}
+  a.back:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<main class="card">
+  <span class="tag">自主迭代试验台 · 独立于 try / index</span>
+  <h1>lab.html 试验台已上线</h1>
+  <p>本页是自主迭代的专用试验台，与你的 <code>try.html</code>(官网页) 和 <code>index</code>(主页) 完全隔离。改动先在此验证，通过后再同步到 <code>index</code>，全程不碰 <code>try.html</code> 与主页。</p>
+  <div class="kv">访问地址：<b id="u"></b></div>
+  <div class="kv">当前时间：<b id="t"></b></div>
+  <div class="kv">主页健康自检：<b id="hp" class="status-ok">检测中…</b></div>
+  <div id="lab"><span class="lab-tip">#lab 试验容器：后续迭代的新 UI/逻辑在此验证，通过后同步到 index。</span></div>
+  <a class="back" href="/">← 返回 FKD 主页</a>
+</main>
+<script>
+  document.getElementById('u').textContent = location.href;
+  document.getElementById('t').textContent = new Date().toLocaleString('zh-CN');
+  fetch('/', { method: 'HEAD', cache: 'no-store' })
+    .then(function(r){ var el=document.getElementById('hp'); el.textContent = r.ok ? '主页可访问 (HTTP ' + r.status + ')' : '主页异常 (HTTP ' + r.status + ')'; el.className = r.ok ? 'status-ok' : 'status-bad'; })
+    .catch(function(){ var el=document.getElementById('hp'); el.textContent = '主页不可达'; el.className='status-bad'; });
+</script>
+</body>
+</html>
