@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FKD-Web 版本 v1.9.16 · 2026-10-11 · 登录/注册已拆分到独立登录站(方案B: fesui.是.gay/login)；本版下线注册审核：apply 写入 status=approved(注册即生效，无需后台审核)，login 页按钮/文案改为“注册”；登录页通用化：myself-sHTML/login/index.html 不再写死品牌与域名，由 brand/home/redirect 参数驱动、允许同父域回跳，可供多个项目复用；主站 goLogin 带 brand=FKD/home/redirect 跳转登录站；昵称/IP限流/列级权限同前 -->
+<!-- FKD-Web 版本 v1.9.17 · 2026-10-13 · 安全加固迭代：①login/apply 边缘函数加安全响应头(Cache-Control:no-store 防token入缓存、X-Content-Type-Options:nosniff、X-Frame-Options:DENY、Referrer-Policy:no-referrer)；②主页/登录页/lab 加 no-referrer 策略，封堵方案B token-in-URL 经 Google Fonts/图床(s41.ax1x.com) 的 Referer 泄漏；③登录页注册成功自动切登录并预填用户名；④端到端验证注册即生效(apply→approved→login→JWT)；⑤修复四副本漂移(资料库/frontend 曾停 v1.9.14，已同步为最新)。登录拆分/注册即生效/登录页通用化同 v1.9.16 -->
 <html lang="zh-CN">
         <head>
                 <meta charset="UTF-8" />
