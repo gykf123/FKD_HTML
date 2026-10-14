@@ -43,6 +43,7 @@
                                         try { if (typeof input === 'string') u = input; else if (input && input.url) u = input.url; } catch (e) { u = ''; }
                                         const p = _rawFetch(input, init);
                                         if (u.indexOf(SUPABASE_URL) !== 0) return p;   // 非本项目请求：原样透传，绝不干预
+                                        if (u.indexOf(SUPABASE_URL + '/functions/v1/auth-exchange') === 0) return p;   // 兑换票据属登录链路本身，交给兑换逻辑自行处理
                                         return p.then(function (res) {
                                                 try {
                                                         if (res && res.status === 401 && !_expiredFired) {
@@ -1607,16 +1608,38 @@
                         const AUTH_TOKEN_KEY = 'fkd_auth_token';
                         // 方案B：独立登录站(fesui.是.gay/login)登录成功后带 ?token= 跳回本页，
                         // 此处捕获并落地到 localStorage，再用 history.replaceState 清除 URL 参数（不留痕）
-                        (function captureLoginToken() {
+                        // 登录回跳落地：优先用一次性票(ticket)换 JWT，兼容旧的 ?token= 直传
+                        // 为什么改：JWT 出现在 URL 上会被 CDN/代理访问日志、浏览器历史、外链 Referer 长期记录；
+                        // 现在 URL 上只有 2 分钟有效、兑换一次即作废的票，真正的 JWT 走 POST 响应体（no-store）。
+                        (function captureLogin() {
                                 try {
                                         const params = new URLSearchParams(location.search);
-                                        const t = params.get('token');
-                                        if (t) {
-                                                localStorage.setItem(AUTH_TOKEN_KEY, t);
-                                                params.delete('token');
-                                                const newUrl = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
-                                                history.replaceState(null, '', newUrl);
+                                        const ticket = params.get('ticket');
+                                        const direct = params.get('token');
+                                        const clean = function () {
+                                                const p = new URLSearchParams(location.search);
+                                                p.delete('ticket'); p.delete('token');
+                                                history.replaceState(null, '', location.pathname + (p.toString() ? '?' + p.toString() : '') + location.hash);
+                                        };
+                                        if (direct) {   // 换票接口异常时登录站会回退到 ?token=，这里继续支持
+                                                localStorage.setItem(AUTH_TOKEN_KEY, direct);
+                                                clean();
+                                                return;
                                         }
+                                        if (!ticket) return;
+                                        fetch(`${SUPABASE_URL}/functions/v1/auth-exchange`, {
+                                                method: 'POST',
+                                                headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ action: 'redeem', ticket: ticket })
+                                        }).then(function (r) { return r.json(); }).then(function (d) {
+                                                clean();
+                                                if (d && d.token) {
+                                                        setToken(d.token);      // 同时写内存兜底，隐私模式下也能用
+                                                        location.reload();      // 以登录态重新渲染页面
+                                                } else {
+                                                        showError((d && d.error) || '登录已失效，请重新登录');
+                                                }
+                                        }).catch(function () { clean(); showError('登录已失效，请重新登录'); });
                                 } catch (e) {}
                         })();
                         // 登录/注册已拆分到独立登录站（方案B）：主站不再内嵌登录弹窗，所有“登录”入口统一跳转，
