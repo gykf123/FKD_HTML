@@ -14,70 +14,30 @@
   .tag{display:inline-block;font-size:12px;color:#7ff0a8;border:1px solid rgba(127,240,168,.4);border-radius:999px;padding:3px 12px;margin-bottom:14px}
   h1{font-size:21px;margin-bottom:8px;letter-spacing:.5px}
   p{color:#9aa0aa;font-size:13px;line-height:1.75;margin:8px 0}
-  code{background:rgba(255,255,255,.08);border-radius:6px;padding:1px 7px;color:#cfe0ff;font-size:12px}
+  code{background:rgba(255,255,255,.08);border-radius:6px;padding:1px 7px;color:#cfe0ff;font-size:12px;word-break:break-all}
   #lab{margin-top:16px;border:1px dashed rgba(255,255,255,.22);border-radius:12px;padding:16px;background:rgba(255,255,255,.03);font-size:13px}
   .row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,.1)}
   .row:last-child{border-bottom:none}
   .ok{color:#7ff0a8}.bad{color:#ff8a8a}.run{color:#8a909c}
-  .status-ok{color:#7ff0a8}.status-bad{color:#ff8a8a}
+  input{width:100%;margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#e8eaed;font-size:13px}
+  button{margin-top:10px;padding:10px 16px;border-radius:10px;border:1px solid rgba(127,240,168,.4);background:rgba(127,240,168,.12);color:#7ff0a8;font-size:13px;cursor:pointer}
   a.back{display:inline-block;margin-top:16px;color:#6f9bff;text-decoration:none;font-size:13px}
-  a.back:hover{text-decoration:underline}
 </style>
 </head>
 <body>
 <main class="card">
-  <span class="tag">自主迭代试验台 · v1.9.18 候选</span>
-  <h1>登录态守卫 · 真实请求自检</h1>
-  <p>本轮候选改动：<strong>①全局 401 守卫</strong>（一次覆盖全部带 token 的请求，而不是只有 2 处单独处理）；<strong>②多标签页登录态同步</strong>。下面用<strong>真实网络请求</strong>逐条验证，通过后才同步到 <code>app.js</code>。</p>
-  <div class="kv" style="font-size:12px;color:#8a909c;margin-top:6px">主页健康自检：<b id="hp" class="status-ok">检测中…</b></div>
-  <div id="lab"><span class="run">自检运行中…</span></div>
+  <span class="tag">自主迭代试验台 · v1.9.19 候选</span>
+  <h1>一次性登录票（ticket）兑换</h1>
+  <p>本轮目标：<strong>让 JWT 不再出现在 URL 上</strong>。登录站登录成功后先用 JWT 换一张 2 分钟有效、只能用一次的票，URL 上只带票，主站再用票换回 JWT。下面用<strong>真实票</strong>验证兑换链路。</p>
+  <div id="lab"><span class="run">检测中…</span></div>
+  <input id="tk" placeholder="也可手动粘贴 ticket 后点兑换" />
+  <button id="go">手动兑换</button>
   <a class="back" href="/">← 返回 FKD 主页</a>
 </main>
 <script>
-  // ============ 候选实现（与将同步到 app.js 的版本一致，此处先验证） ============
   const SUPABASE_URL = 'https://yowwyasttkywyqgseuqz.supabase.co';
   const ANON_KEY = 'sb_publishable_j4rpi2ejPTMGxo79uaaX3g_kQYrinS4';
   const AUTH_TOKEN_KEY = 'fkd_auth_token';
-
-  let _memToken = null;
-  function getToken(){ try { return localStorage.getItem(AUTH_TOKEN_KEY) || _memToken; } catch(e){ return _memToken; } }
-  function clearToken(){ _memToken = null; try { localStorage.removeItem(AUTH_TOKEN_KEY); } catch(e){} }
-
-  // 守卫：只拦本项目域名，第三方图床的 401 不受影响
-  (function installAuthGuard() {
-    const _rawFetch = window.fetch.bind(window);
-    let _expiredFired = false;
-    window.fetch = function (input, init) {
-      let u = '';
-      try { if (typeof input === 'string') u = input; else if (input && input.url) u = input.url; } catch (e) { u = ''; }
-      const p = _rawFetch(input, init);
-      if (u.indexOf(SUPABASE_URL) !== 0) return p;   // 非本项目请求：原样透传，绝不干预
-      return p.then(function (res) {
-        try {
-          if (res && res.status === 401 && !_expiredFired) {
-            let had = false;
-            try { had = !!localStorage.getItem(AUTH_TOKEN_KEY); } catch (e) {}
-            if (had) { _expiredFired = true; window.dispatchEvent(new CustomEvent('fkd:auth-expired', { detail: { url: u } })); }
-          }
-        } catch (e) {}
-        return res;
-      });
-    };
-  })();
-
-  // 过期处理 + 多标签页同步
-  let _expireCount = 0, _syncCount = 0, _lastExpiredUrl = '';
-  window.addEventListener('fkd:auth-expired', function (e) {
-    _expireCount++; _lastExpiredUrl = (e.detail && e.detail.url) || '';
-    clearToken();
-  });
-  window.addEventListener('storage', function (e) {
-    if (!e || e.key !== AUTH_TOKEN_KEY) return;
-    _memToken = e.newValue || null;
-    _syncCount++;
-  });
-
-  // ============ 用真实请求逐条验证 ============
   const box = document.getElementById('lab');
   function row(name, state, detail) {
     const d = document.createElement('div'); d.className = 'row';
@@ -85,47 +45,62 @@
     d.innerHTML = '<span>' + name + '</span><span class="' + cls + '">' + detail + '</span>';
     box.appendChild(d);
   }
-  (async function run() {
+
+  // ===== 与主站 app.js 待同步的兑换逻辑一致 =====
+  function cleanUrl() {
+    try {
+      const p = new URLSearchParams(location.search);
+      p.delete('ticket'); p.delete('token');
+      history.replaceState(null, '', location.pathname + (p.toString() ? '?' + p.toString() : '') + location.hash);
+    } catch (e) {}
+  }
+  function redeem(ticket, cb) {
+    fetch(SUPABASE_URL + '/functions/v1/auth-exchange', {
+      method: 'POST',
+      headers: { apikey: ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'redeem', ticket: ticket })
+    }).then(r => r.json()).then(d => cb(d)).catch(e => cb({ error: '网络失败' }));
+  }
+
+  (function captureLogin() {
+    const params = new URLSearchParams(location.search);
+    const ticket = params.get('ticket');
+    const direct = params.get('token');
     box.innerHTML = '';
-    // 预置一个“看起来已登录”的 token，模拟登录态
-    try { localStorage.setItem(AUTH_TOKEN_KEY, 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsYWItdGVzdCJ9.invalid-signature'); } catch(e){}
-
-    // 用例1：本项目 + 坏 token → 应 401 且触发守卫（计数 1）
-    let r1 = null;
-    try { r1 = await fetch(SUPABASE_URL + '/rest/v1/users?select=id&limit=1', { headers: { apikey: ANON_KEY, Authorization: 'Bearer invalid.xxx.yyy' } }); } catch(e){}
-    row('① 本项目 401（带 token）', r1 && r1.status === 401 && _expireCount === 1 ? 'ok' : 'bad',
-        'HTTP ' + (r1 ? r1.status : 'ERR') + ' / 触发 ' + _expireCount + ' 次');
-
-    // 用例2：再来一次 401 → 不重复骚扰（仍为 1）
-    let r2 = null;
-    try { r2 = await fetch(SUPABASE_URL + '/rest/v1/users?select=id&limit=1', { headers: { apikey: ANON_KEY, Authorization: 'Bearer invalid.xxx.yyy' } }); } catch(e){}
-    row('② 重复 401 不重复提示', _expireCount === 1 ? 'ok' : 'bad', '累计触发 ' + _expireCount + ' 次');
-
-    // 用例3：本项目正常请求 → 不触发，且返回值必须原样透传（不能被守卫破坏）
-    let r3 = null, j3 = null;
-    try { r3 = await fetch(SUPABASE_URL + '/rest/v1/users?select=id&limit=1', { headers: { apikey: ANON_KEY, Authorization: 'Bearer ' + ANON_KEY } }); j3 = await r3.json(); } catch(e){}
-    row('③ 本项目 200 不触发 + 返回值透传', (r3 && r3.status === 200 && Array.isArray(j3) && _expireCount === 1) ? 'ok' : 'bad',
-        'HTTP ' + (r3 ? r3.status : 'ERR') + ' / 数组长度 ' + (Array.isArray(j3) ? j3.length : 'N/A'));
-
-    // 用例4：第三方请求（图床域名判定）→ 守卫必须完全不干预
-    const third = 'https://sm.ms/api/v2/upload';
-    let before = _expireCount; let t4 = 'skipped';
-    try { await fetch(third, { method: 'POST' }); t4 = 'sent'; } catch(e){ t4 = 'blocked-by-cors'; }
-    row('④ 第三方 401 不误伤', _expireCount === before ? 'ok' : 'bad', '结果 ' + t4 + ' / 触发仍为 ' + _expireCount);
-
-    // 用例5：模拟“其他标签页退出登录” → 本页应收到同步
-    try { window.dispatchEvent(new StorageEvent('storage', { key: AUTH_TOKEN_KEY, newValue: null, oldValue: 'x' })); } catch(e){}
-    row('⑤ 多标签页退出同步', _syncCount === 1 ? 'ok' : 'bad', '收到同步 ' + _syncCount + ' 次');
-
-    // 用例6：URL 判定纯函数行为（域名隔离的根因）
-    row('⑥ 域名隔离判定', (('https://sm.ms/x'.indexOf(SUPABASE_URL) !== 0) && (SUPABASE_URL + '/rest'.indexOf(SUPABASE_URL) === 0)) ? 'ok' : 'bad', '第三方=false / 本项目=true');
-
-    try { localStorage.removeItem(AUTH_TOKEN_KEY); } catch(e){}
+    if (direct) {
+      try { localStorage.setItem(AUTH_TOKEN_KEY, direct); } catch (e) {}
+      cleanUrl();
+      row('兼容旧链路 ?token=', 'ok', '已落地并清除 URL 参数');
+      return;
+    }
+    if (!ticket) { row('等待票据', 'run', '请带 ?ticket=xxx 访问，或在下方手动粘贴'); return; }
+    row('① 收到票据', 'ok', ticket.slice(0, 8) + '…（长度 ' + ticket.length + '）');
+    redeem(ticket, function (d) {
+      cleanUrl();
+      if (d && d.token) {
+        try { localStorage.setItem(AUTH_TOKEN_KEY, d.token); } catch (e) {}
+        row('② 兑换 JWT', 'ok', '成功，token 长度 ' + d.token.length);
+        row('③ URL 已清除票据', location.search.indexOf('ticket') === -1 ? 'ok' : 'bad', location.search || '(已无查询串)');
+        row('④ 已落地 localStorage', localStorage.getItem(AUTH_TOKEN_KEY) ? 'ok' : 'bad', 'fkd_auth_token 已写入');
+        // 同一张票重放：必须失败（一次性）
+        redeem(ticket, function (d2) {
+          row('⑤ 同票重放', (!d2 || !d2.token) ? 'ok' : 'bad', (d2 && d2.error) ? ('已拒绝：' + d2.error) : '异常：竟然又拿到了 token');
+        });
+      } else {
+        row('② 兑换 JWT', 'bad', (d && d.error) || '未返回 token');
+      }
+    });
   })();
 
-  fetch('/', { method: 'HEAD', cache: 'no-store' })
-    .then(function(r){ var el=document.getElementById('hp'); el.textContent = r.ok ? '主页可访问 (HTTP ' + r.status + ')' : '主页异常 (HTTP ' + r.status + ')'; el.className = r.ok ? 'status-ok' : 'status-bad'; })
-    .catch(function(){ var el=document.getElementById('hp'); el.textContent='主页不可达'; el.className='status-bad'; });
+  document.getElementById('go').onclick = function () {
+    const v = document.getElementById('tk').value.trim();
+    if (!v) return;
+    box.innerHTML = '';
+    redeem(v, function (d) {
+      if (d && d.token) { try { localStorage.setItem(AUTH_TOKEN_KEY, d.token); } catch (e) {} row('手动兑换', 'ok', '成功，token 长度 ' + d.token.length); }
+      else row('手动兑换', 'bad', (d && d.error) || '未返回 token');
+    });
+  };
 </script>
 </body>
 </html>
