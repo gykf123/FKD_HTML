@@ -30,6 +30,35 @@
                         const SUPABASE_URL = 'https://yowwyasttkywyqgseuqz.supabase.co';
                         const SUPABASE_ANON_KEY = 'sb_publishable_j4rpi2ejPTMGxo79uaaX3g_kQYrinS4';
 
+                        // ---------- 0. 登录态守卫：全局 401 拦截（仅本项目 Supabase 请求） ----------
+                        // 背景：登录 token 过期后 Supabase 返回 401（常见 PGRST301）。此前只有 2 处请求单独处理 401，
+                        // 其余几十处带 token 的读写会“静默失败”——用户只看到“操作失败”，并不知道其实是登录过期。
+                        // 做法：在 fetch 层统一拦截，只认本项目域名（第三方图床 sm.ms / imgtp.com 的 401 一律不干预）。
+                        // 触发后派发事件，具体处理（清 token / 提示 / 去登录）由文件末尾的侦听器统一负责。
+                        (function installAuthGuard() {
+                                const _rawFetch = window.fetch.bind(window);
+                                let _expiredFired = false;
+                                window.fetch = function (input, init) {
+                                        let u = '';
+                                        try { if (typeof input === 'string') u = input; else if (input && input.url) u = input.url; } catch (e) { u = ''; }
+                                        const p = _rawFetch(input, init);
+                                        if (u.indexOf(SUPABASE_URL) !== 0) return p;   // 非本项目请求：原样透传，绝不干预
+                                        return p.then(function (res) {
+                                                try {
+                                                        if (res && res.status === 401 && !_expiredFired) {
+                                                                let had = false;
+                                                                try { had = !!localStorage.getItem(AUTH_TOKEN_KEY); } catch (e) {}
+                                                                if (had) {
+                                                                        _expiredFired = true;
+                                                                        window.dispatchEvent(new CustomEvent('fkd:auth-expired', { detail: { url: u } }));
+                                                                }
+                                                        }
+                                                } catch (e) {}
+                                                return res;
+                                        });
+                                };
+                        })();
+
                         const SITE_CONFIG = {
                             serverName: 'FKD方块殿',
                             season: 'S9.0',
@@ -1622,7 +1651,9 @@
                         }
                         function clearToken() {
                                 _memToken = null;
-                                try { localStorage.removeItem(AUTH_TOKEN_KEY); } catch {}
+                                // 顺带清昵称缓存：否则退出后（尤其换账号登录）会短暂显示上一个账号的昵称
+                                _myNickname = null;
+                                try { localStorage.removeItem(AUTH_TOKEN_KEY); localStorage.removeItem('fkd_nickname'); } catch {}
                         }
                         function parseToken() {
                                 const t = getToken();
@@ -1863,3 +1894,22 @@
                                 ));
                         })();
                 
+
+                        // ---------- 15. 登录态守卫的落地处理：过期重登 / 多标签页同步 ----------
+                        (function wireAuthGuard() {
+                                // 守卫探测到 401：清理登录态并提示后前往登录页（当前操作本来就失败了，不留半截状态）
+                                window.addEventListener('fkd:auth-expired', function () {
+                                        clearToken();
+                                        try { updateAuthUI(); } catch (e) {}
+                                        showError('登录已过期，正在前往登录页…');
+                                        setTimeout(function () { goLogin(); }, 1500);
+                                });
+                                // 多标签页同步：另一个标签页登录/退出时本页跟着变，避免“显示已登录但操作全 401”
+                                window.addEventListener('storage', function (e) {
+                                        if (!e || e.key !== AUTH_TOKEN_KEY) return;
+                                        _memToken = e.newValue || null;
+                                        if (!e.newValue) { _myNickname = null; try { localStorage.removeItem('fkd_nickname'); } catch (err) {} }
+                                        try { updateAuthUI(); } catch (err) {}
+                                        if (e.newValue) { loadMyNickname(); }
+                                });
+                        })();
