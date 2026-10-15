@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FKD-Web 版本 v1.9.19 · 2026-10-14 · 一次性登录票迭代：①消除 JWT 走 URL 的风险——登录站登录成功后先拿 JWT 换一次性 ticket(2 分钟有效、兑换即作废)，URL 上只有票、不再有 JWT；主站用票换回 JWT 后清除 URL 并刷新登录态；换票失败自动回退旧 ?token= 链路。②新增 auth_tickets 表(迁移 0011)与 auth-exchange 边缘函数(已部署)；该表刻意不授予 Data API 权限并显式 REVOKE，实测匿名访问返回 401 permission denied。③守卫豁免 auth-exchange(兑换属登录链路本身)。经真实浏览器端到端验证：票据兑换/URL清理/登录态渲染/重放拒绝 全通过。同 v1.9.18 的全局 401 守卫 + 多标签页同步 -->
+<!-- FKD-Web 版本 v1.9.20 · 2026-10-15 · 工会日活迭代：①工会内聊天——新增 guild_messages 表(迁移 0012)+RLS 仅同工会 approved 成员可读可写(实测非成员读 200 空数组、写 400 PGRST204 被拦)，成员视图渲染 5 秒轮询的气泡聊天室，非成员显示锁定提示；②工会招募公告——guilds 增 recruiting/recruit_note 列，排名卡渲染"招募中"角标+招募语+高亮描边，创建弹窗与管理弹窗均可设置(set_guild_recruit RPC 校验会长身份、招募语≤100 字)；③顺手修复工会排名列表永不渲染的潜伏 bug(guild_rank_list 返回数组本体而前端误取 data.list，改为兼容两种形态)。经真实浏览器双账号端到端验证 11/11 通过：招募卡渲染/申请审批/聊天收发/弹窗回显/RLS 隔离。 -->
 <html lang="zh-CN">
         <head>
                 <meta charset="UTF-8" />

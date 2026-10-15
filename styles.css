@@ -889,3 +889,43 @@ button .ui-ic, .submit-btn .ui-ic, .cat-badge .ui-ic, .q-icon .ui-ic, .t-icon .u
 .ore-mine-btn.on { background: #3ad67a; color: #0a2a15; border-color: #2a9c59; }
 .ore-pt.mined { opacity: .45; }
 .ore-pt.mined .ore-xyz { text-decoration: line-through; color: var(--text-muted); }
+
+/* ===== 工会招募卡片 + 工会内聊天（v1.9.20） ===== */
+.guild-card.is-recruiting {
+  border-color: rgba(127, 240, 168, .45);
+  background: linear-gradient(135deg, rgba(127, 240, 168, .10), rgba(255, 255, 255, .04));
+}
+.recruit-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-left: 8px; padding: 1px 9px; border-radius: 999px;
+  font-size: 11px; color: #7ff0a8; vertical-align: middle;
+  border: 1px solid rgba(127, 240, 168, .45); background: rgba(127, 240, 168, .10);
+}
+.recruit-badge .ui-ic { width: 12px; height: 12px; }
+.gc-recruit-note { margin-top: 6px; font-size: 12px; color: #9fe8bd; line-height: 1.6; }
+.gm-switch { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #cfe0ff; margin: 8px 0; cursor: pointer; }
+.gm-switch input { accent-color: #5b8cff; }
+.gm-section-title { font-size: 13px; color: #8a909c; margin: 10px 0 4px; }
+#gmRecruitNote { width: 100%; margin: 4px 0 8px; }
+
+.guild-chat { margin-top: 18px; border: 1px solid rgba(255, 255, 255, .12); border-radius: 14px; background: rgba(255, 255, 255, .03); overflow: hidden; }
+.gc-chat-head { display: flex; align-items: center; gap: 8px; padding: 10px 14px; font-size: 14px; font-weight: 600; border-bottom: 1px solid rgba(255, 255, 255, .10); background: rgba(255, 255, 255, .03); }
+.gc-chat-tip { font-size: 11px; color: #8a909c; font-weight: 400; }
+.gc-chat-msgs { max-height: 340px; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.gc-msg { display: flex; gap: 8px; align-items: flex-start; }
+.gc-msg.mine { flex-direction: row-reverse; }
+.gc-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex: none; background: rgba(255, 255, 255, .08); }
+.gc-avatar-empty { display: flex; align-items: center; justify-content: center; font-size: 13px; color: #cfe0ff; }
+.gc-bubble { max-width: 78%; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .10); border-radius: 12px; padding: 7px 11px; }
+.gc-msg.mine .gc-bubble { background: rgba(91, 140, 255, .16); border-color: rgba(91, 140, 255, .35); }
+.gc-sender { font-size: 11px; color: #8a909c; margin-bottom: 3px; display: flex; gap: 8px; align-items: baseline; }
+.gc-time { font-size: 10px; opacity: .7; }
+.gc-text { font-size: 13px; line-height: 1.6; color: #e8eaed; word-break: break-word; white-space: pre-wrap; }
+.gc-chat-row { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid rgba(255, 255, 255, .10); }
+.gc-chat-row input { flex: 1; padding: 9px 12px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .06); color: #e8eaed; font-size: 13px; }
+.guild-chat-locked { padding: 14px; text-align: center; }
+
+@media (max-width: 640px) {
+  .gc-chat-msgs { max-height: 260px; }
+  .gc-bubble { max-width: 86%; }
+}
