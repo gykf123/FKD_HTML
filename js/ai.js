@@ -87,12 +87,13 @@
 
   /* ---------- 任务链卡片（一句话多动作） ---------- */
   function batchCard(b) {
-    const items = (b.items || []).map(it => `
+    // seq 兜底：老数据里 seq 可能是 0 或缺失，直接显示 0 很难看，按数组下标补
+    const items = (b.items || []).map((it, i) => `
       <li class="ai-batch-item">
-        <span class="ai-batch-no">${it.seq}</span>
+        <span class="ai-batch-no">${it.seq ? it.seq : (i + 1)}</span>
         <span class="ai-batch-txt">${esc(it.summary)}</span>
       </li>`).join('');
-    const label = (b.count > 1) ? `待确认的 ${b.count} 个操作` : '待确认的操作';
+    const label = (b.count > 1) ? `待执行的 ${b.count} 个操作` : '待执行的操作';
     return `<div class="ai-pending ai-batch" data-bid="${esc(b.batch_id)}">
       <div class="ai-pending-head">${label}</div>
       <ol class="ai-batch-list">${items}</ol>
@@ -106,7 +107,7 @@
   /* ---------- 单条兼容卡片 ---------- */
   function pendingCard(p) {
     return `<div class="ai-pending" data-pid="${esc(p.id)}">
-      <div class="ai-pending-head">待确认的操作</div>
+      <div class="ai-pending-head">待执行的操作</div>
       <div class="ai-pending-body">${esc(p.summary)}</div>
       <div class="ai-pending-acts">
         <button class="submit-btn small" data-ai-ok="${esc(p.id)}">确认执行</button>
@@ -323,6 +324,7 @@
         </div>`;
 
       renderModeBar();
+      loadPending();
 
       const input = document.getElementById('aiInput');
       document.getElementById('aiSend').onclick = send;
@@ -335,8 +337,80 @@
       });
     } else {
       renderModeBar();
+      // 每次切回 AI 视图都补拉一次：上次没点确认的动作不该因为刷新就消失
+      loadPending();
     }
   };
+
+  // 从后端拉「还没处理的待办」，补渲染成确认卡。
+  // 之前这些卡片只在发送消息的响应里出现（data.pending），刷新就没了，
+  // 数据库里一直挂着 pending，用户根本没机会点。
+  let pendingLoading = false;
+  async function loadPending() {
+    if (!token() || pendingLoading) return;
+    const box = document.getElementById('aiMsgs');
+    if (!box) return;
+    pendingLoading = true;
+    try {
+      const r = await fetch(`${API}/rest/v1/rpc/ai_my_pending`, {
+        method: 'POST',
+        headers: {
+          'apikey': ANON,
+          'Authorization': `Bearer ${token()}`,
+          'Content-Type': 'application/json'
+        },
+        body: '{}'
+      });
+      const d = await r.json().catch(() => null);
+      const list = (d && d.ok && Array.isArray(d.list)) ? d.list : [];
+      pendingLoading = false;
+      if (!list.length) return;
+
+      // 已经在聊天区里的就别重复渲染（按 id / batch_id 去重）。
+      // 注意：只把"还没结束"的卡片算进去——done/failed 的卡片要排除，
+      // 否则执行完切走再回来，同一批会被重新拉出来渲染成第二张。
+      const shown = new Set();
+      box.querySelectorAll('.ai-pending').forEach(el => {
+        if (el.classList.contains('done') || el.classList.contains('failed')) return;
+        const pid = el.getAttribute('data-pid');
+        const bid = el.getAttribute('data-bid');
+        if (pid) shown.add('p:' + pid);
+        if (bid) shown.add('b:' + bid);
+      });
+      const fresh = list.filter(p => p && p.id && !shown.has('p:' + p.id) && !(p.batch_id && shown.has('b:' + p.batch_id)));
+      if (!fresh.length) return;
+
+      // 按 batch_id 归组：同一批的合成一张多行卡
+      const groups = new Map();
+      fresh.forEach(p => {
+        const k = p.batch_id || ('single:' + p.id);
+        if (!groups.has(k)) groups.set(k, []);
+        groups.get(k).push(p);
+      });
+
+      groups.forEach(arr => {
+        const bid = arr[0].batch_id;
+        let html;
+        if (bid && arr.length) {
+          html = batchCard({
+            batch_id: bid,
+            items: arr.map(p => ({ seq: p.seq, kind: p.kind, summary: p.summary })),
+            count: arr.length
+          });
+        } else {
+          html = pendingCard(arr[0]);
+        }
+        const wrap = document.createElement('div');
+        wrap.className = 'ai-msg bot';
+        wrap.innerHTML = `<div class="ai-ava">AI</div><div class="ai-bub">${html}</div>`;
+        box.appendChild(wrap);
+      });
+      wireCards(box);
+      scrollBottom();
+    } catch (e) {
+      pendingLoading = false;
+    }
+  }
 
   window.setAIFoot = function (txt) {
     const f = document.getElementById('aiFoot');
