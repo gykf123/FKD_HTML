@@ -266,6 +266,19 @@
         window.setAIFoot(`本次 ${u.chars || 0} 字 · 消耗 ${fmtPts(u.cost)} 积分${freeTip} · 余额 ${fmtPts(u.balance)}`);
       }
 
+      // 站外问题不拦，但 ×10 计费，得让用户当场知道，不能等月底看余额才发现
+      if (data.offtopic) {
+        const ot = data.offtopic;
+        const mult = ot.multiplier || 10;
+        const base = (ot.base_cost != null) ? fmtPts(ot.base_cost) : null;
+        const msg = base
+          ? `这次问的不在站内范围，按 ${mult} 倍算：${base} → ${fmtPts(u.cost)} 积分`
+          : `这次问的不在站内范围，按 ${mult} 倍扣积分`;
+        if (typeof window.showToast === 'function') window.showToast(msg, true);
+        // 聊天里也留一条，免得 toast 一闪就忘
+        push(bubble('assistant', `ℹ️ ${ot.note || ''}${base ? `（正常 ${base} × ${mult} = ${fmtPts(u.cost)}）` : ''}`));
+      }
+
       if (data.batch && data.batch.batch_id) {
         push(batchCard(data.batch));
         const ar = data.auto_result;
