@@ -31,6 +31,13 @@
     return { status: r.status, data };
   }
 
+  function fmtPts(n) {
+    if (typeof window.fmtPts === 'function') return window.fmtPts(n);
+    const v = Number(n);
+    if (!isFinite(v)) return '0';
+    return Number.isInteger(v) ? String(v) : v.toFixed(2);
+  }
+
   function esc(s) {
     return (typeof escapeHTML === 'function')
       ? escapeHTML(String(s == null ? '' : s))
@@ -120,7 +127,10 @@
     const t = document.getElementById('aiTyping');
     if (t) t.remove();
 
-    if (status === 429) {
+    if (status === 402) {
+      push(bubble('assistant', '积分不够啦，去个人主页签个到就能领积分～'));
+      if (window.setAIFoot) window.setAIFoot('当前积分：' + fmtPts(data && data.balance));
+    } else if (status === 429) {
       push(bubble('assistant', (data && data.error) || '太快了，等会儿再问～'));
     } else if (status !== 200 || !data || !data.success) {
       push(bubble('assistant', (data && data.error) || '我这边出了点问题，稍后再试试'));
@@ -128,6 +138,10 @@
       const reply = data.reply || '';
       history.push({ role: 'assistant', content: reply });
       push(bubble('assistant', reply));
+      const u = data.usage || {};
+      if (window.setAIFoot && u.balance !== undefined) {
+        window.setAIFoot(`本次 ${u.chars || 0} 字 · 消耗 ${fmtPts(u.cost)} 积分 · 余额 ${fmtPts(u.balance)}`);
+      }
       (data.pending || []).forEach(p => {
         const box = document.getElementById('aiMsgs');
         box.insertAdjacentHTML('beforeend', pendingCard(p));
@@ -154,12 +168,12 @@
         <div class="ai-layout">
           <div class="ai-head">
             <div class="ai-title"><svg class="ui-ic" aria-hidden="true"><use href="#ic-spark"></use></svg> AI 助手</div>
-            <div class="ai-sub">能聊 MC，也能帮你查活跃值、发消息</div>
+            <div class="ai-sub">能聊 MC，也能帮你查积分、发消息 · 按字数扣积分</div>
           </div>
           <div class="ai-msgs" id="aiMsgs">
             <div class="ai-msg bot">
               <div class="ai-ava">AI</div>
-              <div class="ai-bub">你好，我是 FKD 的 AI 助手。<br>可以问我游戏问题，也能让我帮你查活跃值、看排行榜，或者给站友发消息（发之前会让你确认）。</div>
+              <div class="ai-bub">你好，我是 FKD 的 AI 助手。<br>可以问我游戏问题，也能让我帮你查积分、看排行榜，或者给站友发消息（发之前会让你确认）。</div>
             </div>
           </div>
           <div class="ai-inputbar">

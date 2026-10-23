@@ -1019,7 +1019,15 @@
                             t.addEventListener('click', () => switchSub(t.dataset.sub));
                         });
 
-                        // ---------- 名人榜：活跃值排名 ----------
+                        // ---------- 名人榜：积分排名 ----------
+                        // 积分统一显示：整数不带小数点，小数保留两位（后端是 numeric(12,2)）
+                        function fmtPts(n) {
+                                const v = Number(n);
+                                if (!isFinite(v)) return '0';
+                                return Number.isInteger(v) ? String(v) : v.toFixed(2);
+                        }
+                        window.fmtPts = fmtPts;
+
                         function showToast(text, isError) {
                             let t = document.getElementById('fkdToast');
                             if (!t) { t = document.createElement('div'); t.id = 'fkdToast'; t.className = 'toast'; document.body.appendChild(t); }
@@ -1031,7 +1039,7 @@
                         // 名人榜本地数据缓存：管理员调控后先本地即时重排，再静默校准
                         let _hallData = null;
                         let _hallSeq = 0;
-                        // 排序规则：活跃值降序；同分按用户名升序（与服务器 order 一致，保证本地重排与刷新后结果相同）
+                        // 排序规则：积分降序；同分按用户名升序（与服务器 order 一致，保证本地重排与刷新后结果相同）
                         function sortHall(arr) {
                             return arr.slice().sort((a, b) => ((b.active_value || 0) - (a.active_value || 0)) || String(a.username || '').localeCompare(String(b.username || ''), 'zh-Hans-CN'));
                         }
@@ -1040,7 +1048,7 @@
                             const box = document.getElementById('hallList');
                             if (!box) return;
                             const list = sortHall(Array.isArray(arr) ? arr : []);
-                            if (!list.length) { box.innerHTML = '<div class="empty-hint">还没有玩家上榜，快去发帖攒活跃值吧！</div>'; return; }
+                            if (!list.length) { box.innerHTML = '<div class="empty-hint">还没有玩家上榜，快去发帖攒积分吧！</div>'; return; }
                             const admin = isAdmin();
                             box.innerHTML = list.map((u, i) => {
                                 const av = u.avatar_url ? `<img class="hall-avatar" src="${escapeHTML2(u.avatar_url)}" onerror="this.style.display='none'"/>` : `<div class="hall-avatar hall-avatar-empty">${escapeHTML2((u.nickname||u.username||'?').slice(0,1))}</div>`;
@@ -1049,7 +1057,7 @@
                                 return `<div class="hall-item${i<3?' hall-top':''}" data-uid="${u.id}" data-username="${escapeHTML2(u.username||'')}">
                                     <span class="hall-rank">${i+1}</span>${av}
                                     <span class="hall-name">${escapeHTML2(u.nickname || u.username || '匿名')}</span>${roleBadge}
-                                    <span class="hall-score">${u.active_value||0}</span>${ctrl}
+                                    <span class="hall-score">${fmtPts(u.active_value||0)}</span>${ctrl}
                                 </div>`;
                             }).join('');
                             box.querySelectorAll('.hall-item').forEach(el => el.addEventListener('click', e => { if (e.target.closest('.hall-ctrl')) return; const un = el.dataset.username; if (un) openProfile(un); }));
@@ -1475,7 +1483,7 @@
                                                 });
                                                 const arr = await r.json();
                                                 // 仅当“仍是本次打开(seq 未变)”且“用户尚未上传/改过头像(!_mpTouched)”时，才允许回填覆盖头像；
-                                                // 否则保留用户刚上传的新头像，避免把新值覆盖回旧值。bio / 活跃值 始终回填。
+                                                // 否则保留用户刚上传的新头像，避免把新值覆盖回旧值。bio / 积分 始终回填。
                                                 if (seq === _mpLoadSeq && r.ok && Array.isArray(arr) && arr[0]) {
                                                         const u = arr[0];
                                                         const dbAvatar = u.avatar_url || '';
@@ -1500,14 +1508,36 @@
                                 if (signBtn) {
                                         signBtn.disabled = false;
                                         if (signHint) signHint.textContent = '';
+
+                                        // 拉一次签到状态：已签显示连登天数，未签显示下一次能拿多少
+                                        const paintSign = (st) => {
+                                                if (!st || !st.ok) return;
+                                                if (st.signed_today) {
+                                                        signBtn.disabled = true;
+                                                        signBtn.innerHTML = '<svg class="ui-ic"><use href="#ic-calendar"></use></svg> 今日已签到';
+                                                        if (signHint) signHint.textContent = '已连登 ' + (st.streak || 1) + ' 天';
+                                                } else {
+                                                        signBtn.disabled = false;
+                                                        signBtn.innerHTML = '<svg class="ui-ic"><use href="#ic-calendar"></use></svg> 签到 +' + fmtPts(st.next_delta);
+                                                        if (signHint) signHint.textContent = st.streak ? ('已连登 ' + st.streak + ' 天，明天断签要重来哦') : '连续签到积分更多';
+                                                }
+                                        };
+                                        fetch(`${SUPABASE_URL}/rest/v1/rpc/my_sign_status`, { method:'POST', headers:{ 'apikey':SUPABASE_ANON_KEY, 'Authorization':`Bearer ${getToken()}`, 'Content-Type':'application/json' } })
+                                                .then(r => r.json()).then(paintSign).catch(()=>{});
+
                                         signBtn.onclick = async () => {
                                                 try {
                                                         signBtn.disabled = true;
                                                         const sr = await fetch(`${SUPABASE_URL}/rest/v1/rpc/do_sign_in`, { method:'POST', headers:{ 'apikey':SUPABASE_ANON_KEY, 'Authorization':`Bearer ${getToken()}`, 'Content-Type':'application/json' } });
                                                         const sj = await sr.json().catch(()=>({ok:false}));
                                                         if (sj && sj.ok) {
-                                                                if (sj.signed) { const avEl = document.getElementById('mpActiveValue'); if (avEl) avEl.textContent = (parseInt(avEl.textContent,10)||0) + (sj.delta||0); if (signHint) signHint.textContent = '今日已签到 +' + (sj.delta||0); showToast('签到成功 +' + (sj.delta||0) + ' 活跃值'); }
-                                                                else { if (signHint) signHint.textContent = '今天已经签到过啦'; showToast('今天已签到'); }
+                                                                if (sj.signed) {
+                                                                        const avEl = document.getElementById('mpActiveValue');
+                                                                        if (avEl) avEl.textContent = fmtPts(sj.balance ?? ((parseFloat(avEl.textContent)||0) + (sj.delta||0)));
+                                                                        if (signHint) signHint.textContent = '已连登 ' + sj.streak + ' 天';
+                                                                        signBtn.innerHTML = '<svg class="ui-ic"><use href="#ic-calendar"></use></svg> 今日已签到';
+                                                                        showToast('签到成功 +' + fmtPts(sj.delta) + ' 积分（连登 ' + sj.streak + ' 天）');
+                                                                } else { if (signHint) signHint.textContent = '今天已经签到过啦'; showToast('今天已签到'); }
                                                         } else { if (signHint) signHint.textContent = (sj && sj.msg) || '签到失败'; signBtn.disabled = false; }
                                                 } catch { if (signBtn) signBtn.disabled = false; }
                                         };
@@ -1857,7 +1887,7 @@
                                         // 每日登录奖励（每天一次，重复不叠加）
                                         try {
                                             const dl = await fetch(`${SUPABASE_URL}/rest/v1/rpc/grant_daily_login`, { method:'POST', headers:{ 'apikey':SUPABASE_ANON_KEY, 'Authorization':`Bearer ${getToken()}`, 'Content-Type':'application/json' } });
-                                            if (dl.ok) { const add = await dl.json().catch(()=>0); if (add === 2) showToast('每日登录 +2 活跃值'); }
+                                            if (dl.ok) { const add = await dl.json().catch(()=>0); if (add === 2) showToast('每日登录 +2 积分'); }
                                         } catch {}
                                         setTimeout(closeAuthModal, 600);
                                 });

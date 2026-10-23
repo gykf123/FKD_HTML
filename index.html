@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FKD-Web 版本 v1.9.21 · 2026-10-23 · AI 助手 + 赠送加固：①新增 AI 助手视图（侧栏入口），接 Cloudflare Workers AI(账号/令牌仅存 Supabase Secrets，前端零接触)，支持流式对话与受控工具调用——查活跃值/排行榜/我的工会/按名找人可直接执行，发私聊与工会发言走"两阶段确认"：模型只能登记待办，用户点确认才由 ai_exec_action 复用现有 RPC 落地，权限等同本人手动操作。②防刷：ai_rate_check 每次调用先占额度(每分钟6次/每日200次)，超限 429；提示词注入防护+服务端 reply 过滤防设定泄漏；消息正文按用户原话对齐，防小模型改写。③赠送活跃值修复溢出：active_value 升 bigint + 非负约束，gift_active 全部改用 bigint 运算并 clamp，新增单笔1万/日送5万/日收20万/10秒冷却四道闸门，赠送流水加正数约束与双索引(迁移 0013)，AI 配额表见 0014/0015。真实端到端验证 22/22 通过。 -->
+<!-- FKD-Web 版本 v1.9.22 · 2026-10-23 · 积分体系 + 连登签到：①活跃值对外全面改称"积分"，并升为 numeric(12,2) 精确到 0.01（字段名 active_value 保持不变，避免连锁改动）；前端统一走 fmtPts()，整数不显示小数点、小数保留两位。②连登签到：首日 +5，每多一天 +1，每满 7 天额外 +10，单日封顶 20，断签重置；个人主页会预告"签到 +N"并显示已连登天数（迁移 0016）。③AI 对话按字数扣积分：ceil 口径改为 round((输入字数+输出字数)/100, 2)，最低 0.01，积分不足返回 402 并提示签到；ai_usage 改用 in_chars/out_chars/cost 三列记账（迁移 0017）。④修复 gifts.js 把 SVG 写成 textContent 导致裸标签外溢；名人榜积分列加宽防溢出。实测 19/19 通过。 -->
 <html lang="zh-CN">
         <head>
                 <meta charset="UTF-8" />
@@ -151,9 +151,9 @@
                                                 </div>
                                         </div>
                                         <div class="mp-detail-bio" id="mpDetailBio"></div>
-                                        <div class="mp-active-row"><span>我的活跃值</span><strong id="mpActiveValue">0</strong></div>
+                                        <div class="mp-active-row"><span>我的积分</span><strong id="mpActiveValue">0</strong></div>
                                         <div class="mp-signin-row">
-                                                <button type="button" class="submit-btn small" id="mpSignInBtn"><svg class="ui-ic"><use href="#ic-calendar"></use></svg> 每日签到 +3</button>
+                                                <button type="button" class="submit-btn small" id="mpSignInBtn"><svg class="ui-ic"><use href="#ic-calendar"></use></svg> 每日签到</button>
                                                 <span id="mpSignInHint" class="mp-signin-hint"></span>
                                         </div>
                                         <div class="mp-detail-actions">
@@ -520,7 +520,7 @@
                                         <!-- 子面板：名人榜 -->
                                         <div class="subpanel" id="sub-hall">
                                                 <div class="section-header">
-                                                        <h2 class="section-title"><svg class="ui-ic" aria-hidden="true"><use href="#ic-medal"></use></svg> 名人榜 · 活跃值排名</h2>
+                                                        <h2 class="section-title"><svg class="ui-ic" aria-hidden="true"><use href="#ic-medal"></use></svg> 名人榜 · 积分排名</h2>
                                                         <div class="section-divider"></div>
                                                 </div>
                                                 <div id="hallList" class="hall-list"><div class="empty-hint">加载中...</div></div>

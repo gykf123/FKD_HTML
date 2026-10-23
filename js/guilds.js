@@ -116,7 +116,7 @@
         <div class="gc-rank">${rank}</div>
         <div class="gc-main">
           <div class="gc-name">${escapeHTML(g.name)}${recBadge}${g.tag ? `<span class="gc-tag">${escapeHTML(g.tag)}</span>` : ''}</div>
-          <div class="gc-meta">成员 ${g.member_count || 0} 人 · 活跃值总和 ${g.total_active || 0}</div>
+          <div class="gc-meta">成员 ${g.member_count || 0} 人 · 积分总和 ${(window.fmtPts||String)(g.total_active || 0)}</div>
           ${recNote}
         </div>
         <div class="gc-actions"><button class="submit-btn small" data-rank="${g.id}">成员</button></div>
@@ -227,7 +227,7 @@
       return `<div class="guild-member">
         ${av}
         <span class="gm-name">${escapeHTML(u.username || '匿名')}${m.role === 'owner' ? ' <svg class="ui-ic" aria-hidden="true"><use href="#ic-crown"></use></svg>' : ''}</span>
-        <span class="gm-av">活跃 ${u.active_value || 0}</span>
+        <span class="gm-av">积分 ${(window.fmtPts||String)(u.active_value || 0)}</span>
         ${isMe ? '' : `<button class="submit-btn small" data-gift="${u.id}" data-gname="${escapeHTML(u.username || '')}"><svg class="ui-ic" aria-hidden="true"><use href="#ic-gift"></use></svg> 赠送</button>`}
       </div>`;
     }).join('');

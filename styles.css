@@ -637,7 +637,7 @@
                         .hall-avatar { width:34px; height:34px; border-radius:50%; object-fit:cover; border:2px solid var(--accent-gold); }
                         .hall-avatar-empty { display:flex; align-items:center; justify-content:center; background:var(--bg-secondary); color:var(--text-secondary); font-weight:700; }
                         .hall-name { flex:1; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-                        .hall-score { font-family:var(--mc-pixel-font); font-size:.9rem; color:var(--accent-gold); min-width:2.5rem; text-align:right; }
+                        .hall-score { font-family:var(--mc-pixel-font); font-size:.9rem; color:var(--accent-gold); min-width:4.2rem; text-align:right; white-space:nowrap; flex:none; letter-spacing:-.02em; }
                         .hall-ctrl { display:flex; gap:.3rem; }
                         .hall-btn { background:var(--bg-secondary); border:2px solid var(--mc-edge); color:var(--text-primary); padding:.2rem .5rem; cursor:pointer; font-size:.8rem; box-shadow:2px 2px 0 0 rgba(0,0,0,.4); }
                         .hall-btn:hover { border-color:var(--accent-green); }

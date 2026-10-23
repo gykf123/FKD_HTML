@@ -1,4 +1,4 @@
-/* v1.9 赠送活跃值：全局 giftUser + 个人主页注入赠送按钮 */
+/* v1.9 赠送积分：全局 giftUser + 个人主页注入赠送按钮 */
 (function () {
   const API = SUPABASE_URL, ANON = SUPABASE_ANON_KEY;
   function token() { return getToken(); }
@@ -44,7 +44,7 @@
     overlay.id = 'giftModal';
     overlay.innerHTML = `<div class="modal">
       <button class="modal-close" id="giftClose">&times;</button>
-      <h3><svg class="ui-ic" aria-hidden="true"><use href="#ic-gift"></use></svg> 赠送活跃值</h3>
+      <h3><svg class="ui-ic" aria-hidden="true"><use href="#ic-gift"></use></svg> 赠送积分</h3>
       <p>赠送给：<strong>${escapeHTML(targetName || '该用户')}</strong></p>
       <div class="gift-row"><input id="giftAmount" type="number" min="1" placeholder="数量"/><button class="submit-btn" id="giftConfirm">赠送</button></div>
       <div class="gift-balance" id="giftBal"></div>
@@ -59,12 +59,12 @@
       const msg = document.getElementById('giftMsg');
       if (!amt || amt <= 0) { msg.textContent = '请输入大于 0 的数量'; msg.className = 'form-message error'; return; }
       const r = await rpc('gift_active', { p_to: targetId, p_amount: amt });
-      if (r.data && r.data.ok) { showToast(`已赠送 ${amt} 活跃值`); close(); if (window.renderHall) window.renderHall(); }
+      if (r.data && r.data.ok) { showToast(`已赠送 ${(window.fmtPts||String)(amt)} 积分`); close(); if (window.renderHall) window.renderHall(); }
       else { msg.textContent = (r.data && r.data.msg) || '赠送失败'; msg.className = 'form-message error'; }
     };
   };
 
-  // 在公开个人主页显示他人时注入"赠送活跃值"按钮 + 赠送记录入口
+  // 在公开个人主页显示他人时注入"赠送积分"按钮 + 赠送记录入口
   const _op = window.openProfile;
   window.openProfile = async function (username) {
     if (typeof _op === 'function') await _op(username);
@@ -75,7 +75,7 @@
       const rec = document.createElement('button');
       rec.id = 'giftRecBtn';
       rec.className = 'submit-btn small ghost';
-      rec.textContent = '<svg class="ui-ic" aria-hidden="true"><use href="#ic-scroll"></use></svg> 赠送记录';
+      rec.innerHTML = '<svg class="ui-ic" aria-hidden="true"><use href="#ic-scroll"></use></svg> 赠送记录';
       rec.style.marginTop = '1rem';
       rec.style.marginRight = '.5rem';
       rec.onclick = () => giftRecords(username);
@@ -86,7 +86,7 @@
     const btn = document.createElement('button');
     btn.id = 'giftEntryBtn';
     btn.className = 'submit-btn small';
-    btn.textContent = '<svg class="ui-ic" aria-hidden="true"><use href="#ic-gift"></use></svg> 赠送活跃值';
+    btn.innerHTML = '<svg class="ui-ic" aria-hidden="true"><use href="#ic-gift"></use></svg> 赠送积分';
     btn.style.marginTop = '1rem';
     btn.onclick = async () => {
       const u = await rest('users', `select=id,username&username=eq.${encodeURIComponent(username)}`);
@@ -96,7 +96,7 @@
     body.appendChild(btn);
   };
 
-  // 赠送记录：展示该用户送出 / 收到的活跃值流水（公开可读，demo 级）
+  // 赠送记录：展示该用户送出 / 收到的积分流水（公开可读，demo 级）
   async function giftRecords(username) {
     const u = await rest('users', `select=id,username&username=eq.${encodeURIComponent(username)}`);
     const arr = Array.isArray(u.data) ? u.data : [];
@@ -110,7 +110,7 @@
     const item = x => {
       const out = !!(x.from_user && x.from_user.id === uidv);
       const other = out ? (x.to_user && x.to_user.username) : (x.from_user && x.from_user.username);
-      return `<div class="gr-item"><span class="gr-dir ${out ? 'out' : 'in'}">${out ? '送出' : '收到'}</span><span class="gr-who">${escapeHTML(other || '匿名')}</span><span class="gr-amt">${out ? '-' : '+'}${x.amount}</span><span class="gr-time">${fmt(x.created_at)}</span></div>`;
+      return `<div class="gr-item"><span class="gr-dir ${out ? 'out' : 'in'}">${out ? '送出' : '收到'}</span><span class="gr-who">${escapeHTML(other || '匿名')}</span><span class="gr-amt">${out ? '-' : '+'}${(window.fmtPts||String)(x.amount)}</span><span class="gr-time">${fmt(x.created_at)}</span></div>`;
     };
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay active';
