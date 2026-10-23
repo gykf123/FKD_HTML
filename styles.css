@@ -982,10 +982,72 @@ button .ui-ic, .submit-btn .ui-ic, .cat-badge .ui-ic, .q-icon .ui-ic, .t-icon .u
   border: 1px dashed var(--accent-gold); background: var(--bg-gold);
 }
 .ai-pending.done, .ai-pending.cancelled { opacity: .6; border-style: solid; border-color: var(--border-light); background: var(--bg-secondary); }
+.ai-pending.failed { border-style: solid; border-color: #b4544c; }
 .ai-pending-head { font-size: .75rem; font-weight: 700; color: var(--accent-gold); letter-spacing: .5px; margin-bottom: 6px; }
 .ai-pending-body { font-size: .88rem; color: var(--text-primary); line-height: 1.6; margin-bottom: 10px; word-break: break-word; }
-.ai-pending-acts { display: flex; gap: 8px; }
+.ai-pending-acts { display: flex; gap: 8px; flex-wrap: wrap; }
 .ai-done-tip { font-size: .8rem; color: var(--text-muted); }
+
+/* ---- 任务链：一句话多个动作 ---- */
+.ai-batch-list { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ai-batch-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  font-size: .86rem; line-height: 1.55; color: var(--text-primary);
+}
+.ai-batch-no {
+  flex: none; width: 18px; height: 18px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: .7rem; font-weight: 700;
+  background: var(--accent-gold); color: #1a1a1a; margin-top: 1px;
+}
+.ai-batch-txt { flex: 1; min-width: 0; word-break: break-word; }
+.ai-batch-result {
+  margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-light);
+  font-size: .78rem; color: #c9736a; line-height: 1.5; word-break: break-word;
+}
+
+/* ---- 执行方式切换 ---- */
+.ai-mode-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-top: 10px;
+}
+.ai-mode-label { font-size: .72rem; color: var(--text-muted); letter-spacing: .3px; }
+.ai-mode-seg {
+  display: inline-flex; border: 1px solid var(--border-light); border-radius: 8px;
+  overflow: hidden; background: var(--bg-main);
+}
+.ai-mode-btn {
+  border: none; background: transparent; cursor: pointer;
+  padding: 4px 10px; font-size: .75rem; font-family: inherit;
+  color: var(--text-secondary); transition: background .15s, color .15s;
+}
+.ai-mode-btn + .ai-mode-btn { border-left: 1px solid var(--border-light); }
+.ai-mode-btn:hover { color: var(--text-primary); }
+.ai-mode-btn.on { background: var(--accent-green); color: #fff; font-weight: 600; }
+.ai-log-btn {
+  margin-left: auto; border: 1px solid var(--border-light); background: transparent;
+  border-radius: 8px; padding: 4px 10px; font-size: .75rem; font-family: inherit;
+  color: var(--text-secondary); cursor: pointer; transition: color .15s, border-color .15s;
+}
+.ai-log-btn:hover { color: var(--text-primary); border-color: var(--accent-green); }
+
+/* ---- 操作记录面板 ---- */
+.ai-log-panel { display: none; }
+.ai-log-panel.open {
+  display: block; max-height: 220px; overflow-y: auto;
+  border-bottom: 1px solid var(--border-color); background: var(--bg-main);
+  padding: 10px 16px;
+}
+.ai-log-head { font-size: .74rem; font-weight: 700; color: var(--text-muted); letter-spacing: .5px; margin-bottom: 8px; }
+.ai-log-empty { font-size: .8rem; color: var(--text-muted); padding: 6px 0; }
+.ai-log-row { display: flex; gap: 8px; align-items: flex-start; padding: 5px 0; border-bottom: 1px dashed var(--border-light); }
+.ai-log-row:last-child { border-bottom: none; }
+.ai-log-dot { flex: none; width: 6px; height: 6px; border-radius: 50%; margin-top: 6px; }
+.ai-log-dot.ok { background: var(--accent-green); }
+.ai-log-dot.fail { background: #b4544c; }
+.ai-log-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ai-log-sum { font-size: .8rem; color: var(--text-primary); word-break: break-word; }
+.ai-log-meta { font-size: .7rem; color: var(--text-muted); }
 
 .ai-inputbar {
   display: flex; gap: 10px; align-items: flex-end;
@@ -1005,4 +1067,6 @@ button .ui-ic, .submit-btn .ui-ic, .cat-badge .ui-ic, .q-icon .ui-ic, .t-icon .u
   .ai-layout { height: calc(100vh - 160px); border-radius: 0; border-left: none; border-right: none; }
   .ai-bub { max-width: 84%; }
   .ai-pending { margin-left: 0; }
+  .ai-mode-bar { gap: 8px; }
+  .ai-log-btn { margin-left: 0; }
 }
