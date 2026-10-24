@@ -217,6 +217,24 @@
                         .hero-owner { color: var(--text-muted); font-size: 0.85rem; }
                         .hero-owner strong { color: var(--accent-gold); }
 
+                        /* ===== 一键进服 CTA（hero 主按钮） ===== */
+                        .hero-cta-row { margin-top: 1.2rem; display: flex; align-items: center; justify-content: center; gap: .9rem; flex-wrap: wrap; }
+                        .join-btn {
+                                display: inline-flex; align-items: center; gap: .55rem;
+                                background: linear-gradient(180deg, #ffd85e, var(--accent-gold));
+                                color: #1b1b1b;
+                                border: 3px solid var(--mc-edge);
+                                padding: .72rem 1.8rem;
+                                font-family: var(--mc-title-font); font-size: 1.08rem; font-weight: 800; letter-spacing: 1px;
+                                cursor: pointer;
+                                box-shadow: 5px 5px 0 0 rgba(0, 0, 0, 0.6);
+                                transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+                        }
+                        .join-btn:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 0 rgba(0, 0, 0, 0.6); filter: brightness(1.08); }
+                        .join-btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 0 rgba(0, 0, 0, 0.6); }
+                        .join-btn .ui-ic { width: 1.2em; height: 1.2em; }
+                        .join-tip { font-size: .76rem; color: var(--text-muted); }
+
                         .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
                         .section { padding: 40px 0; }
                         .section-header { text-align: center; margin-bottom: 2rem; }
@@ -259,6 +277,8 @@
                         .quick-card.c-trade { border-color: var(--mc-gold); }
                         .quick-card.c-tool { border-color: var(--mc-diamond); }
                         .quick-card.c-submit { border-color: var(--mc-redstone); }
+                        .quick-card.c-join { border-color: var(--accent-green); }
+                        .quick-card.c-join .q-icon { color: var(--accent-green-light); }
 
                         /* ===== 公告框 ===== */
                         .notice-box {

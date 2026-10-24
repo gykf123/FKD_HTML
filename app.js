@@ -72,7 +72,13 @@
                             // 重要：务必用 http(s) 访问本页面（不要 file:// 双击打开），否则浏览器会拦截所有跨域请求（图床/接口全部 Load failed）。
                             imageHost: 'supabase,smms,imgtp',
                             // 旧版功能保持匿名选项；勾选“匿名发布”则不署名账号
-                            allowAnonymous: true
+                            allowAnonymous: true,
+                            // 一键进服：网易版我的世界启动器协议链接。
+                            // 换服务器/迁移平台时只改这一个 url 即可（hero 按钮与快速入口卡片共用）。
+                            joinServer: {
+                                url: 'https://mc.163.com/pe/startup/?id=app_store&m=%7B%22from%22%3A%22rentGame%22%2C%22id%22%3A%224690878378062152976%22%7D',
+                                tip: '需已安装网易版《我的世界》'
+                            }
                         };
                         document.getElementById('footerText').innerHTML = `
                             服主：${SITE_CONFIG.owner} | 赛季 ${SITE_CONFIG.season} | ${SITE_CONFIG.githubNote}<br>
@@ -1006,6 +1012,18 @@
                                 switchView(el.dataset.view);
                             });
                         });
+
+                        // ---------- 9.5 一键进服（外链，唤起网易版我的世界启动器） ----------
+                        function joinServer() {
+                            const cfg = SITE_CONFIG.joinServer;
+                            if (!cfg || !cfg.url) { showToast('进服链接未配置', true); return; }
+                            // 网易链接会尝试唤起本机启动器/App；桌面上则打开说明页
+                            window.open(cfg.url, '_blank', 'noopener');
+                        }
+                        const joinBtn = document.getElementById('joinServerBtn');
+                        if (joinBtn) joinBtn.addEventListener('click', joinServer);
+                        const joinCard = document.getElementById('joinServerCard');
+                        if (joinCard) joinCard.addEventListener('click', joinServer);
 
                         // ---------- 10. 社区子标签切换（UI） ----------
                         function switchSub(tab) {
