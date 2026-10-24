@@ -36,6 +36,15 @@
     }
   }
 
+  // 切换工会 tab（排名/我的工会），供 tab 点击与跨面板跳转共用
+  function switchGuildTab(name) {
+    const root = document.getElementById('guildRoot');
+    if (!root) return;
+    document.getElementById('guildRankPanel').classList.toggle('active', name === 'rank');
+    document.getElementById('guildMinePanel').classList.toggle('active', name === 'mine');
+    root.querySelectorAll('.guild-tab').forEach(x => x.classList.toggle('active', x.dataset.gtab === name));
+  }
+
   function initGuilds() {
     const root = document.getElementById('guildRoot');
     if (!root) return;
@@ -81,12 +90,8 @@
       </div>`;
     root.querySelectorAll('.guild-tab').forEach(t => {
       t.onclick = () => {
-        root.querySelectorAll('.guild-tab').forEach(x => x.classList.remove('active'));
-        t.classList.add('active');
-        const tab = t.dataset.gtab;
-        document.getElementById('guildRankPanel').classList.toggle('active', tab === 'rank');
-        document.getElementById('guildMinePanel').classList.toggle('active', tab === 'mine');
-        if (tab === 'rank') loadGuildRank(); else loadMyGuilds();
+        switchGuildTab(t.dataset.gtab);
+        if (t.dataset.gtab === 'rank') loadGuildRank(); else loadMyGuilds();
       };
     });
     document.getElementById('openCreateGuildBtn').onclick = () => modalOpen('createGuildModal');
@@ -107,11 +112,25 @@
     // 早年这里写成 data.list 导致排名列表永远渲染成"还没有工会"——兼容两种形态。
     const list = Array.isArray(data) ? data : ((data && data.list) || []);
     if (!list.length) { box.innerHTML = '<div class="empty-hint">还没有工会，快去创建一个吧！</div>'; return; }
+    // 查当前用户与各工会的关系，决定卡片上显示"申请加入/审核中/已加入"
+    const uid = meId();
+    const myRel = {};
+    if (uid) {
+      const rel = await rest('guild_members', `select=guild_id,status&user_id=eq.${uid}`);
+      if (Array.isArray(rel.data)) rel.data.forEach(r => { myRel[r.guild_id] = r.status; });
+    }
     box.innerHTML = list.map((g, i) => {
       const rank = i + 1;
       const top = rank <= 3 ? ' guild-top' : '';
       const recBadge = g.recruiting ? '<span class="recruit-badge" title="该工会正在招募"><svg class="ui-ic" aria-hidden="true"><use href="#ic-megaphone"></use></svg> 招募中</span>' : '';
       const recNote = (g.recruiting && g.recruit_note) ? `<div class="gc-recruit-note">${escapeHTML(g.recruit_note)}</div>` : '';
+      let applyBtn = '';
+      if (uid && g.recruiting) {
+        const st = myRel[g.id];
+        if (st === 'approved') applyBtn = '<button class="submit-btn small ghost" disabled>已加入</button>';
+        else if (st === 'pending') applyBtn = '<button class="submit-btn small ghost" disabled>审核中</button>';
+        else applyBtn = `<button class="submit-btn small" data-apply="${g.id}">申请加入</button>`;
+      }
       return `<div class="guild-card${top}${g.recruiting ? ' is-recruiting' : ''}">
         <div class="gc-rank">${rank}</div>
         <div class="gc-main">
@@ -119,10 +138,11 @@
           <div class="gc-meta">成员 ${g.member_count || 0} 人 · 积分总和 ${(window.fmtPts||String)(g.total_active || 0)}</div>
           ${recNote}
         </div>
-        <div class="gc-actions"><button class="submit-btn small" data-rank="${g.id}">成员</button></div>
+        <div class="gc-actions"><button class="submit-btn small" data-rank="${g.id}">成员</button>${applyBtn}</div>
       </div>`;
     }).join('');
     box.querySelectorAll('[data-rank]').forEach(b => b.onclick = () => showGuildMembers(b.dataset.rank, true));
+    box.querySelectorAll('[data-apply]').forEach(b => b.onclick = () => applyGuild(b.dataset.apply, true));
   }
 
   async function loadMyGuilds() {
@@ -205,15 +225,23 @@
     box.querySelectorAll('[data-apply]').forEach(b => b.onclick = () => applyGuild(b.dataset.apply));
   }
 
-  async function applyGuild(gid) {
+  async function applyGuild(gid, fromRank) {
     const uid = meId();
     if (!uid) { showToast('请先登录', true); openAuthModal('login'); return; }
     const { data } = await rpc('apply_guild', { p_guild: gid });
-    if (data && data.ok) { showToast('已提交申请，等待会长审核'); document.getElementById('guildApplyInput').value = ''; document.getElementById('guildSearchResult').innerHTML = ''; }
+    if (data && data.ok) {
+      showToast('已提交申请，等待会长审核');
+      document.getElementById('guildApplyInput').value = '';
+      document.getElementById('guildSearchResult').innerHTML = '';
+      if (fromRank) loadGuildRank(); else loadMyGuilds();
+    }
     else showToast((data && data.msg) || '申请失败', true);
   }
 
   async function showGuildMembers(gid, fromRank) {
+    // 从排行榜点"成员"进来时，成员视图渲染在我的工会面板里，
+    // 必须先把面板和 tab 切过去，否则内容写进 display:none 的容器，用户看着就是"无反应"。
+    if (fromRank) switchGuildTab('mine');
     const box = document.getElementById('guildMineList');
     box.innerHTML = '<div class="empty-hint">加载中...</div>';
     const { data } = await rest('guild_members', `select=user_id,role,users(id,username,avatar_url,active_value)&guild_id=eq.${gid}&status=eq.approved`);
@@ -233,6 +261,12 @@
     }).join('');
     html += '</div>';
     const isMember = list.some(m => (m.users || {}).id === meId());
+    // 非成员时查一下自己有没有待审核的申请，避免重复提交
+    let myPending = false;
+    if (!isMember && meId()) {
+      const rel = await rest('guild_members', `select=status&guild_id=eq.${gid}&user_id=eq.${meId()}&limit=1`);
+      if (Array.isArray(rel.data) && rel.data.length && rel.data[0].status === 'pending') myPending = true;
+    }
     if (isMember) {
       html += `<div class="guild-chat" id="guildChatBox">
         <div class="gc-chat-head"><svg class="ui-ic" aria-hidden="true"><use href="#ic-message"></use></svg> 工会聊天 <span class="gc-chat-tip">仅本工会成员可见 · 5 秒自动刷新</span></div>
@@ -242,13 +276,23 @@
           <button class="submit-btn small" id="guildChatSend">发送</button>
         </div>
       </div>`;
+    } else if (myPending) {
+      html += `<div class="guild-chat guild-chat-locked"><div class="empty-hint">申请已提交，等待会长审核</div></div>`;
     } else {
-      html += `<div class="guild-chat guild-chat-locked"><div class="empty-hint">加入工会即可参与群聊</div></div>`;
+      html += `<div class="guild-chat guild-chat-locked">
+        <div class="empty-hint">加入工会即可参与群聊</div>
+        <button class="submit-btn small" data-apply="${gid}">申请加入该工会</button>
+      </div>`;
     }
     box.innerHTML = html;
     const back = document.getElementById('gmBack');
-    if (back) back.onclick = () => fromRank ? loadGuildRank() : loadMyGuilds();
+    if (back) back.onclick = () => { if (fromRank) { switchGuildTab('rank'); loadGuildRank(); } else loadMyGuilds(); };
     box.querySelectorAll('[data-gift]').forEach(b => b.onclick = () => window.giftUser(b.dataset.gift, b.dataset.gname));
+    box.querySelectorAll('[data-apply]').forEach(b => b.onclick = async () => {
+      const r = await rpc('apply_guild', { p_guild: b.dataset.apply });
+      if (r.data && r.data.ok) { showToast('已提交申请，等待会长审核'); showGuildMembers(gid, fromRank); }
+      else showToast((r.data && r.data.msg) || '申请失败', true);
+    });
     if (isMember) wireGuildChat(gid);
   }
 
