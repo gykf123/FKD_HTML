@@ -10,6 +10,7 @@
   const API = SUPABASE_URL, ANON = SUPABASE_ANON_KEY;
   const FN = `${API}/functions/v1/ai-chat`;
   const MODE_KEY = 'fkd_ai_mode';        // 'ask' | 'auto'
+  const THINK_KEY = 'fkd_ai_thinking';   // '1' | '0' 公开思维链开关
 
   const history = [];                    // [{role, content}]
   let busy = false;
@@ -25,6 +26,13 @@
   function setMode(m) {
     try { localStorage.setItem(MODE_KEY, m === 'auto' ? 'auto' : 'ask'); } catch (e) {}
     renderModeBar();
+  }
+  // 公开思维链：默认关（会多花 token，而且很多人不喜欢看过程）
+  function getThink() {
+    try { return localStorage.getItem(THINK_KEY) === '1'; } catch (e) { return false; }
+  }
+  function setThink(v) {
+    try { localStorage.setItem(THINK_KEY, v ? '1' : '0'); } catch (e) {}
   }
 
   async function call(payload) {
@@ -63,6 +71,14 @@
     </div>`;
   }
 
+  // 气泡里塞「已转义好的 HTML」（思维链卡片 + 正文），正文部分自己 esc
+  function bubbleRaw(innerHtml) {
+    return `<div class="ai-msg bot">
+      <div class="ai-ava">AI</div>
+      <div class="ai-bub">${innerHtml}</div>
+    </div>`;
+  }
+
   /* ---------- 处理方式条 ---------- */
   function renderModeBar() {
     const bar = document.getElementById('aiModeBar');
@@ -74,6 +90,8 @@
         <button type="button" class="ai-mode-btn ${m === 'ask' ? 'on' : ''}" data-mode="ask">先问我</button>
         <button type="button" class="ai-mode-btn ${m === 'auto' ? 'on' : ''}" data-mode="auto">自动通过</button>
       </div>
+      <button type="button" class="ai-think-btn ${getThink() ? 'on' : ''}" id="aiThinkBtn"
+              title="显示 AI 的思考过程：先查了什么、怎么得出的结论">思维链</button>
       <button type="button" class="ai-log-btn" id="aiLogBtn">操作记录</button>`;
     bar.querySelectorAll('[data-mode]').forEach(b => {
       b.onclick = () => {
@@ -81,11 +99,42 @@
         if (b.dataset.mode === 'auto') showToast('已开启自动通过：AI 的操作会直接执行');
       };
     });
+    const tb = document.getElementById('aiThinkBtn');
+    if (tb) tb.onclick = () => {
+      const v = !getThink();
+      setThink(v);
+      tb.classList.toggle('on', v);
+      showToast(v ? '已打开思维链：会显示 AI 查了什么、怎么想的' : '已关闭思维链');
+    };
     const lb = document.getElementById('aiLogBtn');
     if (lb) lb.onclick = toggleLog;
   }
 
   /* ---------- 任务链卡片（一句话多动作） ---------- */
+  /* ---------- 公开思维链 ---------- */
+  function thinkCard(list) {
+    const rows = list.map((s, i) => {
+      const no = i + 1;
+      if (s.kind === 'reasoning') {
+        return `<li class="ai-think-row reason">
+          <span class="ai-think-no">${no}</span>
+          <span class="ai-think-txt">${esc(s.text)}</span>
+        </li>`;
+      }
+      const arg = s.args ? esc(JSON.stringify(s.args)).slice(0, 80) : '';
+      const brief = s.result_brief ? `<span class="ai-think-brief">${esc(s.result_brief)}</span>` : '';
+      const bad = s.ok === false ? ' bad' : '';
+      return `<li class="ai-think-row${bad}">
+        <span class="ai-think-no">${no}</span>
+        <span class="ai-think-txt"><b>${esc(s.label || s.name)}</b>${arg ? ` <code>${arg}</code>` : ''}${brief}</span>
+      </li>`;
+    }).join('');
+    return `<div class="ai-think">
+      <div class="ai-think-head">思考过程 · ${list.length} 步</div>
+      <ul class="ai-think-list">${rows}</ul>
+    </div>`;
+  }
+
   function batchCard(b) {
     // seq 兜底：老数据里 seq 可能是 0 或缺失，直接显示 0 很难看，按数组下标补
     const items = (b.items || []).map((it, i) => `
@@ -243,7 +292,7 @@
 
     push(`<div class="ai-msg bot ai-typing" id="aiTyping"><div class="ai-ava">AI</div><div class="ai-bub"><span></span><span></span><span></span></div></div>`);
 
-    const { status, data } = await call({ messages: history.slice(-12), mode: getMode() });
+    const { status, data } = await call({ messages: history.slice(-12), mode: getMode(), thinking: getThink() });
 
     const t = document.getElementById('aiTyping');
     if (t) t.remove();
@@ -258,7 +307,14 @@
     } else {
       const reply = data.reply || '';
       history.push({ role: 'assistant', content: reply });
-      push(bubble('assistant', reply));
+
+      // 公开思维链：插在正文前面，让用户看到"AI 先做了什么才得出这个结论"
+      // 跟正文放同一个气泡里，视觉上更紧凑
+      if (data.thinking && data.thinking.length) {
+        push(bubbleRaw(thinkCard(data.thinking) + esc(reply).replace(/\n/g, '<br>')));
+      } else {
+        push(bubble('assistant', reply));
+      }
 
       const u = data.usage || {};
       if (window.setAIFoot && u.balance !== undefined) {

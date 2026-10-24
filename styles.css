@@ -1030,6 +1030,35 @@ button .ui-ic, .submit-btn .ui-ic, .cat-badge .ui-ic, .q-icon .ui-ic, .t-icon .u
   color: var(--text-secondary); cursor: pointer; transition: color .15s, border-color .15s;
 }
 .ai-log-btn:hover { color: var(--text-primary); border-color: var(--accent-green); }
+.ai-think-btn {
+  border: 1px solid var(--border-color); background: transparent;
+  border-radius: 8px; padding: 4px 10px; font-size: .75rem; font-family: inherit;
+  color: var(--text-secondary); cursor: pointer; transition: color .15s, border-color .15s, background .15s;
+}
+.ai-think-btn:hover { color: var(--text-primary); border-color: var(--accent-green); }
+.ai-think-btn.on { background: var(--accent-green); color: #fff; font-weight: 600; border-color: var(--accent-green); }
+
+/* ---- 公开思维链 ---- */
+.ai-think {
+  border: 1px dashed var(--border-color); border-radius: 8px;
+  background: var(--bg-main); padding: 8px 10px; margin-bottom: 8px;
+}
+.ai-think-head { font-size: .72rem; font-weight: 700; color: var(--text-muted); letter-spacing: .5px; margin-bottom: 6px; }
+.ai-think-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.ai-think-row { display: flex; gap: 8px; align-items: flex-start; }
+.ai-think-row.bad .ai-think-txt b { color: #b4544c; }
+.ai-think-row.reason .ai-think-txt { color: var(--text-secondary); font-style: italic; }
+.ai-think-no {
+  flex: none; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--border-light); color: var(--text-muted);
+  font-size: .65rem; line-height: 16px; text-align: center; margin-top: 2px;
+}
+.ai-think-txt { flex: 1; min-width: 0; font-size: .78rem; color: var(--text-primary); word-break: break-word; }
+.ai-think-txt code {
+  font-size: .7rem; color: var(--text-muted); background: var(--bg-card);
+  padding: 1px 4px; border-radius: 4px; word-break: break-all;
+}
+.ai-think-brief { color: var(--accent-green); font-size: .72rem; margin-left: 4px; }
 
 /* ---- 操作记录面板 ---- */
 .ai-log-panel { display: none; }
@@ -1068,5 +1097,5 @@ button .ui-ic, .submit-btn .ui-ic, .cat-badge .ui-ic, .q-icon .ui-ic, .t-icon .u
   .ai-bub { max-width: 84%; }
   .ai-pending { margin-left: 0; }
   .ai-mode-bar { gap: 8px; }
-  .ai-log-btn { margin-left: 0; }
+  .ai-log-btn, .ai-think-btn { margin-left: 0; }
 }
