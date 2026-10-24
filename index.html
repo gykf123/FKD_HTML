@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FKD-Web 版本 v1.9.27 · 2026-10-24 · AI 增加内容查询工具 + 公开思维链开关：①新增 8 个只读工具，不用确认直接执行：list_stories 翻投稿列表、read_story 读投稿全文和评论、list_story_comments 看某篇/某人的评论、list_guestbook 看留言板、list_trades 看交易所挂单、read_guild_chat 读自己工会聊天（不给 id 就读我加入的第一个工会）、read_my_dm 读自己私聊（只看自己的，看不到别人的）、my_sign_in 查签到（连续天数/本月几天/今天签没签）。②新增 ai_find_user_id() RPC 做名字→id 解析（完全一致→username 模糊→昵称模糊，多候选返回 ambiguous）。③修「问我的积分却去查别人」：模型会把 me/自己 当用户名传给 user_points，现加白名单转成查自己，描述也写明"查别人用这个，查自己用 my_active"，提示词同步加硬约束。④新增「思维链」开关（默认关）：打开后每次回答前显示 AI 先做了什么——第几步、调了什么工具、拿到什么结果。推理型模型还会显示 reasoning_content。默认关是因为会多花 token。⑤提示词补充：用户问"有什么投稿/留言板说了啥/签到几天"这类要直接去查，不许凭印象编。 -->
+<!-- FKD-Web 版本 v1.9.28 · 2026-10-24 · 修「排名说成第 47.79 名」：①新增 ai_my_rank() RPC 和 my_rank 工具——用户问「我排名第几」时后端直接算好名次，不再让模型从 active_rank 的前 N 名列表里自己数。原实现只给前 10/50 名，模型既要数位置又容易把积分余额误读成名次（实测：用户真实第 1 名，AI 答「第 47.79 名」，47.79 正是扣费前的余额）。②ai_my_rank 返回 rank（名次，正整数）/ total（上榜人数）/ ahead（前面几人）/ points（我的积分）/ gap_to_next（距上一名差多少）。③提示词加 7b 硬约束：问排名必须用 my_rank；名次一定是正整数，如果准备说出来的名次带小数点，就是拿积分余额当名次了，属严重错误；active_value / total / ahead 也绝不能当成名次说出去。 -->
 <html lang="zh-CN">
         <head>
                 <meta charset="UTF-8" />
