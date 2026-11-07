@@ -113,14 +113,62 @@
     return url.indexOf(PRIMARY) === 0;
   }
 
-  function rewrite(url, ep) {
+  // --------------------------- 路径白名单（与反代侧保持一致） ---------------------------
+  // 反代只放行 /rest/v1/ /functions/v1/ /storage/v1/object/ /auth/v1/，
+  // 且 auth 下还有敏感子路径被挡。本层提前拦掉，避免「切到反代 → 403 → 用户看到请求失败」。
+  // 被挡的请求一律走官方域，行为与没有反代时完全一致。
+  var ALLOW_PATH = ['/rest/v1/', '/functions/v1/', '/storage/v1/object/', '/auth/v1/'];
+  var AUTH_DENY = [
+    '/auth/v1/admin/', '/auth/v1/invite', '/auth/v1/recover',
+    '/auth/v1/otp', '/auth/v1/magiclink', '/auth/v1/resend'
+  ];
+
+  function epCanServe(ep, path) {
+    if (ep === PRIMARY) return true;          // 官方域什么路径都能走
+    var ok = false, i;
+    for (i = 0; i < ALLOW_PATH.length; i++) {
+      if (path.indexOf(ALLOW_PATH[i]) === 0) { ok = true; break; }
+    }
+    if (!ok) return false;
+    for (i = 0; i < AUTH_DENY.length; i++) {
+      if (path.indexOf(AUTH_DENY[i]) === 0) return false;
+    }
+    return true;
+  }
+
+  // 从任意端点前缀的完整 URL 里取出路径，用于白名单判定
+  function pathOf(url) {
     var i, base;
     for (i = 0; i < endpoints.length; i++) {
       base = endpoints[i];
-      if (url.indexOf(base) === 0) return ep + url.slice(base.length);
+      if (url.indexOf(base) === 0) return url.slice(base.length) || '/';
     }
-    if (url.indexOf(PRIMARY) === 0) return ep + url.slice(PRIMARY.length);
+    if (url.indexOf(PRIMARY) === 0) return url.slice(PRIMARY.length) || '/';
     return url;
+  }
+
+  // 把 URL 映射到指定端点；该端点不支持这条路径时返回 null
+  function rewrite(url, ep) {
+    var i, base, p;
+    for (i = 0; i < endpoints.length; i++) {
+      base = endpoints[i];
+      if (url.indexOf(base) === 0) {
+        p = url.slice(base.length);
+        return epCanServe(ep, p) ? ep + p : null;
+      }
+    }
+    if (url.indexOf(PRIMARY) === 0) {
+      p = url.slice(PRIMARY.length);
+      return epCanServe(ep, p) ? ep + p : null;
+    }
+    return url;
+  }
+
+  // 当前端点能否承接这条请求；不能就回退到官方域
+  function endpointFor(url) {
+    var ep = currentEp();
+    if (epCanServe(ep, pathOf(url))) return ep;
+    return PRIMARY;
   }
 
   function switchEndpoint() {
@@ -301,7 +349,7 @@
 
   // --------------------------- 请求主体 ---------------------------
   function attempt(input, init, ctx, tried) {
-    var ep = currentEp();
+    var ep = endpointFor(ctx.url);
     var target = rewrite(ctx.url, ep);
     var t = withTimeout(init, ctx.isRequest, ctx.method === 'GET' ? TIMEOUT_GET : TIMEOUT_WRITE);
     var t0 = Date.now();
