@@ -273,6 +273,69 @@
     if (typeof onDegraded === 'function') {
       try { onDegraded({ url: url, reason: reason }); } catch (e) {}
     }
+    // 内置轻提示；页面用 setDegradedHandler 接管后就不再弹，避免重复
+    if (onDegraded) return;
+    try { showNetHint(url, reason); } catch (e) {}
+  }
+
+  // --------------------------- 降级提示条 ---------------------------
+  // 设计取舍：
+  //  - 用顶部细条而非弹窗：降级是「背景状态」，不该抢焦点、更不该拦着用户点东西。
+  //  - 只在不影响操作时才提示：用户正在输入（写投稿/评论）一律不打扰。
+  //  - 同时只存在一条，新消息覆盖旧消息并重置计时，避免刷屏。
+  //  - 会自动消失；点一下也能立刻关掉。
+  var HINT_ID = 'fkdNetHint';
+  var HINT_COOL_MS = 60000;    // 同类提示 1 分钟内不重复
+  var _hintLast = {};
+  var _hintTimer = null;
+
+  function hintText(reason) {
+    if (reason === 'recovered') return '网络已自动切换到备用线路，刚才是线路波动';
+    if (reason === 'cache') return '网络不太稳定，暂时显示的是缓存内容';
+    return '网络不太稳定，已自动切换到备用线路';
+  }
+
+  function showNetHint(url, reason) {
+    var key = reason === 'recovered' ? 'recovered' : 'switch';
+    var now = Date.now();
+    if (_hintLast[key] && now - _hintLast[key] < HINT_COOL_MS) return;
+
+    // 用户正在输入就不打断，等下一次机会
+    var el = document.activeElement;
+    if (el) {
+      var tag = (el.tagName || '').toUpperCase();
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable) return;
+    }
+
+    _hintLast[key] = now;
+
+    var box = document.getElementById(HINT_ID);
+    if (!box) {
+      box = document.createElement('div');
+      box.id = HINT_ID;
+      box.setAttribute('role', 'status');
+      box.setAttribute('aria-live', 'polite');
+      (document.body || document.documentElement).appendChild(box);
+    }
+    box.textContent = hintText(reason);
+    box.className = 'net-hint show';
+    box.onclick = function () { hideNetHint(); };
+
+    // 把实际高度写进 CSS 变量，页面据此把内容下移，避免盖住导航上的按钮
+    try {
+      var h = box.offsetHeight;
+      if (h > 0) document.documentElement.style.setProperty('--net-hint-h', h + 'px');
+    } catch (e) {}
+    try { document.body.className += ' net-hint-on'; } catch (e) {}
+
+    clearTimeout(_hintTimer);
+    _hintTimer = setTimeout(hideNetHint, 4500);
+  }
+
+  function hideNetHint() {
+    var box = document.getElementById(HINT_ID);
+    if (box) box.className = 'net-hint';
+    try { document.body.className = document.body.className.replace(/\s*net-hint-on/g, ''); } catch (e) {}
   }
 
   // --------------------------- 超时组合 ---------------------------
@@ -386,6 +449,9 @@
         if (switchEndpoint()) return attempt(input, init, ctx, tried + 1);
       }
 
+      // 换端点重试后拿到正常响应：告诉用户「刚才断过，已自动恢复」
+      if (tried > 0 && res.status < 500) notifyDegraded('recovered');
+
       // 成功写缓存（只收 /rest/v1/ 的 JSON 响应，绝不把图片二进制塞进 localStorage）
       if (res.ok && ctx.cacheKey) {
         try {
@@ -416,7 +482,7 @@
         if (cached) {
           var stale = staleResponse(cached);
           if (stale) {
-            notifyDegraded(ctx.url, 'network');
+            notifyDegraded(ctx.url, 'cache');
             return stale;
           }
         }
@@ -510,6 +576,8 @@
       return endpoints.slice();
     },
     setDegradedHandler: function (fn) { onDegraded = fn; },
+    // 调试/自检用：FKD_NET.notify('switch' | 'cache' | 'recovered')
+    notify: function (reason) { notifyDegraded('manual', reason || 'switch'); },
     goDiag: function () {
       try { location.href = DIAG_URL + '?auto=1'; } catch (e) {}
     },

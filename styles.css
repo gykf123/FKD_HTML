@@ -665,6 +665,45 @@
                         .toast { position:fixed; left:50%; bottom:2rem; transform:translateX(-50%); background:var(--bg-card); color:var(--text-primary); border:3px solid var(--mc-edge); box-shadow:4px 4px 0 0 rgba(0,0,0,.5); padding:.7rem 1.2rem; z-index:3000; font-size:.9rem; opacity:0; transition:opacity .25s, transform .25s; pointer-events:none; }
                         .toast.show { opacity:1; transform:translateX(-50%) translateY(-6px); }
                         .toast.error { border-color:#d0453b; color:#d0453b; }
+
+                        /* ---------- 网络降级提示条 ----------
+                           反代/官方域自动切换时顶部轻提示。做成细条而非弹窗：
+                           降级是背景状态，不该抢焦点、不该挡住点击。
+                           导航栏是 fixed top:0，所以提示条出现时整体把它往下推，
+                           避免盖住「登录/注册」按钮——那是用户最可能要点的东西。 */
+                        .net-hint {
+                                position: fixed; top: 0; left: 0; right: 0;
+                                z-index: 9998;
+                                padding: .5rem 2.4rem .5rem 1rem;
+                                background: #2b3a67; color: #e8eefc;
+                                font-size: .82rem; line-height: 1.35; text-align: center;
+                                border-bottom: 2px solid #4a5f9e;
+                                transform: translateY(-100%);
+                                transition: transform .28s ease;
+                                pointer-events: none;
+                        }
+                        .net-hint.show { transform: translateY(0); pointer-events: auto; cursor: pointer; }
+                        .net-hint.show::after {
+                                content: '×';
+                                position: absolute; right: .7rem; top: 50%; transform: translateY(-50%);
+                                font-size: 1rem; opacity: .55;
+                        }
+                        @media (prefers-reduced-motion: reduce) {
+                                .net-hint { transition: none; }
+                        }
+
+                        /* 提示条出现时把导航栏整体往下推，而不是盖住它。
+                           导航栏是 fixed top:0，页面靠 .view 的 padding-top:60px 留位；
+                           这两处必须同步移动同样距离，否则会出现「导航被盖」或「页面跳一下」。 */
+                        body.net-hint-on .navbar,
+                        body.net-hint-on .view {
+                                transform: translateY(var(--net-hint-h, 36px));
+                                transition: transform .28s ease;
+                        }
+                        @media (prefers-reduced-motion: reduce) {
+                                body.net-hint-on .navbar,
+                                body.net-hint-on .view { transition: none; }
+                        }
                         .message-card, .trade-card, .story-card { position:relative; }
                         .role-badge { font-size:.7rem; padding:.1rem .4rem; border-radius:4px; margin-left:.3rem; }
                         .role-badge.role-admin { background:var(--accent-gold); color:#1a1a1a; }
