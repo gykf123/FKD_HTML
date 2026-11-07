@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>网络诊断 · FKD方块殿</title>
+<!--
+  单文件、零外部依赖：Supabase 全挂 / CDN 抽风时也能打开。
+  不引用 styles.css、不引用任何 CDN、不发任何第三方请求（除了阿里 DoH）。
+-->
+<style>
+  :root{
+    --bg:#121212; --bg2:#1a1a1e; --card:#1e1e24; --line:#2a2a32;
+    --txt:#e8e8e8; --txt2:#a8a8b0; --muted:#707078;
+    --green:#5a9e3e; --greenl:#6ab04c; --gold:#f0c040; --red:#e05555; --amber:#e0a040;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0;padding:16px 14px 40px;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    font-size:15px;line-height:1.6;-webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:640px;margin:0 auto}
+  h1{font-size:1.25rem;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+  h1 .dot{width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold)}
+  .sub{color:var(--muted);font-size:.82rem;margin-bottom:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 15px;margin-bottom:12px}
+  .card h2{font-size:.88rem;margin:0 0 10px;color:var(--txt2);font-weight:600;letter-spacing:.02em}
+  .row{display:flex;align-items:flex-start;gap:9px;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,.05);font-size:.88rem}
+  .row:last-child{border-bottom:0}
+  .row .k{flex:0 0 auto;color:var(--txt2);min-width:76px}
+  .row .v{flex:1;min-width:0;word-break:break-word;font-variant-numeric:tabular-nums}
+  .ic{flex:0 0 auto;width:16px;text-align:center;font-size:.9rem;line-height:1.5}
+  .ok{color:var(--greenl)} .bad{color:var(--red)} .warn{color:var(--amber)} .dim{color:var(--muted)}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.8rem}
+  #verdict{border-left:3px solid var(--gold);background:rgba(240,192,64,.07);padding:12px 14px;border-radius:8px;font-size:.9rem;white-space:pre-wrap}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    background:var(--green);color:#fff;border:0;border-radius:9px;
+    padding:11px 18px;font-size:.9rem;font-weight:600;cursor:pointer;width:100%;
+    -webkit-appearance:none;
+  }
+  .btn:active{transform:translateY(1px)}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt2);font-weight:500}
+  .btns{display:flex;gap:10px;margin-top:14px}
+  .bar{height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;margin-top:10px}
+  .bar i{display:block;height:100%;width:0;background:var(--greenl);transition:width .3s}
+  .spin{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--greenl);border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .hint{color:var(--muted);font-size:.78rem;margin-top:8px;line-height:1.55}
+  textarea{
+    width:100%;background:var(--bg2);color:var(--txt);border:1px solid var(--line);
+    border-radius:8px;padding:10px;font-size:.75rem;font-family:ui-monospace,Menlo,monospace;
+    resize:vertical;min-height:150px;margin-top:10px;
+  }
+  .totop{position:fixed;right:14px;bottom:18px;background:var(--card);border:1px solid var(--line);
+    color:var(--txt2);border-radius:50%;width:40px;height:40px;font-size:1rem;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span class="dot"></span>网络诊断</h1>
+  <div class="sub" id="subline">正在检测从这台设备到服务器的每一层链路…</div>
+
+  <div class="card" id="envCard">
+    <h2>① 设备与网络环境</h2>
+    <div id="envRows"><div class="row"><span class="ic"><span class="spin"></span></span><span class="v dim">检测中…</span></div></div>
+  </div>
+
+  <div class="card">
+    <h2>② DNS 解析（阿里 DoH）</h2>
+    <div id="dnsRows"><div class="row"><span class="ic"><span class="spin"></span></span><span class="v dim">等待…</span></div></div>
+  </div>
+
+  <div class="card">
+    <h2>③ 端点连通性（各测 3 次）</h2>
+    <div id="connRows"><div class="row"><span class="ic"><span class="spin"></span></span><span class="v dim">等待…</span></div></div>
+  </div>
+
+  <div class="card">
+    <h2>④ 协议与链路</h2>
+    <div id="protoRows"><div class="row"><span class="ic"><span class="spin"></span></span><span class="v dim">等待…</span></div></div>
+  </div>
+
+  <div class="card">
+    <h2>⑤ 结论</h2>
+    <div id="verdict" class="dim">测试进行中…</div>
+    <div class="bar"><i id="bar"></i></div>
+  </div>
+
+  <div class="btns">
+    <button class="btn" id="againBtn">重新测试</button>
+    <button class="btn ghost" id="copyBtn">复制报告</button>
+  </div>
+  <textarea id="report" readonly placeholder="报告会在这里生成"></textarea>
+  <div class="hint" id="backHint" style="display:none">
+    <a href="/" style="color:var(--gold)">← 返回站点</a>
+  </div>
+  <div class="hint">
+    诊断只做只读探测，不上传任何数据。DNS 查询通过阿里公共 DNS（dns.alidns.com）完成。
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var SUPABASE = 'https://yowwyasttkywyqgseuqz.supabase.co';
+  var ANON = 'sb_publishable_j4rpi2ejPTMGxo79uaaX3g_kQYrinS4';
+  var PROBE = '/rest/v1/users?select=id&limit=1';
+  var DOH = 'https://dns.alidns.com/resolve';
+
+  var R = {};           // 结果收集
+  var steps = 0, done = 0;
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ---------- 小工具 ----------
+  function row(icon, cls, key, val) {
+    return '<div class="row"><span class="ic ' + cls + '">' + icon + '</span>' +
+           '<span class="k">' + key + '</span><span class="v">' + val + '</span></div>';
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function tick() {
+    done++; $('bar').style.width = Math.min(100, Math.round(done / steps * 100)) + '%';
+  }
+  function now() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
+  function fmt(ms) { return ms >= 1000 ? (ms / 1000).toFixed(2) + ' s' : Math.round(ms) + ' ms'; }
+
+  // 带超时的 fetch，返回 {ok,ms,status,err,timeout}
+  function probe(url, ms, opts) {
+    var ctl = new AbortController();
+    var to = setTimeout(function () { ctl.abort(); }, ms);
+    var t0 = now();
+    var o = { method: 'GET', signal: ctl.signal, cache: 'no-store', mode: 'cors' };
+    if (opts) { for (var k in opts) { if (Object.prototype.hasOwnProperty.call(opts, k)) o[k] = opts[k]; } }
+    return fetch(url, o).then(function (res) {
+      clearTimeout(to);
+      return { ok: true, ms: now() - t0, status: res.status };
+    }).catch(function (e) {
+      clearTimeout(to);
+      var ms2 = now() - t0;
+      var aborted = (e && (e.name === 'AbortError' || /abort/i.test(String(e))));
+      return { ok: false, ms: ms2, status: 0, timeout: aborted, err: String((e && e.message) || e) };
+    });
+  }
+
+  // ---------- ① 环境 ----------
+  function detectPlatform(ua) {
+    if (/iPad/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'iPad (iPadOS)';
+    if (/iPhone|iPod/i.test(ua)) return 'iPhone (iOS)';
+    if (/Android/i.test(ua)) return 'Android';
+    if (/Windows/i.test(ua)) return 'Windows';
+    if (/Macintosh/i.test(ua)) return 'macOS';
+    if (/Linux/i.test(ua)) return 'Linux';
+    return '未知';
+  }
+
+  function stepEnv() {
+    var ua = navigator.userAgent;
+    var plat = detectPlatform(ua);
+    var browser = /Edg\//.test(ua) ? 'Edge'
+      : /CriOS/.test(ua) ? 'Chrome (iOS)'
+      : /FxiOS/.test(ua) ? 'Firefox (iOS)'
+      : /Chrome\//.test(ua) ? 'Chrome'
+      : /Safari\//.test(ua) ? 'Safari'
+      : '未知';
+
+    var html = '';
+    html += row('●', 'ok', '设备', esc(plat));
+    html += row('●', 'ok', '浏览器', esc(browser));
+
+    var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (c) {
+      var net = [];
+      if (c.effectiveType) net.push('类型 ' + c.effectiveType);
+      if (c.downlink != null) net.push('下行 ~' + c.downlink + 'Mbps');
+      if (c.rtt != null) net.push('RTT ~' + c.rtt + 'ms');
+      html += row('●', net.length ? 'ok' : 'dim', '网络', esc(net.join(' · ') || '不可读'));
+    } else {
+      html += row('○', 'dim', '网络', '本浏览器不提供网络信息（iOS 常见）');
+    }
+    html += row(navigator.onLine ? '●' : '●', navigator.onLine ? 'ok' : 'bad',
+                '在线状态', navigator.onLine ? '浏览器认为在线' : '浏览器认为已离线');
+    html += row('○', 'dim', 'Origin', '<span class="mono">' + esc(location.origin) + '</span>');
+
+    R.env = { platform: plat, browser: browser, ua: ua, online: navigator.onLine, net: c ? {
+      effectiveType: c.effectiveType, downlink: c.downlink, rtt: c.rtt
+    } : null };
+
+    $('envRows').innerHTML = html;
+    tick();
+  }
+
+  // ---------- ② DNS ----------
+  function doh(name, type) {
+    var url = DOH + '?name=' + encodeURIComponent(name) + '&type=' + type;
+    return probe(url, 6000, { mode: 'cors', headers: { 'accept': 'application/dns-json' } })
+      .then(function (r) {
+        if (!r.ok || r.status !== 200) return { ok: false, ms: r.ms, timeout: r.timeout, ips: [] };
+        return fetch(url, { headers: { 'accept': 'application/dns-json' }, cache: 'no-store' })
+          .then(function (res) { return res.json(); })
+          .then(function (j) {
+            var ips = [];
+            (j.Answer || []).forEach(function (a) {
+              if (a.type === 1 || a.type === 28) ips.push(a.data);
+            });
+            return { ok: true, ms: r.ms, ips: ips, status: j.Status };
+          }).catch(function () { return { ok: false, ms: r.ms, ips: [] }; });
+      });
+  }
+
+  function isCloudflareIP(ip) {
+    // 104.16.0.0/13 与 172.64.0.0/13 是 Cloudflare 常用段
+    var p = ip.split('.').map(Number);
+    if (p.length !== 4) return false;
+    if (p[0] === 104 && p[1] >= 16 && p[1] <= 23) return true;
+    if (p[0] === 172 && p[1] >= 64 && p[1] <= 71) return true;
+    return false;
+  }
+
+  function stepDns() {
+    var host = 'yowwyasttkywyqgseuqz.supabase.co';
+    return Promise.all([doh(host, 'A'), doh(host, 'AAAA'), doh(host, 'CNAME')]).then(function (rs) {
+      var a = rs[0], aaaa = rs[1], cname = rs[2];
+      var html = '';
+
+      if (!a.ok) {
+        html += row('✕', 'bad', 'A 记录', a.timeout ? 'DoH 查询超时' : 'DoH 查询失败');
+        R.dns = { ok: false, a: [], aaaa: [] };
+      } else if (!a.ips.length) {
+        html += row('✕', 'bad', 'A 记录', '解析成功但无 A 记录（异常）');
+        R.dns = { ok: false, a: [], aaaa: aaaa.ips || [] };
+      } else {
+        var allCF = a.ips.every(isCloudflareIP);
+        html += row('●', 'ok', 'A 记录', '<span class="mono">' + esc(a.ips.slice(0, 4).join(', ')) + '</span>');
+        html += row(allCF ? '●' : '!', allCF ? 'ok' : 'warn', '归属判断',
+          allCF ? 'Cloudflare 节点（正常）' : '非典型 Cloudflare 段（可能被改写）');
+        R.dns = { ok: true, a: a.ips, aaaa: (aaaa.ips || []), cloudflare: allCF, ms: a.ms };
+      }
+
+      html += row(aaaa.ips && aaaa.ips.length ? '●' : '○', aaaa.ips && aaaa.ips.length ? 'ok' : 'dim',
+        'AAAA', aaaa.ips && aaaa.ips.length
+          ? '<span class="mono">' + esc(aaaa.ips.slice(0, 2).join(', ')) + '</span>'
+          : '无 IPv6 记录（该域名仅 IPv4）');
+      if (cname.ips && cname.ips.length) {
+        html += row('○', 'dim', 'CNAME', '<span class="mono">' + esc(cname.ips.slice(0, 2).join(', ')) + '</span>');
+      }
+      html += row('○', 'dim', 'DoH 耗时', fmt(a.ms));
+
+      $('dnsRows').innerHTML = html;
+      tick();
+    });
+  }
+
+  // ---------- ③ 端点连通性 ----------
+  function classify(r) {
+    if (r.ok) return { cls: 'ok', txt: 'HTTP ' + r.status };
+    if (r.timeout) return { cls: 'bad', txt: '超时（' + fmt(r.ms) + ' 无响应）' };
+    return { cls: 'bad', txt: '连接失败' };
+  }
+
+  function testEndpoint(base, label) {
+    var url = base + PROBE;
+    var jobs = [];
+    for (var i = 0; i < 3; i++) jobs.push(probe(url, 9000, { headers: { 'apikey': ANON } }));
+    return Promise.all(jobs).then(function (rs) {
+      var good = rs.filter(function (r) { return r.ok; });
+      var times = rs.map(function (r) { return r.ms; });
+      var avg = times.reduce(function (a, b) { return a + b; }, 0) / times.length;
+      var res = {
+        label: label, base: base, total: rs.length, ok: good.length,
+        avg: avg, min: Math.min.apply(null, times), max: Math.max.apply(null, times),
+        results: rs
+      };
+      var icon = good.length === rs.length ? '●' : (good.length ? '!' : '✕');
+      var cls = good.length === rs.length ? 'ok' : (good.length ? 'warn' : 'bad');
+      var html = row(icon, cls, esc(label),
+        '成功 ' + good.length + '/' + rs.length +
+        ' · 平均 ' + fmt(avg) + (good.length ? ' · 最快 ' + fmt(res.min) : '') +
+        (good.length < rs.length && !good.length ? ' · ' + classify(rs[0]).txt : ''));
+      return { html: html, res: res };
+    });
+  }
+
+  function stepConn() {
+    var EPs = [{ u: SUPABASE, n: 'Supabase 官方' }];
+    // 如果访问者从某个自有域名进来，同时测一下当前站点域名下的 /rest/v1（反代部署后可直接对比）
+    if (location.origin !== SUPABASE && location.protocol === 'https:') {
+      EPs.push({ u: location.origin, n: '当前站点域' });
+    }
+    return Promise.all(EPs.map(function (e) { return testEndpoint(e.u, e.n); })).then(function (out) {
+      var html = '', arr = [];
+      out.forEach(function (o) { html += o.html; arr.push(o.res); });
+      R.conn = arr;
+      $('connRows').innerHTML = html;
+      tick();
+    });
+  }
+
+  // ---------- ④ 协议 ----------
+  function stepProto() {
+    var html = '';
+    var entries = (window.performance && performance.getEntriesByType)
+      ? performance.getEntriesByType('resource') : [];
+    var hit = null;
+    for (var i = 0; i < entries.length; i++) {
+      if (entries[i].name && entries[i].name.indexOf('supabase.co') !== -1) hit = entries[i];
+    }
+    if (hit && hit.nextHopProtocol) {
+      var p = hit.nextHopProtocol;
+      var isH3 = p.indexOf('h3') === 0;
+      html += row('●', 'ok', '传输协议', esc(p) + (isH3 ? '（QUIC / UDP）' : '（TCP）'));
+      R.proto = p;
+      if (isH3) {
+        html += row('!', 'warn', '提示', '走的是 QUIC。国内 UDP 常被限速/丢弃，可尝试在浏览器设置中关闭 QUIC');
+      }
+    } else {
+      html += row('○', 'dim', '传输协议', '浏览器未暴露（跨域限制或未发起请求）');
+      R.proto = null;
+    }
+
+    var nav = (window.performance && performance.getEntriesByType)
+      ? performance.getEntriesByType('navigation')[0] : null;
+    if (nav && nav.nextHopProtocol) html += row('○', 'dim', '本站协议', esc(nav.nextHopProtocol));
+
+    var sup = R.conn && R.conn[0];
+    if (sup) {
+      var spread = Math.round(sup.max - sup.min);
+      html += row(sup.ok ? '●' : '✕', sup.ok ? ((spread > 2500) ? 'warn' : 'ok') : 'bad',
+        '抖动',
+        sup.ok ? (spread + ' ms 波动（' + Math.round(sup.min) + ' / ' + Math.round(sup.max) + ' ms）'
+                  + (spread > 2500 ? ' · 波动很大' : ' · 相对稳定'))
+               : '无法测量（请求均失败）');
+      R.jitter = sup.ok ? spread : null;
+    }
+    $('protoRows').innerHTML = html;
+    tick();
+  }
+
+  // ---------- ⑤ 结论 ----------
+  function verdict() {
+    var lines = [];
+    var dns = R.dns || {};
+    var conn = (R.conn && R.conn[0]) || null;
+
+    if (!dns.ok) {
+      lines.push('⚠️ DNS 解析异常：连阿里公共 DNS 都拿不到地址。可能是本地网络/DoH 被拦，先换个网络再试。');
+    } else if (conn && conn.ok === 0) {
+      lines.push('❌ 域名能解析（' + dns.a[0] + '），但一个请求都连不上。');
+      lines.push('   这种情况通常是「域名/SNI 被针对性干扰」，而不是普通拥塞。');
+      lines.push('   → 换一个自有域名的反代端点，很可能直接恢复。');
+    } else if (conn && conn.ok < conn.total) {
+      lines.push('⚠️ 时通时不通（' + conn.ok + '/' + conn.total + ' 成功），属于典型的跨境链路抖动。');
+      lines.push('   → 多端点自动切换 + 缓存降级能明显改善体感。');
+    } else if (conn && conn.ok === conn.total && conn.avg > 2500) {
+      lines.push('🟡 全部能通，但平均 ' + fmt(conn.avg) + '，偏慢。');
+      lines.push('   → 属延迟问题，非阻断；换区域或加边缘缓存收益更大。');
+    } else if (conn && conn.ok === conn.total) {
+      lines.push('✅ 当前网络下链路正常（平均 ' + fmt(conn.avg) + '）。');
+      lines.push('   如果站点仍然卡，问题可能在页面渲染或个别接口，而非网络。');
+    } else {
+      lines.push('测试未完成，请点「重新测试」。');
+    }
+
+    if (dns.ok && (!dns.aaaa || !dns.aaaa.length)) {
+      lines.push('');
+      lines.push('ℹ️ 该域名没有 AAAA 记录，所以 IPv6 不是本次故障的原因（安卓不会因此卡住）。');
+    }
+    if (R.proto && R.proto.indexOf('h3') === 0) {
+      lines.push('');
+      lines.push('ℹ️ 当前走 QUIC。若反复超时，可试关闭浏览器 QUIC（Chrome: chrome://flags/#enable-quic）再对比。');
+    }
+    if (R.conn && R.conn.length > 1) {
+      var a = R.conn[0], b = R.conn[1];
+      if (a.ok === 0 && b.ok > 0) {
+        lines.push('');
+        lines.push('💡 对比结果很关键：官方域不通、当前站点域能通 → 说明自有域名路线有效，值得全量接入。');
+      }
+    }
+
+    $('verdict').className = '';
+    $('verdict').textContent = lines.join('\n');
+    $('subline').textContent = '诊断完成 · ' + new Date().toLocaleString('zh-CN');
+    buildReport(lines);
+  }
+
+  function buildReport(lines) {
+    var L = [];
+    L.push('=== FKD 网络诊断报告 ===');
+    L.push('时间: ' + new Date().toISOString());
+    if (R.env) {
+      L.push('设备: ' + R.env.platform + ' / ' + R.env.browser);
+      L.push('UA: ' + R.env.ua);
+      if (R.env.net) L.push('网络: ' + JSON.stringify(R.env.net));
+    }
+    L.push('页面: ' + location.href);
+    if (R.dns) L.push('DNS: ' + JSON.stringify(R.dns));
+    if (R.conn) {
+      R.conn.forEach(function (c) {
+        L.push('端点[' + c.label + ']: ' + c.ok + '/' + c.total +
+          ' 平均' + Math.round(c.avg) + 'ms 最快' + Math.round(c.min) + 'ms 最慢' + Math.round(c.max) + 'ms');
+      });
+    }
+    L.push('协议: ' + (R.proto || '未知'));
+    L.push('');
+    L.push('结论:');
+    L.push(lines.join('\n'));
+    var txt = L.join('\n');
+    $('report').value = txt;
+    R.report = txt;
+  }
+
+  // ---------- 主流程 ----------
+  function run() {
+    $('report').value = '';
+    R = {}; done = 0; steps = 5;
+    $('bar').style.width = '0%';
+    $('verdict').className = 'dim';
+    $('verdict').textContent = '测试进行中…';
+    $('subline').textContent = '正在检测从这台设备到服务器的每一层链路…';
+    $('dnsRows').innerHTML = row('○', 'dim', '', '等待…');
+    $('connRows').innerHTML = row('○', 'dim', '', '等待…');
+    $('protoRows').innerHTML = row('○', 'dim', '', '等待…');
+
+    stepEnv();
+    stepDns()
+      .then(stepConn)
+      .then(stepProto)
+      .then(function () { tick(); verdict(); })
+      .catch(function (e) {
+        $('verdict').className = 'bad';
+        $('verdict').textContent = '诊断过程出错：' + e;
+      });
+  }
+
+  $('againBtn').onclick = run;
+  $('copyBtn').onclick = function () {
+    var t = R.report || $('report').value;
+    if (!t) return;
+    var ok = false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(t); ok = true;
+      }
+    } catch (e) {}
+    if (!ok) {
+      var ta = $('report'); ta.removeAttribute('readonly'); ta.select();
+      try { document.execCommand('copy'); ok = true; } catch (e) {}
+      ta.setAttribute('readonly', 'readonly');
+    }
+    $('copyBtn').textContent = ok ? '已复制 ✓' : '请手动长按选择';
+    setTimeout(function () { $('copyBtn').textContent = '复制报告'; }, 1800);
+  };
+
+  // 从 net-guard 自动跳转过来时，给出返回入口并自动开跑
+  if (/[?&]auto=1/.test(location.search)) {
+    $('backHint').style.display = 'block';
+    $('subline').textContent = '检测到连接异常，正在自动诊断…';
+  }
+  run();
+})();
+</script>
+</body>
+</html>

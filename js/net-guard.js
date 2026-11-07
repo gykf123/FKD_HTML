@@ -50,6 +50,14 @@
   var probeDone = false;
   var onDegraded = null;       // 可选回调
 
+  // 自动诊断相关
+  var DIAG_URL = 'diag.html';
+  var DIAG_COOL_MS = 10 * 60 * 1000;   // 10 分钟内只自动跳一次，避免连环跳
+  var DIAG_THRESHOLD = 3;              // 连续 3 次网络层失败才跳（单次抖动不打扰）
+  var DIAG_WINDOW_MS = 12000;          // 只在首屏 12 秒内触发：后台刷新失败不该把用户踢走
+  var netFailStreak = 0;
+  var bootAt = Date.now();
+
   // --------------------------- 端点配置 ---------------------------
   function norm(u) {
     if (typeof u !== 'string') return '';
@@ -247,6 +255,50 @@
     } catch (e) {}
   }
 
+  // --------------------------- 自动诊断 ---------------------------
+  function onDiagPage() {
+    return /(^|\/)diag\.html?($|[?#])/.test(location.pathname + location.search);
+  }
+
+  // 用户正在输入时不打断（否则刚写一半的投稿就没了）
+  function userBusy() {
+    try {
+      var el = document.activeElement;
+      if (!el) return false;
+      var tag = (el.tagName || '').toUpperCase();
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+      if (el.isContentEditable) return true;
+    } catch (e) {}
+    return false;
+  }
+
+  function canJumpDiag() {
+    if (onDiagPage()) return false;
+    if (userBusy()) return false;
+    // 只处理首屏打不开的情况；页面已经正常用起来之后的零散失败，只走缓存降级不跳转
+    if (Date.now() - bootAt > DIAG_WINDOW_MS) return false;
+    try {
+      var last = parseInt(localStorage.getItem('fkd_diag_last') || '0', 10) || 0;
+      if (Date.now() - last < DIAG_COOL_MS) return false;
+    } catch (e) {}
+    return true;
+  }
+
+  // 只有「网络层彻底失败」才计入（HTTP 4xx/5xx 说明链路是通的，不该跳）
+  function noteNetFailure() {
+    netFailStreak++;
+    if (netFailStreak < DIAG_THRESHOLD) return;
+    netFailStreak = 0;
+    if (!canJumpDiag()) return;
+    try { localStorage.setItem('fkd_diag_last', String(Date.now())); } catch (e) {}
+    try {
+      var u = DIAG_URL + '?auto=1&from=' + encodeURIComponent(location.pathname);
+      location.href = u;
+    } catch (e) {}
+  }
+
+  function noteNetSuccess() { netFailStreak = 0; }
+
   // --------------------------- 请求主体 ---------------------------
   function attempt(input, init, ctx, tried) {
     var ep = currentEp();
@@ -278,6 +330,8 @@
       record(ep, Date.now() - t0, res.ok, res.status, ctx.method, ctx.url);
 
       if (res.status >= 500) markFail(ep); else markOk(ep);
+      // 拿到任何 HTTP 响应都说明链路是通的（哪怕 4xx/5xx），不触发诊断
+      noteNetSuccess();
 
       // 5xx 视作端点故障：幂等 GET 换端点重试一次
       if (res.status >= 500 && ctx.idempotent && endpoints.length > 1 && tried < 1) {
@@ -319,6 +373,9 @@
           }
         }
       }
+
+      // 连缓存都没有，说明是真断网：计入自动诊断（仅在「可跳转 + 用户没在输入 + 冷却期外」时生效）
+      if (!callerAborted) noteNetFailure();
       throw err;
     });
   }
@@ -403,6 +460,9 @@
       return endpoints.slice();
     },
     setDegradedHandler: function (fn) { onDegraded = fn; },
+    goDiag: function () {
+      try { location.href = DIAG_URL + '?auto=1'; } catch (e) {}
+    },
     _primary: PRIMARY
   };
 
