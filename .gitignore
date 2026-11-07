@@ -1,0 +1,17 @@
+# ---- 凭证 / 本地环境，一律不进仓库 ----
+.env
+.env.*
+*.env
+.dev.vars
+.wrangler/
+.secrets/
+*.pem
+*.key
+credentials*.json
+
+# ---- 编辑器 / 系统 ----
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+node_modules/
