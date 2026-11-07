@@ -287,11 +287,10 @@
   }
 
   function stepConn() {
+    var PROXY = 'https://api.fkd.xn--0iv.gay';
     var EPs = [{ u: SUPABASE, n: 'Supabase 官方' }];
-    // 如果访问者从某个自有域名进来，同时测一下当前站点域名下的 /rest/v1（反代部署后可直接对比）
-    if (location.origin !== SUPABASE && location.protocol === 'https:') {
-      EPs.push({ u: location.origin, n: '当前站点域' });
-    }
+    // 自有反代：与站点首页同一套 net-guard 配置，用来判断「是官方域被干扰」还是「整条跨境链路都不行」
+    EPs.push({ u: PROXY, n: '自有反代' });
     return Promise.all(EPs.map(function (e) { return testEndpoint(e.u, e.n); })).then(function (out) {
       var html = '', arr = [];
       out.forEach(function (o) { html += o.html; arr.push(o.res); });
@@ -346,13 +345,19 @@
     var lines = [];
     var dns = R.dns || {};
     var conn = (R.conn && R.conn[0]) || null;
+    var proxy = (R.conn && R.conn[1]) || null;
 
     if (!dns.ok) {
       lines.push('⚠️ DNS 解析异常：连阿里公共 DNS 都拿不到地址。可能是本地网络/DoH 被拦，先换个网络再试。');
+    } else if (conn && conn.ok === 0 && proxy && proxy.ok > 0) {
+      lines.push('⚠️ 官方域完全不通，但自有反代 ' + proxy.ok + '/' + proxy.total +
+                 ' 正常（平均 ' + fmt(proxy.avg) + '）。');
+      lines.push('   说明是 supabase.co 这个共享域名被针对性干扰，整条跨境链路本身是好的。');
+      lines.push('   → 站点已配置自动切换，实际使用不受影响；只有反代也一起挂才需要换方案。');
     } else if (conn && conn.ok === 0) {
-      lines.push('❌ 域名能解析（' + dns.a[0] + '），但一个请求都连不上。');
-      lines.push('   这种情况通常是「域名/SNI 被针对性干扰」，而不是普通拥塞。');
-      lines.push('   → 换一个自有域名的反代端点，很可能直接恢复。');
+      lines.push('❌ 域名能解析（' + dns.a[0] + '），但官方域和反代一个请求都连不上。');
+      lines.push('   这种情况通常是「整条跨境链路被限」，而不是单域名干扰。');
+      lines.push('   → 换移动网络/宽带重试，或改用支持国内直连的中转方案。');
     } else if (conn && conn.ok < conn.total) {
       lines.push('⚠️ 时通时不通（' + conn.ok + '/' + conn.total + ' 成功），属于典型的跨境链路抖动。');
       lines.push('   → 多端点自动切换 + 缓存降级能明显改善体感。');

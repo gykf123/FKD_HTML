@@ -32,7 +32,7 @@
 
   var TIMEOUT_GET = 8000;      // 读请求超时
   var TIMEOUT_WRITE = 15000;   // 写/上传请求超时（图片上传较慢）
-  var PROBE_TIMEOUT = 3000;    // 端点竞速探测超时
+  var PROBE_TIMEOUT = 8000;    // 端点竞速探测超时（反代多一跳 TLS，首次冷启动可达 3s+，3s 会误判为不可用）
   var CACHE_TTL = 10 * 60 * 1000;
   var CACHE_MAX = 40;
 
@@ -431,10 +431,12 @@
           clearTimeout(to);
           record(ep, Date.now() - t0, r.ok, r.status, 'PROBE', 'probe');
           if (r.ok && !winner) { winner = true; markOk(ep); saveActive(ep); }
-          else if (!r.ok) markFail(ep);
+          else if (r.status >= 500) markFail(ep);
+          else markOk(ep);   // 4xx 也说明链路通，与业务请求判定保持一致
         }).catch(function () {
           clearTimeout(to);
-          markFail(ep);
+          // 探针超时≠端点坏了：反代首次 TLS 握手可能 3s+。这里不记失败，
+          // 让真实业务请求去裁决，否则会把可用的备路误判成死路。
           record(ep, Date.now() - t0, false, 0, 'PROBE', 'probe');
         });
       } catch (e) { clearTimeout(to); }
