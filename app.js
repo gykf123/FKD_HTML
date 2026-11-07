@@ -58,6 +58,35 @@
                                                 return res;
                                         });
                                 };
+
+                                // ---------- 0b. 封禁识别：全局 403 拦截 ----------
+                                // 背景：账号被封后，后端会在 REST/RPC 层返回 403，响应体里带 ACCOUNT_BANNED。
+                                // 但前端有几十处请求，每处各自读 data.error 再提示，必然漏掉一部分——
+                                // 表现就是「点了没反应」「一直转圈」，用户完全不知道自己被封了。
+                                // 做法：同 401 守卫，在 fetch 层统一认，只认本项目域名；解出原因后派发事件，
+                                // 由文件末尾统一处理（清 token + 说明原因 + 去登录页）。
+                                // 无原因文本时（如触发器在上游被 catch 成裸 403）不猜测，交给业务自己的提示。
+                                (function installBanGuard() {
+                                        const _rawFetch2 = window.fetch.bind(window);
+                                        window.fetch = function (input, init) {
+                                                let u = '';
+                                                try { if (typeof input === 'string') u = input; else if (input && input.url) u = input.url; } catch (e) { u = ''; }
+                                                const p = _rawFetch2(input, init);
+                                                if (u.indexOf(SUPABASE_URL) !== 0) return p;
+                                                return p.then(function (res) {
+                                                        try {
+                                                                if (res && res.status === 403) {
+                                                                        // 只在克隆体上读，避免消费掉业务自己的响应体
+                                                                        res.clone().text().then(function (txt) {
+                                                                                if (!txt || txt.indexOf('ACCOUNT_BANNED') === -1) return;
+                                                                                window.dispatchEvent(new CustomEvent('fkd:account-banned', { detail: { url: u, raw: txt.slice(0, 500) } }));
+                                                                        }).catch(function () {});
+                                                                }
+                                                        } catch (e) {}
+                                                        return res;
+                                                });
+                                        };
+                                })();
                         })();
 
                         const SITE_CONFIG = {
@@ -1982,5 +2011,17 @@
                                         if (!e.newValue) { _myNickname = null; try { localStorage.removeItem('fkd_nickname'); } catch (err) {} }
                                         try { updateAuthUI(); } catch (err) {}
                                         if (e.newValue) { loadMyNickname(); }
+                                });
+
+                                // 账号被封：清登录态 → 说明原因 → 去登录页。
+                                // 一次会话只处理一次（被封后可能同时有好几个请求失败，不该连着弹好几遍、跳好几次）。
+                                let _banFired = false;
+                                window.addEventListener('fkd:account-banned', function () {
+                                        if (_banFired) return;
+                                        _banFired = true;
+                                        clearToken();
+                                        try { updateAuthUI(); } catch (e) {}
+                                        showError('该账号已被封禁，无法继续操作。如有异议请联系服主。');
+                                        setTimeout(function () { goLogin(); }, 2200);
                                 });
                         })();
