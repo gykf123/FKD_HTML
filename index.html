@@ -831,6 +831,9 @@
                         </div>
                 </footer>
 
+                <!-- 网络韧性层：必须在 app.js 之前加载（app.js 的 401 守卫会二次包装 fetch，
+                     本层须处于内层，URL 改写才不会影响守卫基于原始 URL 的判断） -->
+                <script src="js/net-guard.js"></script>
                 <script src="bedrockore.js"></script>
                 <script src="structurefinder.js"></script>
                 <script src="app.js"></script>
