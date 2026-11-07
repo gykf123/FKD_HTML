@@ -59,13 +59,16 @@
                                         });
                                 };
 
-                                // ---------- 0b. 封禁识别：全局 403 拦截 ----------
-                                // 背景：账号被封后，后端会在 REST/RPC 层返回 403，响应体里带 ACCOUNT_BANNED。
-                                // 但前端有几十处请求，每处各自读 data.error 再提示，必然漏掉一部分——
-                                // 表现就是「点了没反应」「一直转圈」，用户完全不知道自己被封了。
-                                // 做法：同 401 守卫，在 fetch 层统一认，只认本项目域名；解出原因后派发事件，
-                                // 由文件末尾统一处理（清 token + 说明原因 + 去登录页）。
-                                // 无原因文本时（如触发器在上游被 catch 成裸 403）不猜测，交给业务自己的提示。
+                                // ---------- 0b. 封禁识别 + 异常兜底 ----------
+                                // 封禁：账号被封后，后端在 REST/RPC 层返回 403，响应体里带 ACCOUNT_BANNED。
+                                //   前端有几十处请求各自读 data.error 再提示，必然漏掉一部分——
+                                //   表现就是「点了没反应」「一直转圈」，用户完全不知道自己被封了。
+                                //   做法：同 401 守卫，在 fetch 层统一认，只认本项目域名。
+                                //   无原因文本时（触发器在上游被 catch 成裸 403）不猜测，交给业务自己的提示。
+                                // 崩溃兜底：app.js 中段（各种初始化、模块 IIFE）一旦抛 ReferenceError，
+                                //   文件末尾的监听器就永远挂不上——页面看着能开，但所有按钮都不响应，
+                                //   而控制台里只有一条不起眼的红字。这里提前注册一个兜底，
+                                //   只要真有未捕获异常，至少让用户看到「出问题了」，不至于一脸茫然。
                                 (function installBanGuard() {
                                         const _rawFetch2 = window.fetch.bind(window);
                                         window.fetch = function (input, init) {
@@ -87,6 +90,24 @@
                                                 });
                                         };
                                 })();
+
+                                // 兜底：脚本初始化阶段的致命异常，直接写在页面横幅里（不依赖任何后续函数）
+                                window.addEventListener('error', function (ev) {
+                                        try {
+                                                var msg = (ev && (ev.message || (ev.error && ev.error.message))) || '';
+                                                if (!msg) return;
+                                                // 只处理脚本错误，资源加载失败（img/script 404）不打扰用户
+                                                if (ev.target && ev.target !== window && ev.target.tagName) return;
+                                                if (/Script error/i.test(msg)) return;
+                                                if (document.getElementById('fkdFatalBar')) return;
+                                                var bar = document.createElement('div');
+                                                bar.id = 'fkdFatalBar';
+                                                bar.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:10000;padding:8px 12px;' +
+                                                        'background:#8a2f28;color:#fff;font-size:13px;line-height:1.5;text-align:center';
+                                                bar.textContent = '页面脚本出现异常，部分功能可能不可用。请刷新重试；若反复出现，请在诊断页反馈。';
+                                                document.body.appendChild(bar);
+                                        } catch (e) {}
+                                }, true);
                         })();
 
                         const SITE_CONFIG = {
