@@ -102,10 +102,16 @@
                                                 if (document.getElementById('fkdFatalBar')) return;
                                                 var bar = document.createElement('div');
                                                 bar.id = 'fkdFatalBar';
-                                                bar.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:10000;padding:8px 12px;' +
+                                                bar.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:10000;padding:8px 34px 8px 12px;' +
                                                         'background:#8a2f28;color:#fff;font-size:13px;line-height:1.5;text-align:center';
-                                                bar.textContent = '页面脚本出现异常，部分功能可能不可用。请刷新重试；若反复出现，请在诊断页反馈。';
+                                                // 固定文案，无外部输入，拼接安全
+                                                bar.innerHTML = '页面脚本出现异常，部分功能可能不可用。请刷新重试；' +
+                                                        '<a href="diag.html" style="color:#ffe08a;text-decoration:underline">打开诊断</a>' +
+                                                        '<span id="fkdFatalX" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);' +
+                                                        'cursor:pointer;font-size:16px;opacity:.75;line-height:1">×</span>';
                                                 document.body.appendChild(bar);
+                                                var x = document.getElementById('fkdFatalX');
+                                                if (x) x.onclick = function () { if (bar.parentNode) bar.parentNode.removeChild(bar); };
                                         } catch (e) {}
                                 }, true);
                         })();
@@ -578,7 +584,11 @@
 
                             async function main() {
                                 try {
-                                    await insertVisit();
+                                    // 诊断页会用同源 iframe 拉一次首页做自检，那不该算一次真实访问。
+                                    // 否则反复自检会把「今日访问数」刷得很高，看到的数据就不真了。
+                                    let selfcheck = false;
+                                    try { selfcheck = /[?&]selfcheck=1(&|$)/.test(location.search); } catch (e) {}
+                                    if (!selfcheck) await insertVisit();
                                     const count = await getTodayCount();
                                     countElement.textContent = count;
                                 } catch (err) {
@@ -2046,3 +2056,11 @@
                                         setTimeout(function () { goLogin(); }, 2200);
                                 });
                         })();
+
+                        // 启动完成标记：诊断页用它判断「app.js 是否跑到了末尾」。
+                        // 脚本中途抛错时这里不会被赋值，页面却看起来一切正常——这是最难排查的一类故障，
+                        // 所以留个显式标记，让页面自检能一眼看出来。
+                        try {
+                                window.FKD_BOOT_OK = '1.9.34';
+                                window.FKD_BOOT_AT = Date.now();
+                        } catch (e) {}

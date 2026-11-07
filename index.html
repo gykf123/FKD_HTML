@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FKD-Web 版本 v1.9.33 · 2026-11-07 · ①账号被封时前端主动提示：fetch 层识别 403 + ACCOUNT_BANNED，清 token、说明原因、2.2s 后跳登录页（此前只在个别请求里被判，其余表现为「点了没反应」）；②接入自有反代 api.fkd.xn--0iv.gay 作为备用端点，直连被墙时自动切换并顶部轻提示；③反代补 /auth/v1/ 放行，修「切到反代后能看帖但登不进来」；④诊断页增加反代对照，区分「单域名被干扰」与「整链路被限」；⑤脚本初始化异常兜底横幅。 -->
+<!-- FKD-Web 版本 v1.9.34 · 2026-11-07 · ①诊断页新增「页面自检」：同源加载首页，检查启动标记/模块挂载/关键节点/资源加载，区分「网络坏了」和「脚本没跑起来」；页脚加诊断入口；app.js 末尾加 FKD_BOOT_OK 标记；自检请求不计访问数。②账号被封时前端主动提示：fetch 层识别 403 + ACCOUNT_BANNED，清 token、说明原因、2.2s 后跳登录页（此前只在个别请求里被判，其余表现为「点了没反应」）；②接入自有反代 api.fkd.xn--0iv.gay 作为备用端点，直连被墙时自动切换并顶部轻提示；③反代补 /auth/v1/ 放行，修「切到反代后能看帖但登不进来」；④诊断页增加反代对照，区分「单域名被干扰」与「整链路被限」；⑤脚本初始化异常兜底横幅。 -->
 <html lang="zh-CN">
         <head>
                 <meta charset="UTF-8" />
@@ -828,6 +828,9 @@
                                 <svg class="ui-ic" aria-hidden="true"><use href="#ic-chart"></use></svg> 今日被访问数：<span class="count-num" id="todayVisitCount"
                                         >加载中...</span
                                 >
+                        </div>
+                        <div class="footer-links">
+                                <a href="diag.html" class="footer-link">网络诊断 / 页面自检</a>
                         </div>
                 </footer>
 

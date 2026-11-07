@@ -60,7 +60,7 @@
 <body>
 <div class="wrap">
   <h1><span class="dot"></span>网络诊断</h1>
-  <div class="sub" id="subline">正在检测从这台设备到服务器的每一层链路…</div>
+  <div class="sub" id="subline">正在检测网络链路与页面状态…</div>
 
   <div class="card" id="envCard">
     <h2>① 设备与网络环境</h2>
@@ -83,7 +83,12 @@
   </div>
 
   <div class="card">
-    <h2>⑤ 结论</h2>
+    <h2>⑤ 页面自检</h2>
+    <div id="selfRows"><div class="row"><span class="ic"><span class="spin"></span></span><span class="v dim">等待…</span></div></div>
+  </div>
+
+  <div class="card">
+    <h2>⑥ 结论</h2>
     <div id="verdict" class="dim">测试进行中…</div>
     <div class="bar"><i id="bar"></i></div>
   </div>
@@ -97,7 +102,7 @@
     <a href="/" style="color:var(--gold)">← 返回站点</a>
   </div>
   <div class="hint">
-    诊断只做只读探测，不上传任何数据。DNS 查询通过阿里公共 DNS（dns.alidns.com）完成。
+    诊断只做只读探测，不上传任何数据。DNS 查询走阿里公共 DNS；页面自检会在本地加载一次首页，不记入访问数。
   </div>
 </div>
 
@@ -347,6 +352,33 @@
     var conn = (R.conn && R.conn[0]) || null;
     var proxy = (R.conn && R.conn[1]) || null;
 
+    // 页面自检优先：脚本没跑起来的话，后面所有操作都会「点了没反应」，
+    // 这时候再谈网络延迟没有意义，得先把方向指对。
+    var self = R.self || null;
+    var boot = null;
+    if (self && self.items) {
+      for (var i = 0; i < self.items.length; i++) {
+        if (self.items[i].k === '脚本启动') { boot = self.items[i]; break; }
+      }
+    }
+
+    if (boot && !boot.ok) {
+      lines.push('❌ 页面脚本没有跑完（app.js 未执行到最后）。');
+      lines.push('   这类故障的表现是：页面看着是好的，但按钮点下去没反应、内容不刷新。');
+      lines.push('   常见原因：浏览器缓存了旧版脚本、插件拦截、或某个 js 文件没加载成功。');
+      lines.push('   → 先强制刷新一次（Ctrl/Cmd + Shift + R）；仍不行，把下面报告发给服主。');
+      $('verdict').className = '';
+      $('verdict').textContent = lines.join('\n');
+      $('subline').textContent = '诊断完成 · ' + new Date().toLocaleString('zh-CN');
+      buildReport(lines);
+      return;
+    }
+    if (self && self.err) {
+      lines.push('⚠️ 页面自检未能完成：' + self.err);
+      lines.push('   （通常不影响判断，可忽略）');
+      lines.push('');
+    }
+
     if (!dns.ok) {
       lines.push('⚠️ DNS 解析异常：连阿里公共 DNS 都拿不到地址。可能是本地网络/DoH 被拦，先换个网络再试。');
     } else if (conn && conn.ok === 0 && proxy && proxy.ok > 0) {
@@ -383,7 +415,17 @@
       var a = R.conn[0], b = R.conn[1];
       if (a.ok === 0 && b.ok > 0) {
         lines.push('');
-        lines.push('💡 对比结果很关键：官方域不通、当前站点域能通 → 说明自有域名路线有效，值得全量接入。');
+        lines.push('💡 对比结果很关键：官方域不通、自有反代能通 → 站点会自动切换，实际使用不受影响。');
+      }
+    }
+
+    // 自检全绿的兜底说明：帮用户把「网络问题」和「页面问题」分开
+    if (self && self.items && self.items.length) {
+      var bad = self.items.filter(function (it) { return !it.ok; });
+      if (bad.length === 0) {
+        lines.push('');
+        lines.push('🖥 页面自检 ' + self.items.length + ' 项全部通过：脚本加载、模块挂载、首屏渲染都正常。');
+        lines.push('   如果仍然觉得卡，更可能是网络延迟或个别接口慢，而不是页面坏了。');
       }
     }
 
@@ -411,6 +453,14 @@
       });
     }
     L.push('协议: ' + (R.proto || '未知'));
+    if (R.self) {
+      L.push('');
+      L.push('页面自检:');
+      if (R.self.err) L.push('  ! 未完成: ' + R.self.err);
+      (R.self.items || []).forEach(function (it) {
+        L.push('  ' + (it.ok ? '[OK] ' : '[!!] ') + it.k + ': ' + it.v);
+      });
+    }
     L.push('');
     L.push('结论:');
     L.push(lines.join('\n'));
@@ -419,22 +469,124 @@
     R.report = txt;
   }
 
+  // ---------- ⑤ 页面自检 ----------
+  // 目的：区分「网络不通」和「页面脚本没跑起来」。
+  // 后者最坑——页面看着完整，但所有按钮都不响应，用户只会说「点了没反应」。
+  // 做法：同源 iframe 拉一次首页，等它跑完再读运行状态。跨域会失败，这里同源所以能读。
+  function stepSelfCheck() {
+    return new Promise(function (resolve) {
+      var box = $('selfRows');
+      box.innerHTML = row('○', 'dim', '', '正在加载首页…');
+
+      var fr = document.createElement('iframe');
+      fr.setAttribute('aria-hidden', 'true');
+      fr.setAttribute('tabindex', '-1');
+      fr.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;border:0;opacity:0';
+      var settled = false, t0 = now();
+
+      function finish(items, err) {
+        if (settled) return;
+        settled = true;
+        try { if (fr.parentNode) fr.parentNode.removeChild(fr); } catch (e) {}
+        R.self = { items: items || [], err: err || null, ms: now() - t0 };
+        var html = '';
+        (items || []).forEach(function (it) {
+          html += row(it.ok ? '●' : '✕', it.ok ? 'ok' : 'bad', esc(it.k), esc(it.v));
+        });
+        if (err) html += row('✕', 'bad', '自检', esc(err));
+        box.innerHTML = html;
+        resolve();
+      }
+
+      function collect() {
+        var w, d;
+        try { w = fr.contentWindow; d = fr.contentDocument; } catch (e) { return finish(null, '无法读取首页（跨域限制）'); }
+        if (!w || !d) return finish(null, '无法读取首页');
+
+        var out = [];
+        function add(k, ok, v) { out.push({ k: k, ok: !!ok, v: v }); }
+
+        // 1) 启动标记：app.js 是否跑到末尾（最关键的一项）
+        var boot = w.FKD_BOOT_OK;
+        add('脚本启动', !!boot, boot ? '已完成 v' + boot : '未完成（app.js 可能中途报错）');
+
+        // 2) 网络韧性层
+        var net = w.FKD_NET;
+        var netV = net && net.version ? net.version : '';
+        add('网络层', !!netV, netV ? 'v' + netV + ' · ' + String(net.active() || '-').replace(/^https?:\/\//, '') : '未加载');
+
+        // 3) 工具模块
+        var ore = !!w.FKDBedrockOre, st = !!w.FKDStructureFinder;
+        add('工具模块', ore && st, [ore ? '矿石' : '', st ? '结构' : ''].filter(Boolean).join(' + ') || '未加载');
+
+        // 4) 关键节点
+        var need = ['app', 'errorToast', 'view-home'];
+        var miss = need.filter(function (id) { return !d.getElementById(id); });
+        add('关键节点', miss.length === 0, miss.length ? '缺少 ' + miss.join(', ') : '齐全');
+
+        // 5) 首屏是否真的渲染出内容
+        var txt = ((d.body && d.body.innerText) || '').trim().length;
+        add('首屏渲染', txt > 200, txt + ' 字符');
+
+        // 6) 是否有脚本异常横幅（只在真出错时出现）
+        var fatal = d.getElementById('fkdFatalBar');
+        add('异常横幅', !fatal, fatal ? '检测到脚本异常' : (boot ? '未触发' : '脚本未运行，未挂载'));
+
+        // 7) 脚本资源是否都加载成功（区分「没下载下来」和「下载了但跑挂了」）
+        try {
+          var ent = w.performance.getEntriesByType('resource').filter(function (e) {
+            return /\.js(\?|$)/.test(e.name.split('?')[0]);
+          });
+          var bad = ent.filter(function (e) { return e.duration === 0 && e.transferSize === 0; });
+          add('脚本加载', bad.length === 0, bad.length ? bad.length + ' / ' + ent.length + ' 个未取到' : ent.length + ' 个正常');
+        } catch (e) {}
+
+        // 8) 本地存储
+        var ls = false;
+        try { w.localStorage.setItem('__fkd_probe', '1'); w.localStorage.removeItem('__fkd_probe'); ls = true; } catch (e) {}
+        add('本地存储', ls, ls ? '可读写' : '被禁用（无痕模式？）');
+
+        finish(out, null);
+      }
+
+      fr.onload = function () {
+        // 轮询启动标记：一出现就立即读，通常 1 秒内出结果；
+        // 4 秒还没出现就读一次现状（这时多半是真有问题，正好把它记录下来）
+        var waited = 0;
+        (function poll() {
+          var w;
+          try { w = fr.contentWindow; } catch (e) { return collect(); }
+          if (w && w.FKD_BOOT_OK) return collect();
+          waited += 200;
+          if (waited >= 4000) return collect();
+          setTimeout(poll, 200);
+        })();
+      };
+      fr.onerror = function () { finish(null, '首页加载失败（iframe onerror）'); };
+      document.body.appendChild(fr);
+      fr.src = './?selfcheck=1&_=' + Date.now();
+      setTimeout(function () { finish(null, '自检超时（12 秒内未完成）'); }, 12000);
+    });
+  }
+
   // ---------- 主流程 ----------
   function run() {
     $('report').value = '';
-    R = {}; done = 0; steps = 5;
+    R = {}; done = 0; steps = 6;
     $('bar').style.width = '0%';
     $('verdict').className = 'dim';
     $('verdict').textContent = '测试进行中…';
-    $('subline').textContent = '正在检测从这台设备到服务器的每一层链路…';
+    $('subline').textContent = '正在检测网络链路与页面状态…';
     $('dnsRows').innerHTML = row('○', 'dim', '', '等待…');
     $('connRows').innerHTML = row('○', 'dim', '', '等待…');
     $('protoRows').innerHTML = row('○', 'dim', '', '等待…');
+    $('selfRows').innerHTML = row('○', 'dim', '', '等待…');
 
     stepEnv();
     stepDns()
       .then(stepConn)
       .then(stepProto)
+      .then(stepSelfCheck)
       .then(function () { tick(); verdict(); })
       .catch(function (e) {
         $('verdict').className = 'bad';

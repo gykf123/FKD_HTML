@@ -386,6 +386,17 @@
                         }
                         .visit-counter .count-num { color: var(--accent-gold); font-weight: 700; font-size: 0.95rem; font-family: var(--mc-pixel-font); }
 
+                        /* 页脚诊断入口：平时不抢眼，出问题时是唯一能自助排查的口子 */
+                        .footer-links { margin-top: 1.1rem; font-size: 0.75rem; }
+                        .footer-link {
+                                color: var(--text-muted);
+                                text-decoration: none;
+                                border-bottom: 1px dashed var(--border-light);
+                                padding-bottom: 1px;
+                                transition: color .2s, border-color .2s;
+                        }
+                        .footer-link:hover { color: var(--accent-gold); border-bottom-color: var(--accent-gold); }
+
                         /* ===== 模态框 ===== */
                         .modal-overlay {
                                 display: none;
