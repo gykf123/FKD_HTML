@@ -6,7 +6,8 @@
 <title>网络诊断 · FKD方块殿</title>
 <!--
   单文件、零外部依赖：Supabase 全挂 / CDN 抽风时也能打开。
-  不引用 styles.css、不引用任何 CDN、不发任何第三方请求（除了阿里 DoH）。
+  不引用 styles.css、不引用任何 CDN、不引入第三方脚本。
+  只发两类请求：阿里 DoH（看 DNS）、fesui 的只读状态接口（看关联站点是否在线）。
 -->
 <style>
   :root{
@@ -88,7 +89,16 @@
   </div>
 
   <div class="card">
-    <h2>⑥ 结论</h2>
+    <h2>⑥ 关联站点服务状态</h2>
+    <div id="svcRows"><div class="row"><span class="ic"><span class="spin"></span></span><span class="v dim">等待…</span></div></div>
+    <div class="hint">
+      <a id="statusLink" href="https://fesui.xn--0iv.gay/status/" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">打开完整服务状态页 ↗</a>
+      <span class="dim">（含可用率与近期事件）</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⑦ 结论</h2>
     <div id="verdict" class="dim">测试进行中…</div>
     <div class="bar"><i id="bar"></i></div>
   </div>
@@ -102,7 +112,7 @@
     <a href="/" style="color:var(--gold)">← 返回站点</a>
   </div>
   <div class="hint">
-    诊断只做只读探测，不上传任何数据。DNS 查询走阿里公共 DNS；页面自检会在本地加载一次首页，不记入访问数。
+    诊断只做只读探测，不上传任何数据。DNS 查询走阿里公共 DNS；页面自检会在本地加载一次首页，不记入访问数；关联站点状态读自 feSui 的只读监控接口（网页版：<a href="https://fesui.xn--0iv.gay/status/" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">服务状态</a>）。
   </div>
 </div>
 
@@ -114,6 +124,12 @@
   var ANON = 'sb_publishable_j4rpi2ejPTMGxo79uaaX3g_kQYrinS4';
   var PROBE = '/rest/v1/users?select=id&limit=1';
   var DOH = 'https://dns.alidns.com/resolve';
+
+  // 关联站点（fesui）的服务状态页：页面本身 + 背后同一个 supabase 的只读监控接口。
+  // 接口 CORS 全开且无需鉴权，直接读比让用户跳出去看更快；挂了就退化成只给链接。
+  var STATUS_PAGE = 'https://fesui.xn--0iv.gay/status/';
+  var STATUS_PATH = '/functions/v1/fs-status';
+  var STATUS_ENDPOINTS = [SUPABASE, 'https://api.fkd.xn--0iv.gay'];
 
   var R = {};           // 结果收集
   var steps = 0, done = 0;
@@ -429,6 +445,24 @@
       }
     }
 
+    // 关联站点（fesui）状态：一句话带过，明细在上面的卡片和报告里
+    var st = R.status || null;
+    if (st && st.apiOk && st.summary) {
+      var ss = st.summary;
+      var sTotal = ss.total || (st.services || []).length;
+      lines.push('');
+      if (ss.issues > 0) {
+        lines.push('📡 关联站点（fesui）有 ' + ss.issues + ' 项服务异常，明细见上。');
+        lines.push('   → ' + STATUS_PAGE);
+      } else {
+        lines.push('📡 关联站点（fesui）' + sTotal + ' 项服务无异常' +
+          (ss.likely ? '，其中 ' + ss.likely + ' 项监控探针判离线、但服务在网络层有响应，按大概率正常计' : '') + '。');
+      }
+    } else if (st && st.pageOk) {
+      lines.push('');
+      lines.push('📡 状态接口暂时读不到，但状态页本身能打开：' + STATUS_PAGE);
+    }
+
     $('verdict').className = '';
     $('verdict').textContent = lines.join('\n');
     $('subline').textContent = '诊断完成 · ' + new Date().toLocaleString('zh-CN');
@@ -460,6 +494,28 @@
       (R.self.items || []).forEach(function (it) {
         L.push('  ' + (it.ok ? '[OK] ' : '[!!] ') + it.k + ': ' + it.v);
       });
+    }
+    if (R.status) {
+      L.push('');
+      L.push('关联站点状态:');
+      if (R.status.apiOk) {
+        var ss = R.status.summary || {};
+        L.push('  总览: ' + (ss.total || R.status.services.length) + ' 项 · 在线 ' + (ss.up || 0) +
+          (ss.likely ? ' · 大概率正常 ' + ss.likely : '') +
+          (ss.issues ? ' · 异常 ' + ss.issues : '') +
+          ' （来源 ' + R.status.via + '）');
+        (R.status.services || []).forEach(function (s) {
+          var okState = s.state === 'up';
+          L.push('  ' + (okState ? '[OK]' : (s.state === 'down' ? '[!!]' : '[--]')) +
+            ' ' + s.label + ': ' + (s.text || s.state || '未知') +
+            (typeof s.uptime === 'number' && s.uptime > 0 ? ' 可用率' + s.uptime + '%' : '') +
+            (typeof s.ms === 'number' ? ' 平均' + Math.round(s.ms) + 'ms' : ''));
+        });
+      } else {
+        L.push('  ! 状态接口不可达: ' + R.status.err);
+      }
+      L.push('  状态页: ' + (R.status.pageOk ? '可打开 ' + Math.round(R.status.pageMs) + 'ms' : '打不开'));
+      L.push('  链接: ' + STATUS_PAGE);
     }
     L.push('');
     L.push('结论:');
@@ -569,10 +625,120 @@
     });
   }
 
+  // ---------- ⑥ 关联站点服务状态 ----------
+  // fesui 的状态页用的是同一个 supabase 的只读监控接口，CORS 全开、无需鉴权，
+  // 所以这里能直接把「主站 / FKD / QQ bot 在线吗」读出来，不用让用户跳站去查。
+  // 接口挂了就退化成一行失败提示 —— 链接始终在卡片底部，能点就能自己去看。
+  function getJson(url, ms, headers) {
+    var ctl = new AbortController();
+    var to = setTimeout(function () { ctl.abort(); }, ms);
+    var t0 = now();
+    return fetch(url, {
+      method: 'GET', headers: headers || {}, signal: ctl.signal,
+      cache: 'no-store', mode: 'cors'
+    }).then(function (res) {
+      return res.text().then(function (t) {
+        var j = null;
+        try { j = JSON.parse(t); } catch (e) {}
+        return { ok: res.ok, status: res.status, json: j, ms: now() - t0 };
+      });
+    }).catch(function (e) {
+      var aborted = (e && (e.name === 'AbortError' || /abort/i.test(String(e))));
+      return { ok: false, status: 0, timeout: aborted, ms: now() - t0,
+               err: String((e && e.message) || e) };
+    }).then(function (v) { clearTimeout(to); return v; });
+  }
+
+  function stepStatus() {
+    return new Promise(function (resolve) {
+      var box = $('svcRows');
+      box.innerHTML = row('○', 'dim', '', '正在获取服务状态…');
+
+      // 官方域失败就换反代，两条路任意一条通就行
+      function apiAt(i) {
+        if (i >= STATUS_ENDPOINTS.length) {
+          return Promise.resolve({ ok: false, err: '官方域与反代均不可达' });
+        }
+        return getJson(STATUS_ENDPOINTS[i] + STATUS_PATH, 8000, { apikey: ANON }).then(function (r) {
+          if (r.ok && r.json && r.json.ok === true) { r.via = STATUS_ENDPOINTS[i]; return r; }
+          return apiAt(i + 1);
+        });
+      }
+
+      // 状态页本身能不能打开：跨域读不到内容，但连不上会直接 reject，判断足够了
+      var pageP = probe(STATUS_PAGE, 8000, { mode: 'no-cors', cache: 'no-store' });
+
+      Promise.all([apiAt(0), pageP]).then(function (arr) {
+        var api = arr[0], pg = arr[1];
+        var html = '';
+
+        if (api.ok) {
+          var j = api.json, sum = j.summary || {}, svcs = j.services || [];
+          var total = (typeof sum.total === 'number') ? sum.total : svcs.length;
+          var upN = sum.up || 0, likeN = sum.likely || 0, issueN = sum.issues || 0;
+
+          var sumTxt = total + ' 项 · ' + upN + ' 在线';
+          if (likeN) sumTxt += ' · ' + likeN + ' 大概率正常';
+          if (issueN) sumTxt += ' · ' + issueN + ' 异常';
+          html += row(issueN ? '!' : '●', issueN ? 'warn' : 'ok', '总览', esc(sumTxt));
+
+          svcs.forEach(function (s) {
+            // state 取值：up / likely_ok / down / paused / pending
+            // likely_ok = 探针判离线但错误码是 405（健康检查端点不收 GET），网络层其实有响应
+            var st = String(s.state || '');
+            var isUp = st === 'up';
+            var isLikely = st === 'likely_ok' || st === 'likely';
+            var isDown = st === 'down' || st === 'offline';
+            var cls = isUp ? 'ok' : (isLikely ? 'warn' : (isDown ? 'bad' : 'dim'));
+            var ic = isUp ? '●' : (isLikely ? '◐' : (isDown ? '✕' : '○'));
+
+            var bits = [String(s.status_text || st || '未知')];
+            if (isLikely && s.probe_status_text && s.probe_status_text !== s.status_text) {
+              bits.push('探针' + s.probe_status_text);
+            }
+            // 可用率 0 表示还没有样本，不是「0% 可用」，那就干脆不显示数字
+            if (typeof s.uptime_all === 'number' && s.uptime_all > 0) bits.push(s.uptime_all + '%');
+            // 只有在线服务才报响应时间；异常时这个数字没有参考价值，还会把窄屏挤折行
+            if (isUp && typeof s.avg_ms === 'number') bits.push(Math.round(s.avg_ms) + 'ms');
+            html += row(ic, cls, esc(String(s.label || s.key || '服务')), esc(bits.join(' · ')));
+          });
+
+          // 窄屏放不下完整时间，只留「月-日 时:分」
+          var when = String(j.generated_at || '').replace('T', ' ').slice(5, 16);
+          html += row('·', 'dim', '数据来源',
+            esc((api.via === SUPABASE ? '官方域' : '反代') + (when ? ' · ' + when : '') +
+                (j.partial ? ' · 部分缺失' : '')));
+        } else {
+          html += row('✕', 'bad', '状态接口', esc(api.timeout ? '请求超时' : (api.err || '不可达')));
+        }
+
+        html += row(pg.ok ? '●' : '✕', pg.ok ? 'ok' : 'bad', '状态页',
+          pg.ok ? '可打开 · ' + fmt(pg.ms) : (pg.timeout ? '打不开 · 超时' : '打不开'));
+
+        box.innerHTML = html;
+
+        R.status = {
+          apiOk: !!api.ok,
+          pageOk: !!pg.ok,
+          pageMs: pg.ok ? pg.ms : 0,
+          via: api.ok ? (api.via === SUPABASE ? '官方域' : '反代') : '',
+          summary: api.ok ? (api.json.summary || null) : null,
+          services: api.ok ? (api.json.services || []).map(function (s) {
+            return { label: s.label || s.key, state: s.state,
+                     text: s.status_text, uptime: s.uptime_all, ms: s.avg_ms };
+          }) : [],
+          err: api.ok ? null : (api.timeout ? '请求超时' : (api.err || '不可达'))
+        };
+        tick();
+        resolve();
+      });
+    });
+  }
+
   // ---------- 主流程 ----------
   function run() {
     $('report').value = '';
-    R = {}; done = 0; steps = 6;
+    R = {}; done = 0; steps = 7;
     $('bar').style.width = '0%';
     $('verdict').className = 'dim';
     $('verdict').textContent = '测试进行中…';
@@ -581,12 +747,14 @@
     $('connRows').innerHTML = row('○', 'dim', '', '等待…');
     $('protoRows').innerHTML = row('○', 'dim', '', '等待…');
     $('selfRows').innerHTML = row('○', 'dim', '', '等待…');
+    $('svcRows').innerHTML = row('○', 'dim', '', '等待…');
 
     stepEnv();
     stepDns()
       .then(stepConn)
       .then(stepProto)
       .then(stepSelfCheck)
+      .then(stepStatus)
       .then(function () { tick(); verdict(); })
       .catch(function (e) {
         $('verdict').className = 'bad';
